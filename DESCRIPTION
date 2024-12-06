@@ -1,11 +1,15 @@
 Package: capivara
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Decomposition and Analysis of IFU Data Cubes
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Rafael S. de Souza
+Maintainer: Rafael S. de Souza <rd23aag@herts.ac.uk>
+Description: The 'capivara' package provides tools to simplify the decomposition
+    of Integral Field Unit (IFU) data cubes into more manageable representations 
+    such as 2D matrices. By streamlining the conversion from complex, multi-dimensional 
+    IFU data into flat, analysis-ready formats, 'capivara' aims to facilitate 
+    downstream spectral analysis and improve workflows for astronomy researchers.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.2.3
