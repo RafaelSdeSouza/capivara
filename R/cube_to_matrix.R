@@ -47,8 +47,8 @@ cube_to_matrix <- function(x) {
   n_wave <- dim(IFS_gal)[3]
 
   # Reshape the array into a matrix: rows = pixels, columns = wavelengths
-  dim(IFS_gal) <- c(n_row * n_col, n_wave)
+  IFU2D <- array(IFS_gal,dim=c(n_row*n_col, n_wave))
 
-  return(IFS_gal)
+  return(IFU2D)
 }
 

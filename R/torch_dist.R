@@ -58,16 +58,12 @@ torch_dist <- function(x) {
   pd <- torch::nnf_pdist(x_ten, p = 1)
 
   # Convert the torch tensor to an R numeric vector
-  pd <- as.numeric(pd)
+  pd <- as.matrix(pd)
 
   # Fill the lower triangle of mat with distances
   # pd is given in order: (1,2), (1,3), ..., (1,N), (2,3), ..., (N-1,N)
   # This matches the order as.dist() expects from the lower triangle of a distance matrix.
   mat[lower.tri(mat, diag = FALSE)] <- pd
-
-  # Set the diagonal to zero (just for clarity)
-  diag(mat) <- 0
-
   # Return as a dist object
   as.dist(mat)
 }
