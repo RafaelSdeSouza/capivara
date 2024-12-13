@@ -54,17 +54,11 @@ require(capivara)
 cube <- "manga-7443-12703-LOGCUBE.fits"
 
 # Apply Capivara segmentation
-result <- capivara_segment(data_2D)
-
-# Extract and visualize a specific region
-region_map <- matrix(result$regions[[1]], nrow = n_row, ncol = n_col)
-region_df <- melt(region_map)
+res <- capivara::segment(cube,Ncomp=20)
 
 # Plot the segmented region
-ggplot(region_df, aes(Var1, Var2, fill = value)) +
-  geom_raster() +
-  scale_fill_viridis_c(option = "C") +
-  theme_minimal()
+plot <- plot_cluster(res)
+print(plot)
 ```
 
 ## Dependencies
