@@ -1,4 +1,3 @@
-[![crp7](https://img.shields.io/badge/CRP-%237-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://cosmostatistics-initiative.org/residence-programs/crp7/)
 [![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
 [![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE) 
 # [<img align="left" src="images/capivara.jpeg" width="45">](https://cosmostatistics-initiative.org/) Capivara: A Spectral-based Segmentation Method for IFU Data Cubes
@@ -82,6 +81,6 @@ ggplot(region_df, aes(Var1, Var2, fill = value)) +
 3. **Torch in R**: Paszke, Adam, et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library." Advances in Neural Information Processing Systems. 2019.
 
 ---
-For more information, visit the [Cosmostatistics Initiative](https://cosmostatistics-initiative.org/) or check the [Capivara GitHub repository](https://github.com/RafaelSdeSouza/capivara).
+For more information, check the [Capivara GitHub repository](https://github.com/RafaelSdeSouza/capivara).
 
 
