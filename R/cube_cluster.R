@@ -1,63 +1,57 @@
 #' Cluster a 2D Representation of a Data Cube
 #'
-#' This function takes a 2D representation of a data cube (such as an IFU cube that has
-#' been flattened into rows = spatial pixels and columns = spectral variables), scales
-#' each row, computes pairwise distances using \code{\link{torch_dist}}, and then
-#' performs hierarchical clustering. The resulting clusters are rearranged back
-#' into a 2D grid consistent with the original spatial dimensions.
+#' This function processes a data cube (such as an IFU cube) by flattening it into
+#' rows (spatial pixels) and columns (spectral variables), scaling each row, computing
+#' pairwise distances using \code{\link{torch_dist}}, and performing hierarchical
+#' clustering. The resulting clusters are rearranged back into a 2D grid consistent
+#' with the original spatial dimensions. The function also retains the original data cube
+#' for reference and post-processing.
 #'
-#' @param cube_data A numeric matrix representing the 2D flattened data cube.
-#'   Each row typically corresponds to a spatial pixel, and each column represents
-#'   a spectral variable (e.g., wavelength).
-#' @param n_rows Integer, the number of rows in the original cube’s spatial dimension.
-#' @param n_cols Integer, the number of columns in the original cube’s spatial dimension.
-#' @param n_clusters Integer, the number of clusters to form.
-#' @param scale_fn A function used to scale each row of \code{cube_data}. Defaults to
-#'   \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.
+#' @param input A FITS object representing the input data cube. Typically, this is an IFU data cube.
+#' @param Ncomp Integer, the number of clusters to form.
+#' @param redshift Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).
+#' @param scale_fn A function used to scale each row of the 2D representation of the data cube.
+#'   Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.
 #'
 #' @details
 #' Steps performed by the function:
 #' \enumerate{
-#'   \item Applies the scaling function \code{scale_fn} to each row of \code{cube_data}.
-#'   \item Computes Manhattan distances between rows using \code{\link{torch_dist}}.
-#'   \item Performs hierarchical clustering with Ward's D2 method via \code{\link[fastcluster]{hclust}}.
-#'   \item Cuts the resulting dendrogram into \code{n_clusters} clusters.
-#'   \item Reshapes the cluster assignments into a \code{n_rows x n_cols} matrix, restoring
-#'   the original spatial layout.
+#'   \item Reads the input FITS data cube.
+#'   \item Converts the cube into a 2D matrix (spatial pixels x spectral variables).
+#'   \item Scales the data row-wise using \code{scale_fn}.
+#'   \item Computes pairwise distances between rows using \code{\link{torch_dist}}.
+#'   \item Performs hierarchical clustering using Ward's D2 method via \code{\link[fastcluster]{hclust}}.
+#'   \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map.
+#'   \item Calculates the signal-to-noise ratio (SNR) for each cluster.
 #' }
 #'
-#' This process is often used in IFU data analysis, where clustering is applied to
-#' grouped spectral profiles of spatial pixels to identify regions with similar
-#' characteristics.
+#' @return A list containing:
+#' \item{cluster_map}{A \code{n_rows x n_cols} matrix of cluster assignments (integers), where each element corresponds to a spatial pixel in the original cube layout.}
+#' \item{header}{The header metadata from the input FITS file.}
+#' \item{axDat}{Axis information (e.g., spatial and spectral axes) from the input FITS file.}
+#' \item{cluster_snr}{A numeric vector containing the signal-to-noise ratio (SNR) for each cluster.}
+#' \item{original_cube}{The original FITS data cube as input to the function, for reference and post-processing.}
 #'
-#' @return A \code{n_rows x n_cols} matrix of cluster assignments (integers), where each
-#'   element corresponds to a spatial pixel in the original cube layout.
-#'
-#' @import torch
-#' @importFrom fastcluster hclust
-#' @importFrom stats cutree
+#' This process is often used in IFU data analysis, where clustering is applied to grouped
+#' spectral profiles of spatial pixels to identify regions with similar characteristics.
 #'
 #' @seealso \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}}, \code{\link[stats]{cutree}}
 #'
 #' @examples
 #' if (torch::torch_is_installed()) {
-#'   # Suppose we have a 10x10 spatial grid and a spectrum of length 50
-#'   cube_data_example <- matrix(rnorm(10*10*50), nrow = 100, ncol = 50)
-#'   cluster_map <- cube_cluster(
-#'     cube_data = cube_data_example,
-#'     n_rows = 10,
-#'     n_cols = 10,
-#'     n_clusters = 5,
-#'     scale_fn = scale
-#'   )
-#'   dim(cluster_map) # Should be c(10, 10)
+#'   # Read a FITS cube and cluster it
+#'   input_cube <- FITSio::readFITS("manga-11749-12701-LOGCUBE.fits")
+#'   clustering_result <- cube_cluster(input = input_cube, Ncomp = 5)
+#'
+#'   # Access the cluster map and original cube
+#'   cluster_map <- clustering_result$cluster_map
+#'   original_cube <- clustering_result$original_cube
 #' }
 #'
 #' @export
 # Cluster the IFU cube data
 cube_cluster <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
   # Step 1: Read the FITS cube
-#  cubedat <- FITSio::readFITS(input, hdu = 1)
   cubedat <- input
 
   # Step 2: Extract the cube dimensions
@@ -65,25 +59,56 @@ cube_cluster <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale
   n_col <- dim(cubedat$imDat)[2]
   n_wave <- dim(cubedat$imDat)[3]
 
-  # Step 3: Convert the cube to a 2D matrix using cube_to_matrix
+  # Step 3: Convert the cube to a 2D matrix
   IFU2D <- cube_to_matrix(cubedat)
 
-  # Step 4: Scale the data row-wise
-  scaled_data <- t(apply(IFU2D, 1, scale_fn))
+  # Step 4: Calculate signal and noise
+  signal <- rowSums(IFU2D, na.rm = TRUE)  # Total signal per spatial pixel
+  noise <- sqrt(signal)  # Assuming Poisson noise
 
-  # Step 5: Compute pairwise distances using torch_dist
+  # Handle missing or invalid data
+  signal[is.na(signal) | signal <= 0] <- 0
+  noise[is.na(noise) | noise == 0] <- Inf  # Avoid division errors
+
+  # Step 5: Filter valid pixels (based on signal > 0)
+  valid_indices <- which(signal > 0)
+  if (length(valid_indices) == 0) stop("No valid pixels after filtering.")
+
+  IFU2D_valid <- IFU2D[valid_indices, ]
+  signal_valid <- signal[valid_indices]
+  noise_valid <- noise[valid_indices]
+
+  # Step 6: Scale the valid data row-wise
+  scaled_data <- t(apply(IFU2D_valid, 1, scale_fn))
+
+  # Step 7: Compute pairwise distances using torch_dist
   distance_matrix <- torch_dist(scaled_data)
 
-  # Step 6: Perform hierarchical clustering using Ward.D2 method
+  # Step 8: Perform hierarchical clustering using Ward.D2 method
   hc <- fastcluster::hclust(distance_matrix, method = "ward.D2")
 
-  # Step 7: Cut the dendrogram into Ncomp clusters
+  # Step 9: Cut the dendrogram into Ncomp clusters
   clusters <- cutree(hc, k = Ncomp)
 
-  # Step 8: Reshape the cluster vector back to a 2D map
-  cluster_map <- matrix(clusters, nrow = n_row, ncol = n_col)
+  # Step 10: Reshape the cluster vector back to a 2D map
+  cluster_map <- matrix(NA, nrow = n_row, ncol = n_col)
+  cluster_map[valid_indices] <- clusters
 
-  # Return the cluster map and cube metadata
-  return(list(cluster_map = cluster_map, header = cubedat$hdr, axDat = cubedat$axDat))
+  # Step 11: Calculate SNR for each cluster
+  sn_func <- function(indices) {
+    sum(signal_valid[indices]) / sqrt(sum(noise_valid[indices]^2))
+  }
+  cluster_snr <- sapply(unique(clusters), function(cl) {
+    indices <- which(clusters == cl)
+    sn_func(indices)
+  })
+
+  # Return the cluster map, cube metadata, SNR estimates, and original cube
+  return(list(
+    cluster_map = cluster_map,
+    header = cubedat$hdr,
+    axDat = cubedat$axDat,
+    cluster_snr = cluster_snr,
+    original_cube = cubedat
+  ))
 }
-

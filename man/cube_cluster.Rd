@@ -7,57 +7,55 @@
 cube_cluster(input, Ncomp = 5, redshift = 0, scale_fn = median_scale)
 }
 \arguments{
-\item{scale_fn}{A function used to scale each row of \code{cube_data}. Defaults to
-\code{\link[base]{scale}}. If you have a custom scaling function, pass it here.}
+\item{input}{A FITS object representing the input data cube. Typically, this is an IFU data cube.}
 
-\item{cube_data}{A numeric matrix representing the 2D flattened data cube.
-Each row typically corresponds to a spatial pixel, and each column represents
-a spectral variable (e.g., wavelength).}
+\item{Ncomp}{Integer, the number of clusters to form.}
 
-\item{n_rows}{Integer, the number of rows in the original cube’s spatial dimension.}
+\item{redshift}{Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).}
 
-\item{n_cols}{Integer, the number of columns in the original cube’s spatial dimension.}
-
-\item{n_clusters}{Integer, the number of clusters to form.}
+\item{scale_fn}{A function used to scale each row of the 2D representation of the data cube.
+Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.}
 }
 \value{
-A \code{n_rows x n_cols} matrix of cluster assignments (integers), where each
-  element corresponds to a spatial pixel in the original cube layout.
+A list containing:
+\item{cluster_map}{A \code{n_rows x n_cols} matrix of cluster assignments (integers), where each element corresponds to a spatial pixel in the original cube layout.}
+\item{header}{The header metadata from the input FITS file.}
+\item{axDat}{Axis information (e.g., spatial and spectral axes) from the input FITS file.}
+\item{cluster_snr}{A numeric vector containing the signal-to-noise ratio (SNR) for each cluster.}
+\item{original_cube}{The original FITS data cube as input to the function, for reference and post-processing.}
+
+This process is often used in IFU data analysis, where clustering is applied to grouped
+spectral profiles of spatial pixels to identify regions with similar characteristics.
 }
 \description{
-This function takes a 2D representation of a data cube (such as an IFU cube that has
-been flattened into rows = spatial pixels and columns = spectral variables), scales
-each row, computes pairwise distances using \code{\link{torch_dist}}, and then
-performs hierarchical clustering. The resulting clusters are rearranged back
-into a 2D grid consistent with the original spatial dimensions.
+This function processes a data cube (such as an IFU cube) by flattening it into
+rows (spatial pixels) and columns (spectral variables), scaling each row, computing
+pairwise distances using \code{\link{torch_dist}}, and performing hierarchical
+clustering. The resulting clusters are rearranged back into a 2D grid consistent
+with the original spatial dimensions. The function also retains the original data cube
+for reference and post-processing.
 }
 \details{
 Steps performed by the function:
 \enumerate{
-  \item Applies the scaling function \code{scale_fn} to each row of \code{cube_data}.
-  \item Computes Manhattan distances between rows using \code{\link{torch_dist}}.
-  \item Performs hierarchical clustering with Ward's D2 method via \code{\link[fastcluster]{hclust}}.
-  \item Cuts the resulting dendrogram into \code{n_clusters} clusters.
-  \item Reshapes the cluster assignments into a \code{n_rows x n_cols} matrix, restoring
-  the original spatial layout.
+  \item Reads the input FITS data cube.
+  \item Converts the cube into a 2D matrix (spatial pixels x spectral variables).
+  \item Scales the data row-wise using \code{scale_fn}.
+  \item Computes pairwise distances between rows using \code{\link{torch_dist}}.
+  \item Performs hierarchical clustering using Ward's D2 method via \code{\link[fastcluster]{hclust}}.
+  \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map.
+  \item Calculates the signal-to-noise ratio (SNR) for each cluster.
 }
-
-This process is often used in IFU data analysis, where clustering is applied to
-grouped spectral profiles of spatial pixels to identify regions with similar
-characteristics.
 }
 \examples{
 if (torch::torch_is_installed()) {
-  # Suppose we have a 10x10 spatial grid and a spectrum of length 50
-  cube_data_example <- matrix(rnorm(10*10*50), nrow = 100, ncol = 50)
-  cluster_map <- cube_cluster(
-    cube_data = cube_data_example,
-    n_rows = 10,
-    n_cols = 10,
-    n_clusters = 5,
-    scale_fn = scale
-  )
-  dim(cluster_map) # Should be c(10, 10)
+  # Read a FITS cube and cluster it
+  input_cube <- FITSio::readFITS("manga-11749-12701-LOGCUBE.fits")
+  clustering_result <- cube_cluster(input = input_cube, Ncomp = 5)
+
+  # Access the cluster map and original cube
+  cluster_map <- clustering_result$cluster_map
+  original_cube <- clustering_result$original_cube
 }
 
 }
