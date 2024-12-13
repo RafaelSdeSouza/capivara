@@ -16,35 +16,7 @@ library(capivara)
 
 ## Usage
 
-### Basic Usage
-
-Here is a simple example of using **capivara** to process IFU data:
-
-```R
-library(capivara)
-
-# Example data cube
-set.seed(42)
-n_row <- 50
-n_col <- 50
-n_wave <- 100
-cube <- array(rnorm(n_row * n_col * n_wave), dim = c(n_row, n_col, n_wave))
-
-# Segment the cube
-result <- capivara_segment(cube)
-
-# Plotting a decomposed region
-library(ggplot2)
-region <- result$regions[[1]]
-region_df <- as.data.frame(as.table(region))
-
-ggplot(region_df, aes(Var1, Var2, fill = Freq)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  theme_minimal()
-```
-
-### Astronomical Example: MaNGA Data Cube
+### Basic Usage: MaNGA Data Cube
 
 This example demonstrates how to use **capivara** to process an IFU datacube from the MaNGA survey, with dimensions [74, 74, 4563]. The data is flattened for segmentation:
 
