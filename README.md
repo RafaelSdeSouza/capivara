@@ -18,7 +18,7 @@ library(capivara)
 
 ### Basic Usage: MaNGA Data Cube
 
-This example demonstrates how to use **capivara** to process an IFU datacube from the MaNGA survey, with dimensions [74, 74, 4563]. The data is flattened for segmentation:
+This example demonstrates how to use **capivara** to process an IFU datacube from the MaNGA survey:
 
 ```R
 require(capivara)
