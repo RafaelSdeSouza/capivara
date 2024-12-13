@@ -1,19 +1,9 @@
 [![crp7](https://img.shields.io/badge/CRP-%237-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://cosmostatistics-initiative.org/residence-programs/crp7/)
-[![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962) 
-
-
+[![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
+[![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE) 
 # [<img align="left" src="images/capivara.jpeg" width="45">](https://cosmostatistics-initiative.org/) Capivara: A Spectral-based Segmentation Method for IFU Data Cubes
 
-
-
-# [<img align="left" src="images/capivara.jpeg" width="45">](https://cosmostatistics-initiative.org/) Capivara: A Spectral-Based Segmentation Method for IFU Data Cubes
-
-[![CRP7](https://img.shields.io/badge/CRP-%237-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://cosmostatistics-initiative.org/residence-programs/crp7/)  
-[![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)  
-[![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE)  
-[![DOI](https://zenodo.org/badge/481248275.svg)](https://zenodo.org/badge/latestdoi/481248275)
-
-Capivara is a powerful R package that implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
+Capivara implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
 
 ## Installation
 
