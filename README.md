@@ -47,6 +47,6 @@ print(plot)
 3. **Torch in R**: Paszke, Adam, et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library." Advances in Neural Information Processing Systems. 2019.
 
 ---
-For more information, check the [Capivara GitHub webpage]([https://rafaelsdesouza.github.io/capivara/]).
+For more information, check the [Capivara GitHub webpage](https://rafaelsdesouza.github.io/capivara/).
 
 
