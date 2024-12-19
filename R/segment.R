@@ -41,7 +41,7 @@
 #' if (torch::torch_is_installed()) {
 #'   # Read a FITS cube and cluster it
 #'   input_cube <- FITSio::readFITS("manga-11749-12701-LOGCUBE.fits")
-#'   clustering_result <- cube_cluster(input = input_cube, Ncomp = 5)
+#'   clustering_result <- segment(input = input_cube, Ncomp = 5)
 #'
 #'   # Access the cluster map and original cube
 #'   cluster_map <- clustering_result$cluster_map
@@ -50,7 +50,7 @@
 #'
 #' @export
 # Cluster the IFU cube data
-cube_cluster <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
+  segment <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
   # Step 1: Read the FITS cube
   cubedat <- input
 
