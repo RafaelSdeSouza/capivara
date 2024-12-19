@@ -47,8 +47,7 @@ research. The temporary BibTeX entry for the paper is:
         month = oct,
           eid = {arXiv:2410.21962},
         pages = {arXiv:2410.21962},
-          doi = {10.48550/arXiv.2410.21962}
-}
+          doi = {10.48550/arXiv.2410.21962}}
 
 ## Dependencies
 
