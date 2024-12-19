@@ -50,9 +50,7 @@ research. The temporary BibTeX entry for the paper is:
           doi = {10.48550/arXiv.2410.21962},
 archivePrefix = {arXiv},
        eprint = {2410.21962},
- primaryClass = {astro-ph.GA},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2024arXiv241021962D},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+ primaryClass = {astro-ph.GA}
 }
 
 ## Dependencies
