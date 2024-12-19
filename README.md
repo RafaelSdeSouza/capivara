@@ -36,7 +36,7 @@ Attribution
 -----------
 
 Please cite `de Souza et al (2024)
-<[https://arxiv.org/abs/1202.3665](https://arxiv.org/abs/2410.21962)>`_ if you find this code useful in your
+[![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962) if you find this code useful in your
 research. The temporary BibTeX entry for the paper is::
 
     @ARTICLE{2024arXiv241021962D,
