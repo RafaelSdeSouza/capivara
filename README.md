@@ -32,6 +32,29 @@ res <- capivara::segment(cube,Ncomp=20)
 plot <- plot_cluster(res)
 print(plot)
 ```
+Attribution
+-----------
+
+Please cite `de Souza et al (2024)
+<[https://arxiv.org/abs/1202.3665](https://arxiv.org/abs/2410.21962)>`_ if you find this code useful in your
+research. The temporary BibTeX entry for the paper is::
+
+    @ARTICLE{2024arXiv241021962D,
+       author = {{de Souza}, Rafael S. and {Dahmer-Hahn}, Luis G. and {Shen}, Shiyin and {Chies-Santos}, Ana L. and {Chen}, Mi and {Rahna}, P.~T. and {Ye}, Renhao and {Tahmasebzade}, Behzad},
+        title = "{Capivara: A Spectral-based Segmentation Method for IFU Data Cubes}",
+      journal = {arXiv e-prints},
+     keywords = {Astrophysics - Astrophysics of Galaxies, Astrophysics - Instrumentation and Methods for Astrophysics},
+         year = 2024,
+        month = oct,
+          eid = {arXiv:2410.21962},
+        pages = {arXiv:2410.21962},
+          doi = {10.48550/arXiv.2410.21962},
+archivePrefix = {arXiv},
+       eprint = {2410.21962},
+ primaryClass = {astro-ph.GA},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2024arXiv241021962D},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
 
 ## Dependencies
 
