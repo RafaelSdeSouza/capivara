@@ -6,6 +6,9 @@
 
 Capivara implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
 
+![plot](./images/mosaic_segmented.png)
+
+
 ## Installation
 
 Install Capivara from GitHub using the following commands:
