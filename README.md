@@ -1,4 +1,4 @@
-# Capivara: A Spectral-based Segmentation Method for IFU Data Cubes [<img align="right" src="images/capivara.jpeg" width="45">]
+# Capivara <img align="right" src="images/capivara.jpeg" width="45">
 
 
 [![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Capivara implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
+Capivara: A Spectral-based Segmentation Method for IFU Data Cubes implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
 
 ![plot](./images/mosaic_segmented.png)
 
