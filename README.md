@@ -25,9 +25,9 @@ library(capivara)
 
 ## Usage
 
-### Basic Usage: MaNGA Data Cube
+### MaNGA Data Cube
 
-This example demonstrates how to use **capivara** to process an IFU datacube from the MaNGA survey:
+This example demonstrates how to use **capivara** to segment an IFU from the MaNGA survey:
 
 ```R
 require(capivara)
