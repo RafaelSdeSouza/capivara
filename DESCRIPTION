@@ -2,6 +2,7 @@ Package: capivara
 Type: Package
 Title: Decomposition and Analysis of IFU Data Cubes
 Version: 0.1.0
+Imports: FITSio, dplyr, fastcluster, ggplot2, reshape2, tidyr, torch, viridis
 Author: Rafael S. de Souza
 Maintainer: Rafael S. de Souza <rd23aag@herts.ac.uk>
 Description: The 'capivara' package provides tools to simplify the decomposition

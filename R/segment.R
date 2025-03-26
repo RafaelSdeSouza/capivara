@@ -40,7 +40,7 @@
 #' @examples
 #' if (torch::torch_is_installed()) {
 #'   # Read a FITS cube and cluster it
-#'   input_cube <- FITSio::readFITS("manga-11749-12701-LOGCUBE.fits")
+#'   input_cube <- FITSio::readFITS("manga_7443_12703_LOGCUBE.fits")
 #'   clustering_result <- segment(input = input_cube, Ncomp = 5)
 #'
 #'   # Access the cluster map and original cube

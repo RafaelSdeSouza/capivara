@@ -45,32 +45,42 @@ plot_cluster <- function(cluster_data, palette = "magma") {
   # Convert the cluster map to a long-format data frame
   cluster_df <- reshape2::melt(cluster_map, varnames = c("Row", "Col"), value.name = "Cluster")
 
-  # Add the SNR for each cluster
+  # Optionally add SNR information (here not used for fill)
   cluster_df <- dplyr::mutate(cluster_df, SNR = ifelse(!is.na(Cluster), cluster_snr[Cluster], NA))
 
-  # Define a custom color palette
-  snr_palette <- viridis::scale_fill_viridis(option = palette, na.value = "white")
+  # Convert Cluster to factor for discrete coloring
+  cluster_df$Cluster <- as.factor(cluster_df$Cluster)
 
-  # Generate the plot
-  plot <- ggplot2::ggplot(cluster_df, ggplot2::aes(x = Row, y = Col, fill = SNR)) +
+  # Determine number of clusters (levels)
+  n_clusters <- length(levels(cluster_df$Cluster))
+
+  # Create a palette based on the input:
+  if (is.character(palette) && length(palette) == 1) {
+    # Generate discrete colors using viridis if a single option is given
+    colors <- viridis::viridis(n_clusters, option = palette)
+  } else if (is.character(palette) && length(palette) > 1) {
+    # If a custom color vector is provided, ensure there are enough colors
+    if(length(palette) < n_clusters) {
+      colors <- grDevices::colorRampPalette(palette)(n_clusters)
+    } else {
+      colors <- palette[1:n_clusters]
+    }
+  } else {
+    stop("Palette must be either a single viridis option string or a vector of colors")
+  }
+
+  # Generate the plot using a discrete fill scale for clusters
+  plot <- ggplot2::ggplot(cluster_df, ggplot2::aes(x = Row, y = Col, fill = Cluster)) +
     ggplot2::geom_tile() +
     ggplot2::coord_fixed() +
-    snr_palette +
-    ggplot2::labs(
-      x = "Column",
-      y = "Row",
-      fill = "SNR",
-      title = title
-    ) +
+    ggplot2::scale_fill_manual(values = colors, na.value = "white") +
     ggplot2::theme_void() +
     ggplot2::theme(
       axis.text = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       panel.grid = ggplot2::element_blank(),
-      legend.position = "right"
+      legend.position = "none"
     )
 
   return(plot)
 }
-
-
