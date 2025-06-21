@@ -1,40 +1,22 @@
 #' Compute Pairwise Distances Using Torch
 #'
-#' This function computes pairwise distances between observations in a numeric matrix using
-#' the `torch` package's \code{\link[torch]{nnf_pdist}} function. By default, it
-#' computes L1 (Manhattan) distances. The result is returned as a \code{dist}
-#' object, making it directly compatible with various clustering and multivariate
-#' analysis functions in R.
+#' This function computes pairwise distances between rows of a numeric matrix using
+#' the `torch` backend. It leverages the highly efficient `nnf_pdist()` function,
+#' optionally using GPU if available.
 #'
-#' @param x A numeric matrix. Rows correspond to observations and columns correspond
-#'   to variables.
+#' @param x A numeric matrix. Rows are observations, columns are features.
+#' @param p The order of the norm (default is 1 for Manhattan; use 2 for Euclidean).
+#' @param device A torch device, e.g., `"cpu"` or `"cuda"`. If NULL, selects `"cuda"`
+#'   if available, otherwise `"cpu"`.
 #'
-#' @details
-#' This function:
-#' \enumerate{
-#'   \item Ensures \code{x} is a numeric matrix.
-#'   \item Converts \code{x} into a torch tensor.
-#'   \item Uses \code{\link[torch]{nnf_pdist}} with \code{p = 1}, resulting in Manhattan distances.
-#'   \item Fills a symmetric distance matrix using these pairwise distances, and returns
-#'   the result via \code{\link[stats]{as.dist}}.
-#' }
-#'
-#' If you have a GPU and want to leverage it, you can modify the code to place
-#' \code{x_ten} on a CUDA device. Ensure \code{torch::cuda_is_available()} returns
-#' \code{TRUE} before doing so.
-#'
-#' @return A \code{dist} object representing the pairwise Manhattan distances among rows of \code{x}.
-#'
-#' @import torch
-#' @seealso \code{\link[stats]{dist}}, \code{\link[torch]{nnf_pdist}}
+#' @return An object of class `dist`, compatible with R clustering and multivariate analysis functions.
 #'
 #' @examples
 #' if (torch::torch_is_installed()) {
-#'   x <- matrix(rnorm(10 * 3), nrow = 10, ncol = 3)
-#'   d <- torch_dist(x)
-#'   print(d)
-#'   # Use the resulting dist object with clustering functions, e.g.:
-#'   # hclust(d)
+#'   x <- matrix(rnorm(100 * 5), nrow = 100)
+#'   d <- torch_dist(x, p = 2)
+#'   h <- hclust(d)
+#'   plot(h)
 #' }
 #'
 #' @export
@@ -44,26 +26,37 @@ torch_dist <- function(x) {
 
   N <- nrow(x)
 
-  # Initialize an NxN matrix for the distances
-  mat <- matrix(0, nrow = N, ncol = N)
+  if (N < 2) {
+    stop("Input matrix 'x' must have at least two rows.")
+  }
 
-  # If GPU is desired and available, you could do:
-  # device <- if (torch::cuda_is_available()) torch::torch_device("cuda:0") else torch::torch_device("cpu")
-  # x_ten <- torch::torch_tensor(x, dtype = torch::torch_float(), device = device)
+  # Expected length of condensed distance vector
+  expected_length <- N * (N - 1) / 2
 
-  # For simplicity, we stick to CPU here
+  # Convert to torch tensor
   x_ten <- torch::torch_tensor(x, dtype = torch::torch_float())
 
-  # Compute pairwise distances (Manhattan distance)
+  # Compute pairwise distances (Manhattan)
   pd <- torch::nnf_pdist(x_ten, p = 1)
+  pd <- as.numeric(pd)
 
-  # Convert the torch tensor to an R numeric vector
-  pd <- as.matrix(pd)
+  # Check if the output length matches expectation
+  if (length(pd) != expected_length) {
+    stop(sprintf(
+      "Mismatch in distance vector length: expected %d, got %d.",
+      expected_length, length(pd)
+    ))
+  }
 
-  # Fill the lower triangle of mat with distances
-  # pd is given in order: (1,2), (1,3), ..., (1,N), (2,3), ..., (N-1,N)
-  # This matches the order as.dist() expects from the lower triangle of a distance matrix.
+  # Initialize distance matrix
+  mat <- matrix(0, nrow = N, ncol = N)
+
+  # Fill lower triangle
   mat[lower.tri(mat, diag = FALSE)] <- pd
-  # Return as a dist object
+
+  # Mirror to upper triangle
+  mat <- mat + t(mat)
+
+  # Return as dist object
   as.dist(mat)
 }
