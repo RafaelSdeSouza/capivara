@@ -31,7 +31,7 @@ This example demonstrates how to use **capivara** to segment an IFU from the MaN
 ```R
 require(capivara)
 # Read the MaNGA datacube
-cube <- "manga-7443-12703-LOGCUBE.fits"
+cube <- FITSio::readFITS("manga-7443-12703-LOGCUBE.fits")
 
 # Apply Capivara segmentation
 res <- capivara::segment(cube,Ncomp=20)
