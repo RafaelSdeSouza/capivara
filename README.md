@@ -1,6 +1,5 @@
 # Capivara <img align="right" src="images/capivara.jpeg" width="75">
 
-
 [![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
 [![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE) 
 [![Coverage Status](https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara)](https://codecov.io/gh/RafaelSdeSouza/capivara)
@@ -32,7 +31,7 @@ This example demonstrates how to use **capivara** to segment an IFU from the MaN
 ```R
 require(capivara)
 # Read the MaNGA datacube
-cube <- "manga-7443-12703-LOGCUBE.fits"
+cube <- FITSio::readFITS("manga-7443-12703-LOGCUBE.fits")
 
 # Apply Capivara segmentation
 res <- capivara::segment(cube,Ncomp=20)
