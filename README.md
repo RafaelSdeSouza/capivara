@@ -67,7 +67,7 @@ research. The temporary BibTeX entry for the paper is:
 ## References
 
 1. **MaNGA Survey**: Bundy, Kevin, et al. "Overview of the SDSS-IV MaNGA Survey: Mapping Nearby Galaxies at Apache Point Observatory." The Astrophysical Journal 798.1 (2015): 7. DOI: [10.1088/0004-637X/798/1/7](https://doi.org/10.1088/0004-637X/798/1/7)
-2. **Capivara Methodology**: Souza, Rafael S. de, et al. "Capivara: A Spectral-Based Segmentation Method for IFU Data Cubes." arXiv preprint (2024). DOI: [10.48550/arXiv.2410.21962](https://arxiv.org/abs/2410.21962)
+2. **Capivara Methodology**: Souza, R. S. de, *et al.* (2025). **CAPIVARA: A spectral-based segmentation method for IFU data cubes.** *Monthly Notices of the Royal Astronomical Society*, **539**(4), 3166–3179. [https://doi.org/10.1093/mnras/staf688](https://doi.org/10.1093/mnras/staf688)
 3. **Torch in R**: Paszke, Adam, et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library." Advances in Neural Information Processing Systems. 2019.
 
 ---
