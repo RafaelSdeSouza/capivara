@@ -73,7 +73,7 @@ plot_cluster <- function(cluster_data, palette = "magma") {
   plot <- ggplot2::ggplot(cluster_df, ggplot2::aes(x = Row, y = Col, fill = Cluster)) +
     ggplot2::geom_tile() +
     ggplot2::coord_fixed() +
-    ggplot2::scale_fill_manual(values = colors, na.value = "white") +
+    ggplot2::scale_fill_manual(values = colors, na.value = "black") +
     ggplot2::theme_void() +
     ggplot2::theme(
       axis.text = ggplot2::element_blank(),

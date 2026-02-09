@@ -7,7 +7,7 @@
 plot_cluster_spectra(
   cluster_result,
   scale_fn = median_scale,
-  highlight_color = "red3"
+  palette = "magma"
 )
 }
 \arguments{

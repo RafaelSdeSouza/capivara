@@ -7,43 +7,27 @@
 torch_dist(x)
 }
 \arguments{
-\item{x}{A numeric matrix. Rows correspond to observations and columns correspond
-to variables.}
+\item{x}{A numeric matrix. Rows are observations, columns are features.}
+
+\item{p}{The order of the norm (default is 1 for Manhattan; use 2 for Euclidean).}
+
+\item{device}{A torch device, e.g., `"cpu"` or `"cuda"`. If NULL, selects `"cuda"`
+if available, otherwise `"cpu"`.}
 }
 \value{
-A \code{dist} object representing the pairwise Manhattan distances among rows of \code{x}.
+An object of class `dist`, compatible with R clustering and multivariate analysis functions.
 }
 \description{
-This function computes pairwise distances between observations in a numeric matrix using
-the `torch` package's \code{\link[torch]{nnf_pdist}} function. By default, it
-computes L1 (Manhattan) distances. The result is returned as a \code{dist}
-object, making it directly compatible with various clustering and multivariate
-analysis functions in R.
-}
-\details{
-This function:
-\enumerate{
-  \item Ensures \code{x} is a numeric matrix.
-  \item Converts \code{x} into a torch tensor.
-  \item Uses \code{\link[torch]{nnf_pdist}} with \code{p = 1}, resulting in Manhattan distances.
-  \item Fills a symmetric distance matrix using these pairwise distances, and returns
-  the result via \code{\link[stats]{as.dist}}.
-}
-
-If you have a GPU and want to leverage it, you can modify the code to place
-\code{x_ten} on a CUDA device. Ensure \code{torch::cuda_is_available()} returns
-\code{TRUE} before doing so.
+This function computes pairwise distances between rows of a numeric matrix using
+the `torch` backend. It leverages the highly efficient `nnf_pdist()` function,
+optionally using GPU if available.
 }
 \examples{
 if (torch::torch_is_installed()) {
-  x <- matrix(rnorm(10 * 3), nrow = 10, ncol = 3)
-  d <- torch_dist(x)
-  print(d)
-  # Use the resulting dist object with clustering functions, e.g.:
-  # hclust(d)
+  x <- matrix(rnorm(100 * 5), nrow = 100)
+  d <- torch_dist(x, p = 2)
+  h <- hclust(d)
+  plot(h)
 }
 
-}
-\seealso{
-\code{\link[stats]{dist}}, \code{\link[torch]{nnf_pdist}}
 }
