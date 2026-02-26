@@ -1,1 +1,33 @@
 /* css styles */
+```css
+/* Hero section */
+.hero {
+  padding: 5rem 2rem 3rem 2rem;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.hero h3 {
+  font-weight: 400;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+/* Global typography */
+body {
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.4px;
+}
+
+/* Subtle separation */
+hr {
+  margin: 3rem 0;
+}
