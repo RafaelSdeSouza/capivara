@@ -3,10 +3,24 @@ project:
 
 website:
   title: "Capivara"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: about.qmd
+        text: About
+      - href: https://github.com/RafaelSdeSouza/capivara
+        text: GitHub
+    right:
+      - icon: github
+        href: https://github.com/RafaelSdeSouza/capivara
 
 format:
   html:
-    theme:
-      light: litera
-      dark: darkly
+    theme: 
+      light: cosmo
+    toc: true
+    toc-location: right
+    code-copy: true
+    code-overflow: wrap
     css: styles.css
