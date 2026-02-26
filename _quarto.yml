@@ -1,25 +1,12 @@
 project:
   type: website
 
-
 website:
   title: "Capivara"
-  navbar:
-    left:
-      - text: Overview
-        href: index.qmd
-      - text: About
-        href: about.qmd
-    right:
-      - icon: github
-        href: https://github.com/yourname/capivara
 
 format:
   html:
     theme:
-      light: flatly
+      light: litera
       dark: darkly
-    toc: true
-    code-fold: true
-    smooth-scroll: true
     css: styles.css
