@@ -1,11 +1,10 @@
 project:
   type: website
-
 website:
   title: "Capivara"
 
   navbar:
-    background: "#0f1e2e"
+    background: "#6b1d6b"
     foreground: white
     left:
       - text: Overview
@@ -14,14 +13,29 @@ website:
         href: getting-started.qmd
       - text: Method
         href: method.qmd
-      - text: Examples
-        href: examples.qmd
       - text: Reference
         href: reference.qmd
     right:
       - icon: github
         href: https://github.com/RafaelSdeSouza/capivara
 
+  sidebar:
+    style: docked
+    collapse-level: 2
+    contents:
+      - section: "Getting Started"
+        contents:
+          - getting-started.qmd
+          - installation.qmd
+
+      - section: "Core Concepts"
+        contents:
+          - method.qmd
+          - spectral-distance.qmd
+
+      - section: "Reference"
+        contents:
+          - reference.qmd
   page-footer:
     left: "© 2026 Rafael S. de Souza"
     right: "Built with Quarto"
