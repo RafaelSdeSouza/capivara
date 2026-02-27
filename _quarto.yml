@@ -20,6 +20,7 @@ format:
     theme:
       light: flatly
     toc: true
+    toc-title: ""
     toc-location: left
     toc-depth: 3
     code-copy: true
