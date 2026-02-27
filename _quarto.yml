@@ -28,9 +28,7 @@ format:
   html:
     theme:
       light: flatly
-    toc: true
-    toc-location: body
-    toc-title: ""
+    toc: false
     toc-depth: 3
     smooth-scroll: true
     code-copy: true
