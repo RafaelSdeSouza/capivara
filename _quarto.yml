@@ -7,20 +7,9 @@ website:
   navbar:
     background: "#6b1d6b"
     foreground: white
-    left:
-      - text: Overview
-        href: index.qmd
-      - text: About
-        href: about.qmd
     right:
       - icon: github
         href: https://github.com/RafaelSdeSouza/capivara
-
-  sidebar:
-    style: docked
-    contents:
-      - index.qmd
-      - about.qmd
 
   page-footer:
     left: "© 2026 Rafael S. de Souza"
@@ -31,7 +20,9 @@ format:
     theme:
       light: flatly
     toc: true
-    toc-location: right
+    toc-location: left
+    toc-depth: 3
     code-copy: true
     code-line-numbers: true
+    smooth-scroll: true
     css: styles.css
