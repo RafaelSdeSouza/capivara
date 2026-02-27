@@ -3,24 +3,36 @@ project:
 
 website:
   title: "Capivara"
+
   navbar:
+    background: "#0f1e2e"
+    foreground: white
     left:
-      - href: index.qmd
-        text: Home
-      - href: about.qmd
-        text: About
-      - href: https://github.com/RafaelSdeSouza/capivara
-        text: GitHub
+      - text: Overview
+        href: index.qmd
+      - text: Getting Started
+        href: getting-started.qmd
+      - text: Method
+        href: method.qmd
+      - text: Examples
+        href: examples.qmd
+      - text: Reference
+        href: reference.qmd
     right:
       - icon: github
         href: https://github.com/RafaelSdeSouza/capivara
 
+  page-footer:
+    left: "© 2026 Rafael S. de Souza"
+    right: "Built with Quarto"
+
 format:
   html:
-    theme: 
-      light: cosmo
+    theme:
+      light: flatly
     toc: true
     toc-location: right
     code-copy: true
     code-overflow: wrap
+    code-line-numbers: true
     css: styles.css
