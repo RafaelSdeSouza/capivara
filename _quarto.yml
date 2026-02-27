@@ -3,21 +3,22 @@ project:
 
 website:
   title: "Capivara"
-navbar:
-  background: "#6b1d6b"
-  foreground: white
-  left:
-    - text: Overview
-      href: "#overview"
-    - text: Installation
-      href: "#installation"
-    - text: Usage
-      href: "#usage"
-    - text: Reference
-      href: "#references"
-  right:
-    - icon: github
-      href: https://github.com/RafaelSdeSouza/capivara
+
+  navbar:
+    background: "#6b1d6b"
+    foreground: white
+    left:
+      - text: Overview
+        href: "#overview"
+      - text: Installation
+        href: "#installation"
+      - text: Usage
+        href: "#usage"
+      - text: Reference
+        href: "#references"
+    right:
+      - icon: github
+        href: https://github.com/RafaelSdeSouza/capivara
 
   page-footer:
     left: "© 2026 Rafael S. de Souza"
@@ -29,8 +30,9 @@ format:
       light: flatly
     toc: true
     toc-location: body
+    toc-title: ""
     toc-depth: 3
+    smooth-scroll: true
     code-copy: true
     code-line-numbers: true
-    smooth-scroll: true
     css: styles.css
