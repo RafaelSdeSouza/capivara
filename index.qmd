@@ -9,10 +9,15 @@
 
 Capivara: A Spectral-based Segmentation Method for IFU Data Cubes implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
 
-![Toprow:SDSSimagesoffivegalaxiesinoursample,withtheMaNGAplatenumbersindicatedintheupper-rightcornerofeachimage.Thefieldof
-viewoftheIFU(IntegralFieldUnit)isoverlaidinpurple.Middlerow:Spatialdistributionmapsof20componentsdetectedbycapivara inthesamegalaxies.
-Bottom row: Spatial distribution maps for 20 components detected by the vorbin package.](./images/mosaic_segmented.png)
+::: {.figure}
+![](./images/mosaic_segmented.png){fig-align="center" width="100%"}
 
+Top row: SDSS images of five galaxies in our sample, with the MaNGA plate numbers indicated in the upper-right corner of each image. The field of view of the IFU (Integral Field Unit) is overlaid in purple.  
+
+Middle row: Spatial distribution maps of 20 components detected by **capivara** in the same galaxies.  
+
+Bottom row: Spatial distribution maps for 20 components detected by the **vorbin** package.
+:::
 
 ## Installation
 
