@@ -1,15 +1,85 @@
-/* css styles */
-```css
-/* Hero section */
+/* =========================================
+   CAPIVARA – Documentation Style System
+   ========================================= */
+
+/* ---------- Global Variables ---------- */
+
+:root {
+  --capivara-primary: #6b1d6b;
+  --capivara-primary-dark: #4a124a;
+  --capivara-accent: #3b6ea8;
+  --capivara-light-bg: #f8f5fb;
+  --capivara-border: #e6e6e6;
+}
+
+/* ---------- Typography ---------- */
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+h1 {
+  font-weight: 700;
+  color: #2c3e50;
+  border-bottom: 3px solid #6b1d6b;
+  padding-bottom: 0.4rem;
+}
+
+h2 {
+  color: #34495e;
+  border-left: 6px solid #6b1d6b;
+  padding-left: 0.6rem;
+  margin-top: 2.5rem;
+}
+
+h3 {
+  color: #5c3c88;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 1.2rem;
+}
+
+/* ---------- Navbar (Torch-like) ---------- */
+
+.navbar {
+  background: linear-gradient(
+    90deg,
+    var(--capivara-primary),
+    #8a2d8a
+  );
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+.navbar a {
+  color: white !important;
+}
+
+.navbar a:hover {
+  opacity: 0.85;
+}
+
+.navbar-brand {
+  font-weight: 600;
+}
+
+/* ---------- Hero Section ---------- */
+
 .hero {
-  padding: 5rem 2rem 3rem 2rem;
+  padding: 6rem 2rem 4rem 2rem;
   text-align: center;
+  background: linear-gradient(to bottom, #fafafa, #ffffff);
+  border-bottom: 1px solid var(--capivara-border);
 }
 
 .hero h1 {
   font-size: 3rem;
-  font-weight: 700;
-  letter-spacing: -1px;
 }
 
 .hero h3 {
@@ -18,16 +88,102 @@
   margin-bottom: 1.5rem;
 }
 
-/* Global typography */
-body {
-  font-family: "Inter", system-ui, sans-serif;
+/* ---------- Content Width ---------- */
+
+.quarto-container {
+  max-width: 1200px;
 }
 
-h1, h2, h3 {
-  letter-spacing: -0.4px;
+/* ---------- Right TOC Panel ---------- */
+
+#TOC {
+  background-color: var(--capivara-light-bg);
+  border-left: 4px solid var(--capivara-primary);
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
 }
 
-/* Subtle separation */
+#TOC .active {
+  color: var(--capivara-primary);
+  font-weight: 600;
+}
+
+/* ---------- Sidebar (if you enable docked sidebar) ---------- */
+
+.sidebar {
+  border-right: 1px solid var(--capivara-border);
+}
+
+.sidebar .sidebar-section {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--capivara-primary);
+}
+
+.sidebar a.active {
+  color: var(--capivara-primary) !important;
+  font-weight: 600;
+}
+
+/* ---------- Links ---------- */
+
+a {
+  color: var(--capivara-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--capivara-primary-dark);
+  text-decoration: underline;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn-primary {
+  background-color: var(--capivara-primary);
+  border-color: var(--capivara-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--capivara-primary-dark);
+  border-color: var(--capivara-primary-dark);
+}
+
+/* ---------- Code Blocks ---------- */
+
+pre code {
+  font-size: 0.9rem;
+  border-radius: 6px;
+}
+
+code {
+  background-color: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ---------- Images ---------- */
+
+img {
+  border-radius: 6px;
+  max-width: 100%;
+}
+
+/* ---------- Horizontal Rules ---------- */
+
 hr {
   margin: 3rem 0;
+  border-top: 1px solid var(--capivara-border);
+}
+
+/* ---------- Footer ---------- */
+
+.page-footer {
+  border-top: 1px solid var(--capivara-border);
+  padding-top: 2rem;
+  font-size: 0.9rem;
+  color: #666;
 }
