@@ -24,20 +24,20 @@ body {
 
 h1 {
   font-weight: 700;
-  letter-spacing: -1px;
-  margin-top: 2rem;
+  color: #2c3e50;
+  border-bottom: 3px solid #6b1d6b;
+  padding-bottom: 0.4rem;
 }
 
 h2 {
-  margin-top: 3rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid var(--capivara-border);
-  font-weight: 600;
-  color: #1c2d4a;
+  color: #34495e;
+  border-left: 6px solid #6b1d6b;
+  padding-left: 0.6rem;
+  margin-top: 2.5rem;
 }
 
 h3 {
-  margin-top: 2rem;
+  color: #5c3c88;
   font-weight: 600;
 }
 
