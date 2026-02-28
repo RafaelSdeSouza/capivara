@@ -9,8 +9,15 @@
 
 Capivara: A Spectral-based Segmentation Method for IFU Data Cubes implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
 
-![plot](./images/mosaic_segmented.png)
+::: {.figure}
+![](./images/mosaic_segmented.png){fig-align="center" width="100%"}
 
+Top row: SDSS images of five galaxies in our sample, with the MaNGA plate numbers indicated in the upper-right corner of each image. The field of view of the IFU (Integral Field Unit) is overlaid in purple.  
+
+Middle row: Spatial distribution maps of 20 components detected by **capivara** in the same galaxies.  
+
+Bottom row: Spatial distribution maps for 20 components detected by the **vorbin** package.
+:::
 
 ## Installation
 
@@ -69,7 +76,6 @@ research. The temporary BibTeX entry for the paper is:
 1. **MaNGA Survey**: Bundy, Kevin, et al. "Overview of the SDSS-IV MaNGA Survey: Mapping Nearby Galaxies at Apache Point Observatory." The Astrophysical Journal 798.1 (2015): 7. DOI: [10.1088/0004-637X/798/1/7](https://doi.org/10.1088/0004-637X/798/1/7)
 2. **Capivara Methodology**: Souza, R. S. de, *et al.* (2025). **CAPIVARA: A spectral-based segmentation method for IFU data cubes.** *Monthly Notices of the Royal Astronomical Society*, **539**(4), 3166–3179. [https://doi.org/10.1093/mnras/staf688](https://doi.org/10.1093/mnras/staf688)
 3. **Torch in R**: Paszke, Adam, et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library." Advances in Neural Information Processing Systems 2019.
-
 ---
 For more information, check the [Capivara GitHub webpage](https://rafaelsdesouza.github.io/capivara/).
 
