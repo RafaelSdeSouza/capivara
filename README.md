@@ -19,11 +19,11 @@ summaries, and SNR-guided component selection while keeping the original
 
 ### Current Capivara Mosaic
 
-<img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic">
+<img src="images/mosaic_segmented.png" width="1100" height="561" alt="Current Capivara mosaic">
 
 ### Sagui Comparison Mosaic
 
-<img src="images/mosaic_segmented_sagui.png" width="1040" height="561" alt="Sagui comparison mosaic">
+<img src="images/mosaic_segmented_sagui.png" width="1100" height="561" alt="Sagui comparison mosaic">
 
 Both mosaics are displayed with the same fixed size to make the visual
 comparison easier.
