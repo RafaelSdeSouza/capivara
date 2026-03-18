@@ -2,7 +2,8 @@
 #'
 #' This is the recommended post-segmentation summary layer for Capivara. It keeps
 #' the segmentation step separate from downstream spectral products and can return
-#' median spectra, summed spectra, and inverse-variance-weighted mean spectra.
+#' median spectra, arithmetic mean spectra, summed spectra, and
+#' inverse-variance-weighted mean spectra.
 #'
 #' @param cluster_result A list returned by a segmentation function.
 #' @param var_cube Optional variance cube matching the dimensions of the original
@@ -11,8 +12,9 @@
 #'   variances. Use this to account for covariance if needed.
 #'
 #' @return A list with wavelength coordinates, cluster ids, cluster sizes,
-#'   median spectra, summed spectra, and, when \code{var_cube} is supplied,
-#'   propagated sum variances and inverse-variance-weighted means.
+#'   per-wavelength finite counts, median spectra, mean spectra, summed spectra,
+#'   and, when \code{var_cube} is supplied, propagated sum variances and
+#'   inverse-variance-weighted means.
 #' @export
 summarize_cluster_spectra <- function(cluster_result,
                                       var_cube = NULL,
@@ -39,7 +41,14 @@ summarize_cluster_spectra <- function(cluster_result,
     ncol = ncol(flux_mat),
     dimnames = list(as.character(cluster_ids), wave_names)
   )
+  mean_spectra <- median_spectra
   sum_spectra <- median_spectra
+  finite_counts <- matrix(
+    0L,
+    nrow = length(cluster_ids),
+    ncol = ncol(flux_mat),
+    dimnames = list(as.character(cluster_ids), wave_names)
+  )
   n_spaxels <- integer(length(cluster_ids))
 
   has_var <- !is.null(var_cube)
@@ -63,6 +72,9 @@ summarize_cluster_spectra <- function(cluster_result,
     n_spaxels[i] <- length(idx)
     median_spectra[i, ] <- apply(X, 2, stats::median, na.rm = TRUE)
     sum_spectra[i, ] <- colSums(X, na.rm = TRUE)
+    finite_counts[i, ] <- colSums(is.finite(X))
+    mean_spectra[i, ] <- sum_spectra[i, ] / finite_counts[i, ]
+    mean_spectra[i, finite_counts[i, ] == 0] <- NA_real_
 
     if (has_var) {
       V <- var_mat[idx, , drop = FALSE]
@@ -88,7 +100,9 @@ summarize_cluster_spectra <- function(cluster_result,
     wavelength = wavelengths,
     cluster_ids = cluster_ids,
     n_spaxels = stats::setNames(n_spaxels, cluster_ids),
+    finite_counts = finite_counts,
     median_spectra = median_spectra,
+    mean_spectra = mean_spectra,
     sum_spectra = sum_spectra
   )
 

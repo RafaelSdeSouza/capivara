@@ -21,11 +21,13 @@ variances. Use this to account for covariance if needed.}
 }
 \value{
 A list with wavelength coordinates, cluster ids, cluster sizes,
-  median spectra, summed spectra, and, when \code{var_cube} is supplied,
-  propagated sum variances and inverse-variance-weighted means.
+  per-wavelength finite counts, median spectra, mean spectra, summed spectra,
+  and, when \code{var_cube} is supplied, propagated sum variances and
+  inverse-variance-weighted means.
 }
 \description{
 This is the recommended post-segmentation summary layer for Capivara. It keeps
 the segmentation step separate from downstream spectral products and can return
-median spectra, summed spectra, and inverse-variance-weighted mean spectra.
+median spectra, arithmetic mean spectra, summed spectra, and
+inverse-variance-weighted mean spectra.
 }

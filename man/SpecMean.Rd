@@ -40,6 +40,10 @@ This function processes the result of a clustering procedure to:
   \item Creates a new 3D array where each pixel's spectrum is replaced by the median spectrum of its cluster.
   \item Generates a table linking each pixel's original spectrum to its assigned cluster.
 }
+
+This legacy helper is retained for compatibility. For new workflows, prefer
+\code{\link{reconstruct_cluster_cube}} or
+\code{\link{reconstruct_flux_preserving_cube}}.
 }
 \examples{
 # Example clustering result (pseudo-code)

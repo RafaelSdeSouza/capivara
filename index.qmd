@@ -98,6 +98,13 @@ res <- segment(cube, Ncomp = choice$Ncomp)
 spec_summary <- summarize_cluster_spectra(res, var_cube = var_cube$imDat)
 ```
 
+### Reconstructed Cubes
+
+```R
+rep_cube <- reconstruct_cluster_cube(res_star, template = "median")
+fit_cube <- reconstruct_flux_preserving_cube(res_star)
+```
+
 ## Attribution
 
 Please cite de Souza et al. if you find this code useful in your research.

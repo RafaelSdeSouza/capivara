@@ -24,6 +24,10 @@
 #'   \item Generates a table linking each pixel's original spectrum to its assigned cluster.
 #' }
 #'
+#' This legacy helper is retained for compatibility. For new workflows, prefer
+#' \code{\link{reconstruct_cluster_cube}} or
+#' \code{\link{reconstruct_flux_preserving_cube}}.
+#'
 #' @return A list containing:
 #' \describe{
 #'   \item{\code{MeanSpec}}{A data frame with the median spectrum for each cluster (rows = clusters, columns = wavelength).}
@@ -58,6 +62,13 @@ SpecMean <- function(cluster_result) {
   cluster_map <- cluster_result$cluster_map
   summary <- summarize_cluster_spectra(cluster_result)
   wavelength <- summary$wavelength
+  recon <- reconstruct_cluster_cube(
+    cluster_result = cluster_result,
+    template = "median",
+    preserve_mask = FALSE,
+    fill_mode = "na",
+    return_residual = FALSE
+  )
 
   IFU2D <- cube_to_matrix(cubedat)
   class2D <- as.vector(cluster_map)
@@ -72,19 +83,7 @@ SpecMean <- function(cluster_result) {
     check.names = FALSE
   )
 
-  median_cube <- matrix(NA_real_, nrow = nrow(IFU2D), ncol = ncol(IFU2D))
-  for (i in seq_along(summary$cluster_ids)) {
-    group <- summary$cluster_ids[i]
-    group_indices <- which(class2D == group)
-    median_cube[group_indices, ] <- matrix(
-      summary$median_spectra[i, ],
-      nrow = length(group_indices),
-      ncol = ncol(IFU2D),
-      byrow = TRUE
-    )
-  }
-
-  reshaped_cube <- array(median_cube, dim = dim(cubedat$imDat))
+  reshaped_cube <- recon$model_cube$imDat
 
   post_process_table <- as.data.frame(IFU2D)
   post_process_table$class <- class2D

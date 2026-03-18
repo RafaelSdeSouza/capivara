@@ -8,6 +8,7 @@ Released: 2026-03-18
 - `build_starlet_mask()` and `segment_starlet()` for Sagui-style white-light starlet masking before clustering.
 - `summarize_cluster_spectra()` for median, summed, and inverse-variance-weighted cluster spectra.
 - `choose_ncomp_by_snr()` for variance-aware component selection from an SNR threshold.
+- `reconstruct_cluster_cube()` and `reconstruct_flux_preserving_cube()` for representative and flux-preserving model cubes.
 - `scripts/run_manga_starlet_comparison.R` for a full-frame MaNGA comparison workflow.
 
 ## Changed

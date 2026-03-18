@@ -128,6 +128,18 @@ spec_summary <- summarize_cluster_spectra(res, var_cube = var_cube$imDat)
 inspection. For flux and SNR calculations, `sum_spectra` or the
 inverse-variance-weighted summary are usually better choices.
 
+### Reconstructed Cubes
+
+Use `reconstruct_cluster_cube()` to build a representative cube from
+cluster templates, or `reconstruct_flux_preserving_cube()` when you want
+a model cube that preserves the summed flux spectrum of the segmented
+data for later spectral fitting.
+
+``` r
+rep_cube <- reconstruct_cluster_cube(res_star, template = "median")
+fit_cube <- reconstruct_flux_preserving_cube(res_star)
+```
+
 ## Release Notes
 
 See [NEWS.md](NEWS.md) for the `0.2.0` release summary.
@@ -167,7 +179,6 @@ research. A BibTeX entry for the paper is:
     **539**(4), 3166–3179. <https://doi.org/10.1093/mnras/staf688>
 3.  **Torch in R**: Paszke, Adam, et al. “PyTorch: An Imperative Style,
     High-Performance Deep Learning Library.” Advances in Neural
-    Information Processing Systems 2019.
-------------------------------------------------------------------------
-
-For more information, check the [Capivara GitHub webpage](https://rafaelsdesouza.github.io/capivara/).
+    Information Processing Systems 2019. For more information, check the
+    [Capivara GitHub
+    webpage](https://rafaelsdesouza.github.io/capivara/).
