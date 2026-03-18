@@ -13,13 +13,16 @@ Sagui-style white-light starlet masking, variance-aware spectral summaries,
 and SNR-guided component selection while keeping the original `segment()`
 workflow intact.
 
-| Current Capivara Mosaic | Sagui Comparison Mosaic |
-| --- | --- |
-| ![](images/mosaic_segmented.png) | ![](images/mosaic_segmented_sagui.png) |
+### Current Capivara Mosaic
 
-Left: the current Capivara segmentation mosaic used in the package
-documentation. Right: the Sagui comparison mosaic for the same style of visual
-summary.
+<img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic">
+
+### Sagui Comparison Mosaic
+
+<img src="images/mosaic_segmented_sagui.png" width="1040" height="561" alt="Sagui comparison mosaic">
+
+Both mosaics are displayed with the same fixed size to make the visual
+comparison easier.
 
 ## What's New In 0.2.0
 

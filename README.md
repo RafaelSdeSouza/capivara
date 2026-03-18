@@ -17,13 +17,16 @@ path, Sagui-style white-light starlet masking, variance-aware spectral
 summaries, and SNR-guided component selection while keeping the original
 `segment()` workflow intact.
 
-| Current Capivara Mosaic          | Sagui Comparison Mosaic                |
-|----------------------------------|----------------------------------------|
-| ![](images/mosaic_segmented.png) | ![](images/mosaic_segmented_sagui.png) |
+### Current Capivara Mosaic
 
-Left: the current Capivara segmentation mosaic used in the package
-documentation. Right: the Sagui comparison mosaic for the same style of
-visual summary.
+<img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic">
+
+### Sagui Comparison Mosaic
+
+<img src="images/mosaic_segmented_sagui.png" width="1040" height="561" alt="Sagui comparison mosaic">
+
+Both mosaics are displayed with the same fixed size to make the visual
+comparison easier.
 
 ## What’s New In 0.2.0
 
@@ -166,5 +169,10 @@ research. A BibTeX entry for the paper is:
     High-Performance Deep Learning Library.” Advances in Neural
     Information Processing Systems 2019.
 
-For more information, check the [Capivara GitHub
-webpage](https://rafaelsdesouza.github.io/capivara/).
+# \<\<\<\<\<\<\< HEAD
+
+------------------------------------------------------------------------
+
+> > > > > > > 2b8d6e3f168bc1198433a6f7f5abe74ec50aace5 For more
+> > > > > > > information, check the [Capivara GitHub
+> > > > > > > webpage](https://rafaelsdesouza.github.io/capivara/).
