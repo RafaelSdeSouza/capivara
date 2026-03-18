@@ -168,11 +168,6 @@ research. A BibTeX entry for the paper is:
 3.  **Torch in R**: Paszke, Adam, et al. “PyTorch: An Imperative Style,
     High-Performance Deep Learning Library.” Advances in Neural
     Information Processing Systems 2019.
-
-# \<\<\<\<\<\<\< HEAD
-
 ------------------------------------------------------------------------
 
-> > > > > > > 2b8d6e3f168bc1198433a6f7f5abe74ec50aace5 For more
-> > > > > > > information, check the [Capivara GitHub
-> > > > > > > webpage](https://rafaelsdesouza.github.io/capivara/).
+For more information, check the [Capivara GitHub webpage](https://rafaelsdesouza.github.io/capivara/).
