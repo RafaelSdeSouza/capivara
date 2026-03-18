@@ -127,20 +127,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./#overview"> 
-<span class="menu-text">Overview</span></a>
+    <a class="nav-link active" href="./index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./#installation"> 
-<span class="menu-text">Installation</span></a>
+    <a class="nav-link" href="./news.html"> 
+<span class="menu-text">Release Notes</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./#usage"> 
-<span class="menu-text">Usage</span></a>
-  </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./#references"> 
-<span class="menu-text">Reference</span></a>
+    <a class="nav-link" href="./about.html"> 
+<span class="menu-text">About</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
@@ -172,60 +168,101 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><a href="https://arxiv.org/abs/2410.21962"><img src="https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&amp;color=%2321609D" class="img-fluid" alt="arXiv"></a> <a href="https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE"><img src="https://img.shields.io/github/license/RafaelSdeSouza/capivara.png" class="img-fluid" alt="GitHub"></a> <a href="https://codecov.io/gh/RafaelSdeSouza/capivara"><img src="https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Coverage Status"></a> <a href="https://github.com/RafaelSdeSouza/capivara/commits"><img src="https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Last Commit"></a></p>
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Capivara: A Spectral-based Segmentation Method for IFU Data Cubes implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via <strong>torch</strong> for GPU acceleration.</p>
-<div class="figure">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="./images/mosaic_segmented.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
-</figure>
-</div>
-<p>Top row: SDSS images of five galaxies in our sample, with the MaNGA plate numbers indicated in the upper-right corner of each image. The field of view of the IFU (Integral Field Unit) is overlaid in purple.</p>
-<p>Middle row: Spatial distribution maps of 20 components detected by <strong>capivara</strong> in the same galaxies.</p>
-<p>Bottom row: Spatial distribution maps for 20 components detected by the <strong>vorbin</strong> package.</p>
-</div>
+<p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.2.0</code> adds a missing-data-safe segmentation path, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection while keeping the original <code>segment()</code> workflow intact.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Current Capivara Mosaic</th>
+<th>Sagui Comparison Mosaic</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><img src="images/mosaic_segmented.png" class="img-fluid"></td>
+<td><img src="images/mosaic_segmented_sagui.png" class="img-fluid"></td>
+</tr>
+</tbody>
+</table>
+<p>Left: the current Capivara segmentation mosaic used in the package documentation. Right: the Sagui comparison mosaic for the same style of visual summary.</p>
+</section>
+<section id="whats-new-in-0.2.0" class="level2">
+<h2 class="anchored" data-anchor-id="whats-new-in-0.2.0">What’s New In 0.2.0</h2>
+<ul>
+<li><code>segment_masked()</code> reproduces <code>segment()</code> while handling missing channels.</li>
+<li><code>segment_starlet()</code> adds a Sagui-style starlet mask from the white-light image.</li>
+<li><code>summarize_cluster_spectra()</code> supports median, summed, and weighted spectra.</li>
+<li><code>choose_ncomp_by_snr()</code> selects <code>Ncomp</code> from a variance-aware SNR cut.</li>
+<li><code>torch</code> is now optional.</li>
+</ul>
 </section>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
-<p>Install Capivara from GitHub using the following commands:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">install.packages</span>(<span class="st">'remotes'</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">install.packages</span>(<span class="st">"remotes"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"RafaelSdeSouza/capivara"</span>)</span>
 <span id="cb1-3"><a href="#cb1-3"></a><span class="fu">library</span>(capivara)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Optional GPU acceleration:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">install.packages</span>(<span class="st">"torch"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2"></a>torch<span class="sc">::</span><span class="fu">install_torch</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="usage" class="level2">
 <h2 class="anchored" data-anchor-id="usage">Usage</h2>
-<section id="manga-data-cube" class="level3">
-<h3 class="anchored" data-anchor-id="manga-data-cube">MaNGA Data Cube</h3>
-<p>This example demonstrates how to use <strong>capivara</strong> to segment an IFU from the MaNGA survey:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">require</span>(capivara)</span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="co"># Read the MaNGA datacube</span></span>
-<span id="cb2-3"><a href="#cb2-3"></a>cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-7443-12703-LOGCUBE.fits"</span>)</span>
-<span id="cb2-4"><a href="#cb2-4"></a></span>
-<span id="cb2-5"><a href="#cb2-5"></a><span class="co"># Apply Capivara segmentation</span></span>
-<span id="cb2-6"><a href="#cb2-6"></a>res <span class="ot">&lt;-</span> capivara<span class="sc">::</span><span class="fu">segment</span>(cube,<span class="at">Ncomp=</span><span class="dv">20</span>)</span>
-<span id="cb2-7"><a href="#cb2-7"></a></span>
-<span id="cb2-8"><a href="#cb2-8"></a><span class="co"># Plot the segmented region</span></span>
-<span id="cb2-9"><a href="#cb2-9"></a>plot <span class="ot">&lt;-</span> <span class="fu">plot_cluster</span>(res)</span>
-<span id="cb2-10"><a href="#cb2-10"></a><span class="fu">print</span>(plot)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="basic-segmentation" class="level3">
+<h3 class="anchored" data-anchor-id="basic-segmentation">Basic Segmentation</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-LOGCUBE.fits"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>)</span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="fu">plot_cluster</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="missing-data-safe-segmentation" class="level3">
+<h3 class="anchored" data-anchor-id="missing-data-safe-segmentation">Missing-data-safe Segmentation</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>res_masked <span class="ot">&lt;-</span> <span class="fu">segment_masked</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="sagui-style-starlet-segmentation" class="level3">
+<h3 class="anchored" data-anchor-id="sagui-style-starlet-segmentation">Sagui-style Starlet Segmentation</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
+<span id="cb5-2"><a href="#cb5-2"></a>  cube,</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
+<span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb5-6"><a href="#cb5-6"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-7"><a href="#cb5-7"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
+<span id="cb5-8"><a href="#cb5-8"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-9"><a href="#cb5-9"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
+<span id="cb5-10"><a href="#cb5-10"></a>)</span>
+<span id="cb5-11"><a href="#cb5-11"></a></span>
+<span id="cb5-12"><a href="#cb5-12"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/manga_8140_starlet_comparison_full.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
+</figure>
+</div>
+</section>
+<section id="variance-aware-summaries" class="level3">
+<h3 class="anchored" data-anchor-id="variance-aware-summaries">Variance-aware Summaries</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>var_cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-VARCUBE.fits"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2"></a></span>
+<span id="cb6-3"><a href="#cb6-3"></a>choice <span class="ot">&lt;-</span> <span class="fu">choose_ncomp_by_snr</span>(</span>
+<span id="cb6-4"><a href="#cb6-4"></a>  cube,</span>
+<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat,</span>
+<span id="cb6-6"><a href="#cb6-6"></a>  <span class="at">k_values =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">20</span>,</span>
+<span id="cb6-7"><a href="#cb6-7"></a>  <span class="at">target_snr =</span> <span class="dv">20</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9"></a></span>
+<span id="cb6-10"><a href="#cb6-10"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> choice<span class="sc">$</span>Ncomp)</span>
+<span id="cb6-11"><a href="#cb6-11"></a>spec_summary <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(res, <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="attribution" class="level2">
 <h2 class="anchored" data-anchor-id="attribution">Attribution</h2>
-<p>Please cite de Souza et al (2024) if you find this code useful in your research. The temporary BibTeX entry for the paper is:</p>
-<pre><code>@ARTICLE{2024arXiv241021962D,
-   author = {{de Souza}, Rafael S. and {Dahmer-Hahn}, Luis G. and {Shen}, Shiyin and {Chies-Santos}, Ana L. and {Chen}, Mi and {Rahna}, P.~T. and {Ye}, Renhao and {Tahmasebzade}, Behzad},
-    title = "{Capivara: A Spectral-based Segmentation Method for IFU Data Cubes}",
-  journal = {arXiv e-prints},
- keywords = {Astrophysics - Astrophysics of Galaxies, Astrophysics - Instrumentation and Methods for Astrophysics},
-     year = 2024,
-    month = oct,
-      eid = {arXiv:2410.21962},
-    pages = {arXiv:2410.21962},
-      doi = {10.48550/arXiv.2410.21962}}</code></pre>
+<p>Please cite de Souza et al.&nbsp;if you find this code useful in your research.</p>
 </section>
 <section id="dependencies" class="level2">
 <h2 class="anchored" data-anchor-id="dependencies">Dependencies</h2>
 <ul>
-<li><strong>torch</strong>: Efficient tensor computations with GPU support.</li>
+<li><strong>torch</strong>: Optional GPU-accelerated tensor computations.</li>
 <li><strong>ggplot2</strong>: Visualization.</li>
 <li><strong>FITSio</strong>: Reading and handling FITS files.</li>
 <li><strong>reshape2</strong>: Data manipulation.</li>

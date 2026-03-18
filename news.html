@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>About – Capivara</title>
+<title>Release Notes – Capivara</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -96,11 +96,11 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./news.html"> 
+    <a class="nav-link active" href="./news.html" aria-current="page"> 
 <span class="menu-text">Release Notes</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./about.html" aria-current="page"> 
+    <a class="nav-link" href="./about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -127,7 +127,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">About</h1>
+<h1 class="title">Release Notes</h1>
 </div>
 
 
@@ -144,18 +144,42 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Capivara is an R package for segmentation and post-processing of IFU data cubes.</p>
-<p>This documentation site is published from the Quarto sources in this repository and mirrors the GitHub README and release notes. Version <code>0.2.0</code> introduces:</p>
+<section id="release-notes" class="level1">
+<h1>Release Notes</h1>
+</section>
+<section id="capivara-0.2.0" class="level1">
+<h1>capivara 0.2.0</h1>
+<p>Released: 2026-03-18</p>
+<section id="added" class="level2">
+<h2 class="anchored" data-anchor-id="added">Added</h2>
 <ul>
-<li>missing-data-safe segmentation with <code>segment_masked()</code></li>
-<li>Sagui-style starlet masking with <code>segment_starlet()</code></li>
-<li>variance-aware summaries with <code>summarize_cluster_spectra()</code></li>
-<li>SNR-guided component selection with <code>choose_ncomp_by_snr()</code></li>
+<li><code>segment_masked()</code> for missing-data-safe segmentation with the same clustering logic as <code>segment()</code>.</li>
+<li><code>build_starlet_mask()</code> and <code>segment_starlet()</code> for Sagui-style white-light starlet masking before clustering.</li>
+<li><code>summarize_cluster_spectra()</code> for median, summed, and inverse-variance-weighted cluster spectra.</li>
+<li><code>choose_ncomp_by_snr()</code> for variance-aware component selection from an SNR threshold.</li>
+<li><code>scripts/run_manga_starlet_comparison.R</code> for a full-frame MaNGA comparison workflow.</li>
 </ul>
-<p>Repository: <a href="https://github.com/RafaelSdeSouza/capivara">RafaelSdeSouza/capivara</a></p>
-<p>Paper: <a href="https://doi.org/10.1093/mnras/staf688">Capivara: A spectral-based segmentation method for IFU data cubes</a></p>
+</section>
+<section id="changed" class="level2">
+<h2 class="anchored" data-anchor-id="changed">Changed</h2>
+<ul>
+<li><code>segment()</code> and <code>segment_masked()</code> now share the same internal segmentation core.</li>
+<li><code>torch</code> is now optional; Capivara falls back to base R distance calculations when <code>torch</code> is unavailable.</li>
+<li><code>segment_robust()</code> and <code>cube_cluster_with_snr()</code> are preserved as compatibility wrappers around the new API.</li>
+<li>GitHub and website documentation now describe the missing-data, starlet-mask, and variance-aware workflows.</li>
+</ul>
+</section>
+<section id="fixed" class="level2">
+<h2 class="anchored" data-anchor-id="fixed">Fixed</h2>
+<ul>
+<li><code>plot_cluster_spectra()</code> now uses the intended pixel within each cluster instead of repeatedly reusing the first pixel.</li>
+<li>The Sagui comparison workflow now preserves the full cube dimensions rather than applying the starlet mask on a cropped cube.</li>
+<li>Signal and noise estimation no longer produces warnings when row sums are non-positive.</li>
+</ul>
 
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
