@@ -244,6 +244,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-10"><a href="#cb6-10"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> choice<span class="sc">$</span>Ncomp)</span>
 <span id="cb6-11"><a href="#cb6-11"></a>spec_summary <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(res, <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
+<section id="reconstructed-cubes" class="level3">
+<h3 class="anchored" data-anchor-id="reconstructed-cubes">Reconstructed Cubes</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>rep_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_cluster_cube</span>(res_star, <span class="at">template =</span> <span class="st">"median"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2"></a>fit_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_flux_preserving_cube</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 </section>
 <section id="attribution" class="level2">
 <h2 class="anchored" data-anchor-id="attribution">Attribution</h2>
