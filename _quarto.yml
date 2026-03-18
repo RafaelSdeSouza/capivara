@@ -1,5 +1,9 @@
 project:
   type: website
+  render:
+    - index.qmd
+    - about.qmd
+    - news.qmd
 
 website:
   title: "Capivara"
@@ -8,14 +12,12 @@ website:
     background: "#6b1d6b"
     foreground: white
     left:
-      - text: Overview
-        href: "#overview"
-      - text: Installation
-        href: "#installation"
-      - text: Usage
-        href: "#usage"
-      - text: Reference
-        href: "#references"
+      - text: Home
+        href: index.qmd
+      - text: Release Notes
+        href: news.qmd
+      - text: About
+        href: about.qmd
     right:
       - icon: github
         href: https://github.com/RafaelSdeSouza/capivara

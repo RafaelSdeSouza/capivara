@@ -1,23 +1,22 @@
-#' Plot a Cluster Map Color-Coded by Signal-to-Noise Ratio (SNR)
+#' Plot a Cluster Map with Discrete Cluster Colors
 #'
 #' This function visualizes the output of a clustering algorithm applied to
-#' an IFU data cube, where the clusters are color-coded by their respective
-#' signal-to-noise ratio (SNR).
+#' an IFU data cube, where each cluster is assigned a distinct fill color.
 #'
 #' @param cluster_data A list containing the clustering results with the following components:
 #'   \itemize{
 #'     \item \code{cluster_map}: A matrix representing the spatial layout of the clusters.
 #'     \item \code{cluster_snr}: A numeric vector with the SNR values for each cluster.
 #'   }
-#' @param palette Character. Name of the Viridis color palette to use for the SNR scale.
+#' @param palette Character. Name of the Viridis color palette to use for the
+#'   discrete cluster colors.
 #'   Options include "magma", "inferno", "plasma", "viridis", and "cividis". Defaults to "magma".
 #'
-#' @return A \code{ggplot2} object representing the cluster map, color-coded by SNR.
+#' @return A \code{ggplot2} object representing the cluster map.
 #'
 #' @details
-#' The function converts the \code{cluster_map} into a long-format data frame and merges it
-#' with the \code{cluster_snr} values. The SNR for each cluster is displayed using a Viridis
-#' color scale, ensuring high perceptual uniformity.
+#' The function converts the \code{cluster_map} into a long-format data frame and
+#' colors each cluster with a discrete palette.
 #'
 #' @examples
 #' \dontrun{

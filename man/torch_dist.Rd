@@ -4,7 +4,7 @@
 \alias{torch_dist}
 \title{Compute Pairwise Distances Using Torch}
 \usage{
-torch_dist(x)
+torch_dist(x, p = 1, device = NULL)
 }
 \arguments{
 \item{x}{A numeric matrix. Rows are observations, columns are features.}

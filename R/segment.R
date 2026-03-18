@@ -50,65 +50,12 @@
 #'
 #' @export
 # Cluster the IFU cube data
-  segment <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
-  # Step 1: Read the FITS cube
-  cubedat <- input
-
-  # Step 2: Extract the cube dimensions
-  n_row <- dim(cubedat$imDat)[1]
-  n_col <- dim(cubedat$imDat)[2]
-  n_wave <- dim(cubedat$imDat)[3]
-
-  # Step 3: Convert the cube to a 2D matrix
-  IFU2D <- cube_to_matrix(cubedat)
-
-  # Step 4: Calculate signal and noise
-  signal <- rowSums(IFU2D, na.rm = TRUE)  # Total signal per spatial pixel
-  noise <- sqrt(signal)  # Assuming Poisson noise
-
-  # Handle missing or invalid data
-  signal[is.na(signal) | signal <= 0] <- 0
-  noise[is.na(noise) | noise == 0] <- Inf  # Avoid division errors
-
-  # Step 5: Filter valid pixels (based on signal > 0)
-  valid_indices <- which(signal > 0)
-  if (length(valid_indices) == 0) stop("No valid pixels after filtering.")
-
-  IFU2D_valid <- IFU2D[valid_indices, ]
-  signal_valid <- signal[valid_indices]
-  noise_valid <- noise[valid_indices]
-
-  # Step 6: Scale the valid data row-wise
-  scaled_data <- t(apply(IFU2D_valid, 1, scale_fn))
-
-  # Step 7: Compute pairwise distances using torch_dist
-  distance_matrix <- torch_dist(scaled_data)
-
-  # Step 8: Perform hierarchical clustering using Ward.D2 method
-  hc <- fastcluster::hclust(distance_matrix, method = "ward.D2")
-
-  # Step 9: Cut the dendrogram into Ncomp clusters
-  clusters <- cutree(hc, k = Ncomp)
-
-  # Step 10: Reshape the cluster vector back to a 2D map
-  cluster_map <- matrix(NA, nrow = n_row, ncol = n_col)
-  cluster_map[valid_indices] <- clusters
-
-  # Step 11: Calculate SNR for each cluster
-  sn_func <- function(indices) {
-    sum(signal_valid[indices]) / sqrt(sum(noise_valid[indices]^2))
-  }
-  cluster_snr <- sapply(unique(clusters), function(cl) {
-    indices <- which(clusters == cl)
-    sn_func(indices)
-  })
-
-  # Return the cluster map, cube metadata, SNR estimates, and original cube
-  return(list(
-    cluster_map = cluster_map,
-    header = cubedat$hdr,
-    axDat = cubedat$axDat,
-    cluster_snr = cluster_snr,
-    original_cube = cubedat
-  ))
+segment <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
+  .segment_core(
+    input = input,
+    Ncomp = Ncomp,
+    redshift = redshift,
+    scale_fn = scale_fn,
+    na_to_zero = FALSE
+  )
 }

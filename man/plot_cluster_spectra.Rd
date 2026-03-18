@@ -22,12 +22,12 @@ containing at least the following elements:
 \item{scale_fn}{A function that scales each individual spectrum (a numeric vector).
 The default is \code{median_scale} which should be defined elsewhere in your package.}
 
-\item{highlight_color}{A character string specifying the color for plotting the median spectrum.
-Defaults to \code{"red3"}.}
+\item{palette}{Either a single viridis palette name or a vector of colors used
+to color the per-cluster median spectra.}
 }
 \value{
-A \code{ggplot2} object representing a faceted plot of the scaled individual spectra
-  and their median profiles for each cluster.
+A \code{ggplot2} object representing a faceted plot of the median
+  profile for each cluster.
 }
 \description{
 This function creates a faceted plot that displays the individual pixel spectra (after
@@ -44,11 +44,7 @@ The function performs the following steps:
   \item Creates a data frame mapping each valid spatial pixel to its cluster.
   \item Extracts each pixel's spectrum and applies the scaling function \code{scale_fn} to it.
   \item Computes the median spectrum for each cluster at every wavelength.
-  \item Constructs a faceted ggplot where:
-    \itemize{
-      \item Gray lines represent the scaled individual spectra.
-      \item A highlighted line (using \code{highlight_color}) represents the median spectrum.
-    }
+  \item Constructs a faceted ggplot of the median spectrum for each cluster.
 }
 }
 \examples{
@@ -56,8 +52,8 @@ The function performs the following steps:
   # Assuming 'input_cube' is a FITS cube and 'segment' clusters the data:
   cluster_result <- segment(input_cube, Ncomp = 5)
 
-  # Generate the spectra plot with scaling and a highlighted median spectrum
-  spectra_plot <- plot_cluster_spectra(cluster_result, scale_fn = median_scale, highlight_color = "red3")
+  # Generate the spectra plot
+  spectra_plot <- plot_cluster_spectra(cluster_result, scale_fn = median_scale, palette = "magma")
   print(spectra_plot)
 }
 

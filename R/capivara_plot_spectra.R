@@ -43,12 +43,6 @@
 #'
 #' @export
 capivara_plot_spectra_with_map <- function(cluster_result, bin_id, highlight_color = "#FFDE38", map_palette = "magma") {
-  library(ggplot2)
-  library(tidyr)
-  library(reshape2)
-  library(dplyr)
-  library(viridis)
-
   # Extract data from Capivara outputs
   cluster_map <- cluster_result$cluster_map
   original_cube <- cluster_result$original_cube
@@ -89,36 +83,35 @@ capivara_plot_spectra_with_map <- function(cluster_result, bin_id, highlight_col
 
   # Prepare data for 2D cluster map
   cluster_df <- reshape2::melt(cluster_map, varnames = c("Row", "Col"), value.name = "Cluster")
-  cluster_df <- cluster_df %>%
-    mutate(Highlighted = ifelse(Cluster == bin_id, bin_id, NA))  # Highlight the selected bin
+  cluster_df$Highlighted <- ifelse(cluster_df$Cluster == bin_id, bin_id, NA)
 
   # Plot 1: Spectra
-  spectra_plot <- ggplot() +
-    geom_line(data = spectra_long, aes(x = Wavelength, y = Flux, group = Spectrum_ID), color = "gray70", size = 0.4) +
-    geom_line(data = median_df, aes(x = Wavelength, y = Median_Spectrum), color = highlight_color, size = 1.2) +
-    labs(
+  spectra_plot <- ggplot2::ggplot() +
+    ggplot2::geom_line(data = spectra_long, ggplot2::aes(x = Wavelength, y = Flux, group = Spectrum_ID), color = "gray70", size = 0.4) +
+    ggplot2::geom_line(data = median_df, ggplot2::aes(x = Wavelength, y = Median_Spectrum), color = highlight_color, size = 1.2) +
+    ggplot2::labs(
       title = paste("Spectra for Bin", bin_id),
       x = "Wavelength (Å)",
       y = "Flux"
     ) +
-    theme_minimal() +
-    theme(panel.grid.minor = element_blank())
+    ggplot2::theme_minimal() +
+    ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
 
   # Plot 2: 2D Cluster Map
-  cluster_plot <- ggplot(cluster_df, aes(x = Col, y = Row, fill = as.factor(Highlighted))) +
-    geom_tile(color = NA) +
-    scale_fill_manual(values = c(NA, highlight_color), na.value = "white") +
-    coord_fixed() +
-    labs(
+  cluster_plot <- ggplot2::ggplot(cluster_df, ggplot2::aes(x = Col, y = Row, fill = as.factor(Highlighted))) +
+    ggplot2::geom_tile(color = NA) +
+    ggplot2::scale_fill_manual(values = c(NA, highlight_color), na.value = "white") +
+    ggplot2::coord_fixed() +
+    ggplot2::labs(
       title = paste("2D Map for Bin", bin_id),
       fill = "Highlighted Bin"
     ) +
-    theme_void() +
-    theme(
+    ggplot2::theme_void() +
+    ggplot2::theme(
       legend.position = "right",
-      axis.text = element_blank(),
-      axis.ticks = element_blank(),
-      panel.grid = element_blank()
+      axis.text = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank()
     )
 
   # Return both plots as a list

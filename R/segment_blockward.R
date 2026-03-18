@@ -139,18 +139,8 @@ segment_blockward <- function(input,
     which(out, arr.ind = TRUE)
   }
   
-  # capivara torch_dist: L1 via torch::nnf_pdist(p=1)
   torch_dist_l1 <- function(x) {
-    x <- as.matrix(x)
-    N <- nrow(x)
-    if (N < 2) stop("Input matrix must have at least two rows.")
-    x_ten <- torch::torch_tensor(x, dtype = torch::torch_float())
-    pd <- torch::nnf_pdist(x_ten, p = 1)
-    pd <- as.numeric(pd)
-    mat <- matrix(0, nrow = N, ncol = N)
-    mat[lower.tri(mat, diag = FALSE)] <- pd
-    mat <- mat + t(mat)
-    as.dist(mat)
+    torch_dist(x, p = 1)
   }
   
   # nearest-center assignment under L1 or L2
@@ -286,8 +276,7 @@ segment_blockward <- function(input,
   if (verbose) message(sprintf("Computing distances for %d blocks...", m))
   
   if (dist_method == "capivara_l1") {
-    if (!requireNamespace("torch", quietly = TRUE)) stop("Need 'torch' installed for capivara_l1 distances.")
-    d <- torch_dist_l1(feat_blocks)   # L1 (Manhattan)
+    d <- torch_dist_l1(feat_blocks)
   } else {
     d <- stats::dist(feat_blocks)     # Euclidean
   }
@@ -379,4 +368,3 @@ segment_blockward <- function(input,
     original_cube = cubedat
   )
 }
-

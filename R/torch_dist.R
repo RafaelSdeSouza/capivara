@@ -20,7 +20,7 @@
 #' }
 #'
 #' @export
-torch_dist <- function(x) {
+torch_dist <- function(x, p = 1, device = NULL) {
   # Ensure x is a numeric matrix
   x <- as.matrix(x)
 
@@ -33,11 +33,23 @@ torch_dist <- function(x) {
   # Expected length of condensed distance vector
   expected_length <- N * (N - 1) / 2
 
-  # Convert to torch tensor
-  x_ten <- torch::torch_tensor(x, dtype = torch::torch_float())
+  if (!requireNamespace("torch", quietly = TRUE) || !isTRUE(torch::torch_is_installed())) {
+    method <- if (p == 1) "manhattan" else if (p == 2) "euclidean" else NULL
+    if (is.null(method)) {
+      stop("Fallback distance only supports p = 1 or p = 2 when torch is unavailable.")
+    }
+    return(stats::dist(x, method = method))
+  }
 
-  # Compute pairwise distances (Manhattan)
-  pd <- torch::nnf_pdist(x_ten, p = 1)
+  # Convert to torch tensor
+  if (is.null(device)) {
+    x_ten <- torch::torch_tensor(x, dtype = torch::torch_float())
+  } else {
+    x_ten <- torch::torch_tensor(x, dtype = torch::torch_float(), device = device)
+  }
+
+  # Compute pairwise distances
+  pd <- torch::nnf_pdist(x_ten, p = p)
   pd <- as.numeric(pd)
 
   # Check if the output length matches expectation

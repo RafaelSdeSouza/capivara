@@ -29,6 +29,7 @@
 #'   \item{\code{MeanSpec}}{A data frame with the median spectrum for each cluster (rows = clusters, columns = wavelength).}
 #'   \item{\code{reshaped_cube}}{A 3D array containing the new cube with median spectra assigned to each pixel.}
 #'   \item{\code{post_process_table}}{A data frame linking each pixel's original spectrum to its assigned cluster.}
+#'   \item{\code{cluster_summary}}{A richer summary object returned by \code{\link{summarize_cluster_spectra}}.}
 #' }
 #'
 #' @examples
@@ -53,70 +54,46 @@
 #' @importFrom utils write.csv
 #' @export
 SpecMean <- function(cluster_result) {
-  # Step 1: Extract components from the cluster result
-  cubedat     <- cluster_result$original_cube
+  cubedat <- .as_cubedat(cluster_result$original_cube)
   cluster_map <- cluster_result$cluster_map
-  wavelength  <- FITSio::axVec(3, cubedat$axDat)  # Wavelength axis
+  summary <- summarize_cluster_spectra(cluster_result)
+  wavelength <- summary$wavelength
 
-  # Step 2: Convert the original cube to a 2D matrix
   IFU2D <- cube_to_matrix(cubedat)
-
-  # Step 3: Flatten the cluster map
   class2D <- as.vector(cluster_map)
 
-  # Ensure dimensions match
   if (length(class2D) != nrow(IFU2D)) {
     stop("Cluster map dimensions do not match the input cube dimensions.")
   }
 
-  # Step 4: Prepare data frame with spectra + cluster assignments
-  IFU2Db <- as.data.frame(IFU2D)
-  IFU2Db$class <- class2D
-  colnames(IFU2Db) <- c(wavelength, "class")
+  MeanSpec <- data.frame(
+    class = summary$cluster_ids,
+    summary$median_spectra,
+    check.names = FALSE
+  )
 
-  # Step 5: Compute the median spectrum for each cluster
-  MeanSpec <- IFU2Db %>%
-    reshape2::melt(id = "class") %>%
-    dplyr::group_by(class, variable) %>%
-    dplyr::summarise(MedianSpec = median(value, na.rm = TRUE), .groups = "drop") %>%
-    reshape2::dcast(class ~ variable, value.var = "MedianSpec")
-
-  # Step 6: Create a new cube with median spectra
-  median_cube <- matrix(NA, nrow = nrow(IFU2D), ncol = ncol(IFU2D))
-  unique_groups <- unique(class2D)
-
-  for (group in unique_groups) {
-    if (!is.na(group)) {
-      # Extract the median spectrum for this cluster
-      median_spectrum <- MeanSpec %>%
-        dplyr::filter(class == group) %>%
-        dplyr::select(-class) %>%
-        unlist() %>%
-        as.numeric()
-
-      # Assign to matching pixels
-      group_indices <- which(class2D == group)
-      median_cube[group_indices, ] <- matrix(
-        median_spectrum,
-        nrow = length(group_indices),
-        ncol = ncol(IFU2D),
-        byrow = TRUE
-      )
-    }
+  median_cube <- matrix(NA_real_, nrow = nrow(IFU2D), ncol = ncol(IFU2D))
+  for (i in seq_along(summary$cluster_ids)) {
+    group <- summary$cluster_ids[i]
+    group_indices <- which(class2D == group)
+    median_cube[group_indices, ] <- matrix(
+      summary$median_spectra[i, ],
+      nrow = length(group_indices),
+      ncol = ncol(IFU2D),
+      byrow = TRUE
+    )
   }
 
   reshaped_cube <- array(median_cube, dim = dim(cubedat$imDat))
 
-  # Step 7: Table linking each pixel's original spectrum to its cluster
   post_process_table <- as.data.frame(IFU2D)
   post_process_table$class <- class2D
-  colnames(post_process_table) <- c(wavelength, "class")
+  colnames(post_process_table) <- c(as.character(wavelength), "class")
 
-  # Step 8: Return outputs
   return(list(
     MeanSpec           = MeanSpec,
     reshaped_cube      = reshaped_cube,
-    post_process_table = post_process_table
+    post_process_table = post_process_table,
+    cluster_summary    = summary
   ))
 }
-

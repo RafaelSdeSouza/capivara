@@ -20,6 +20,7 @@ A list containing:
   \item{\code{MeanSpec}}{A data frame with the median spectrum for each cluster (rows = clusters, columns = wavelength).}
   \item{\code{reshaped_cube}}{A 3D array containing the new cube with median spectra assigned to each pixel.}
   \item{\code{post_process_table}}{A data frame linking each pixel's original spectrum to its assigned cluster.}
+  \item{\code{cluster_summary}}{A richer summary object returned by \code{\link{summarize_cluster_spectra}}.}
 }
 }
 \description{

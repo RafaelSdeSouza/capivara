@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_cluster.R
 \name{plot_cluster}
 \alias{plot_cluster}
-\title{Plot a Cluster Map Color-Coded by Signal-to-Noise Ratio (SNR)}
+\title{Plot a Cluster Map with Discrete Cluster Colors}
 \usage{
 plot_cluster(cluster_data, palette = "magma")
 }
@@ -13,21 +13,20 @@ plot_cluster(cluster_data, palette = "magma")
   \item \code{cluster_snr}: A numeric vector with the SNR values for each cluster.
 }}
 
-\item{palette}{Character. Name of the Viridis color palette to use for the SNR scale.
+\item{palette}{Character. Name of the Viridis color palette to use for the
+discrete cluster colors.
 Options include "magma", "inferno", "plasma", "viridis", and "cividis". Defaults to "magma".}
 }
 \value{
-A \code{ggplot2} object representing the cluster map, color-coded by SNR.
+A \code{ggplot2} object representing the cluster map.
 }
 \description{
 This function visualizes the output of a clustering algorithm applied to
-an IFU data cube, where the clusters are color-coded by their respective
-signal-to-noise ratio (SNR).
+an IFU data cube, where each cluster is assigned a distinct fill color.
 }
 \details{
-The function converts the \code{cluster_map} into a long-format data frame and merges it
-with the \code{cluster_snr} values. The SNR for each cluster is displayed using a Viridis
-color scale, ensuring high perceptual uniformity.
+The function converts the \code{cluster_map} into a long-format data frame and
+colors each cluster with a discrete palette.
 }
 \examples{
 \dontrun{

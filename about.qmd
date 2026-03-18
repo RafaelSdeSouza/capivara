@@ -2,4 +2,20 @@
 title: "About"
 ---
 
-About this site
+Capivara is an R package for segmentation and post-processing of IFU data
+cubes.
+
+This documentation site is published from the Quarto sources in this
+repository and mirrors the GitHub README and release notes. Version `0.2.0`
+introduces:
+
+- missing-data-safe segmentation with `segment_masked()`
+- Sagui-style starlet masking with `segment_starlet()`
+- variance-aware summaries with `summarize_cluster_spectra()`
+- SNR-guided component selection with `choose_ncomp_by_snr()`
+
+Repository:
+[RafaelSdeSouza/capivara](https://github.com/RafaelSdeSouza/capivara)
+
+Paper:
+[Capivara: A spectral-based segmentation method for IFU data cubes](https://doi.org/10.1093/mnras/staf688)

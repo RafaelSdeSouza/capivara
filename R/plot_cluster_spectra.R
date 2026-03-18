@@ -14,8 +14,8 @@
 #'   }
 #' @param scale_fn A function that scales each individual spectrum (a numeric vector).
 #'   The default is \code{median_scale} which should be defined elsewhere in your package.
-#' @param highlight_color A character string specifying the color for plotting the median spectrum.
-#'   Defaults to \code{"red3"}.
+#' @param palette Either a single viridis palette name or a vector of colors used
+#'   to color the per-cluster median spectra.
 #'
 #' @details
 #' The function performs the following steps:
@@ -26,15 +26,11 @@
 #'   \item Creates a data frame mapping each valid spatial pixel to its cluster.
 #'   \item Extracts each pixel's spectrum and applies the scaling function \code{scale_fn} to it.
 #'   \item Computes the median spectrum for each cluster at every wavelength.
-#'   \item Constructs a faceted ggplot where:
-#'     \itemize{
-#'       \item Gray lines represent the scaled individual spectra.
-#'       \item A highlighted line (using \code{highlight_color}) represents the median spectrum.
-#'     }
+#'   \item Constructs a faceted ggplot of the median spectrum for each cluster.
 #' }
 #'
-#' @return A \code{ggplot2} object representing a faceted plot of the scaled individual spectra
-#'   and their median profiles for each cluster.
+#' @return A \code{ggplot2} object representing a faceted plot of the median
+#'   profile for each cluster.
 #'
 #' @seealso \code{\link{segment}}, \code{\link{cube_to_matrix}}, \code{\link[FITSio]{axVec}}
 #'
@@ -43,8 +39,8 @@
 #'   # Assuming 'input_cube' is a FITS cube and 'segment' clusters the data:
 #'   cluster_result <- segment(input_cube, Ncomp = 5)
 #'
-#'   # Generate the spectra plot with scaling and a highlighted median spectrum
-#'   spectra_plot <- plot_cluster_spectra(cluster_result, scale_fn = median_scale, highlight_color = "red3")
+#'   # Generate the spectra plot
+#'   spectra_plot <- plot_cluster_spectra(cluster_result, scale_fn = median_scale, palette = "magma")
 #'   print(spectra_plot)
 #' }
 #'
@@ -63,14 +59,12 @@ plot_cluster_spectra <- function(cluster_result, scale_fn = median_scale, palett
     index = 1:length(as.vector(cluster_map)),
     cluster = as.vector(cluster_map)
   )
-  pixel_df <- pixel_df %>% filter(!is.na(cluster))
+  pixel_df <- pixel_df[!is.na(pixel_df$cluster), , drop = FALSE]
 
   # For each valid pixel, extract its spectrum and store with spatial info
   spectra_list <- lapply(1:nrow(pixel_df), function(i) {
-    # Convert linear index to matrix row/col; note: R is column-major, so adjust if needed
-    pos <- which(cluster_map == pixel_df$cluster[i], arr.ind = TRUE)[1, ]
-    # Apply scaling function to the spectrum if needed:
-    raw_spectrum <- original_cube$imDat[pos[1], pos[2], ]
+    pos <- arrayInd(pixel_df$index[i], .dim = dim(cluster_map))
+    raw_spectrum <- IFU2D[pixel_df$index[i], ]
     scaled_spectrum <- scale_fn(raw_spectrum)
     data.frame(
       Wavelength = wavelengths,
@@ -82,10 +76,11 @@ plot_cluster_spectra <- function(cluster_result, scale_fn = median_scale, palett
   spectra_df <- do.call(rbind, spectra_list)
 
   # Compute the median spectrum per cluster & wavelength
-  median_spectra <- spectra_df %>%
-    group_by(cluster, Wavelength) %>%
-    summarise(Median_Flux = median(Flux, na.rm = TRUE), .groups = "drop")
-
+  median_spectra <- dplyr::summarise(
+    dplyr::group_by(spectra_df, cluster, Wavelength),
+    Median_Flux = stats::median(Flux, na.rm = TRUE),
+    .groups = "drop"
+  )
 
   # Force clusters to be ordered numerically
   median_spectra$cluster <- factor(
@@ -113,23 +108,22 @@ plot_cluster_spectra <- function(cluster_result, scale_fn = median_scale, palett
 
   # Plot median spectra colored by cluster
   p <- ggplot2::ggplot(median_spectra, ggplot2::aes(x = Wavelength, y = Median_Flux, color = cluster)) +
-    geom_line(linewidth = 0.15) +
+    ggplot2::geom_line(linewidth = 0.15) +
     ggplot2::scale_color_manual(values = colors) +
     ggplot2::facet_wrap(~ cluster, scales = "free_y") +
     ggplot2::labs(x = "Wavelength (Å)", y = "Flux") +
     ggplot2::theme(
-      panel.background = element_rect(fill = "gray50"),
-      axis.ticks.length = unit(0.1, "cm"),
+      panel.background = ggplot2::element_rect(fill = "gray50"),
+      axis.ticks.length = grid::unit(0.1, "cm"),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       legend.position = "none",
-      legend.background = element_rect(colour = "transparent", fill = "transparent"),
-      legend.text = element_text(size = 10),
-      legend.spacing.x = unit(0.1, 'cm'),
-      legend.key = element_rect(colour = "transparent", fill = "transparent"),
-      axis.title = element_text(color = "black", size = 11)
+      legend.background = ggplot2::element_rect(colour = "transparent", fill = "transparent"),
+      legend.text = ggplot2::element_text(size = 10),
+      legend.spacing.x = grid::unit(0.1, "cm"),
+      legend.key = ggplot2::element_rect(colour = "transparent", fill = "transparent"),
+      axis.title = ggplot2::element_text(color = "black", size = 11)
     )
 
   return(p)
 }
-

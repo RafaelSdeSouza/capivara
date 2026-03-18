@@ -1,5 +1,4 @@
 ---
-title: "Capivara"
 format: gfm
 ---
 # Capivara <img align="right" src="images/logo_capivara.png" width="100">
@@ -11,66 +10,137 @@ format: gfm
 
 ## Overview
 
-Capivara: A Spectral-based Segmentation Method for IFU Data Cubes implements a spectral-based segmentation method for Integral Field Unit (IFU) data cubes. Designed with astronomers in mind, it facilitates the decomposition of spectral data into regions of similar physical properties, leveraging advanced matrix operations via **torch** for GPU acceleration.
+Capivara provides spectral segmentation tools for Integral Field Unit (IFU)
+data cubes. Version `0.2.0` adds a missing-data-safe segmentation path,
+Sagui-style white-light starlet masking, variance-aware spectral summaries,
+and SNR-guided component selection while keeping the original `segment()`
+workflow intact.
 
-::: {.figure}
-![](./images/mosaic_segmented.png){fig-align="center" width="100%"}
+| Current Capivara Mosaic | Sagui Comparison Mosaic |
+| --- | --- |
+| ![](images/mosaic_segmented.png) | ![](images/mosaic_segmented_sagui.png) |
 
-Top row: SDSS images of five galaxies in our sample, with the MaNGA plate numbers indicated in the upper-right corner of each image. The field of view of the IFU (Integral Field Unit) is overlaid in purple.  
+Left: the current Capivara segmentation mosaic used in the package
+documentation. Right: the Sagui comparison mosaic for the same style of visual
+summary.
 
-Middle row: Spatial distribution maps of 20 components detected by **capivara** in the same galaxies.  
+## What's New In 0.2.0
 
-Bottom row: Spatial distribution maps for 20 components detected by the **vorbin** package.
-:::
+- `segment_masked()` reproduces `segment()` while tolerating missing spectral channels.
+- `segment_starlet()` adds a Sagui-style photometric mask built from the white-light image.
+- `summarize_cluster_spectra()` returns median, summed, and inverse-variance-weighted spectra.
+- `choose_ncomp_by_snr()` helps select `Ncomp` from an SNR threshold when a variance cube is available.
+- `torch` is now optional; Capivara falls back to base distance calculations when it is not installed.
 
 ## Installation
 
 Install Capivara from GitHub using the following commands:
 
 ```R
-install.packages('remotes')
+install.packages("remotes")
 remotes::install_github("RafaelSdeSouza/capivara")
 library(capivara)
 ```
 
-## Usage
-
-### MaNGA Data Cube
-
-This example demonstrates how to use **capivara** to segment an IFU from the MaNGA survey:
+Optional GPU acceleration:
 
 ```R
-require(capivara)
-# Read the MaNGA datacube
-cube <- FITSio::readFITS("manga-7443-12703-LOGCUBE.fits")
-
-# Apply Capivara segmentation
-res <- capivara::segment(cube,Ncomp=20)
-
-# Plot the segmented region
-plot <- plot_cluster(res)
-print(plot)
+install.packages("torch")
+torch::install_torch()
 ```
-Attribution
------------
 
-Please cite de Souza et al (2024) if you find this code useful in your
-research. The temporary BibTeX entry for the paper is:
+## Usage
 
-    @ARTICLE{2024arXiv241021962D,
-       author = {{de Souza}, Rafael S. and {Dahmer-Hahn}, Luis G. and {Shen}, Shiyin and {Chies-Santos}, Ana L. and {Chen}, Mi and {Rahna}, P.~T. and {Ye}, Renhao and {Tahmasebzade}, Behzad},
-        title = "{Capivara: A Spectral-based Segmentation Method for IFU Data Cubes}",
-      journal = {arXiv e-prints},
-     keywords = {Astrophysics - Astrophysics of Galaxies, Astrophysics - Instrumentation and Methods for Astrophysics},
-         year = 2024,
-        month = oct,
-          eid = {arXiv:2410.21962},
-        pages = {arXiv:2410.21962},
-          doi = {10.48550/arXiv.2410.21962}}
+### Basic Segmentation
+
+```R
+library(capivara)
+cube <- FITSio::readFITS("manga-8140-12703-LOGCUBE.fits")
+
+res <- segment(cube, Ncomp = 20)
+plot_cluster(res)
+```
+
+### Missing Data
+
+Use `segment_masked()` when the cube contains missing spectral channels but
+you want the same clustering workflow as `segment()`.
+
+```R
+res_masked <- segment_masked(cube, Ncomp = 20)
+```
+
+### Sagui-style Starlet Masking
+
+The starlet mask is built from the white-light image, then applied back to the
+full cube before clustering.
+
+```R
+res_star <- segment_starlet(
+  cube,
+  Ncomp = 20,
+  starlet_J = 5,
+  starlet_scales = 2:5,
+  include_coarse = FALSE,
+  denoise_k = 0,
+  positive_only = TRUE,
+  mask_mode = "na"
+)
+
+plot_cluster(res_star)
+```
+
+![](images/manga_8140_starlet_comparison_full.png)
+
+Comparison on `manga-8140-12703-LOGCUBE.fits` using the full frame: the
+starlet mask is computed from the white-light image, not from a cropped cube.
+
+### Variance-aware Analysis
+
+When a variance cube is available, use it in the post-segmentation analysis
+layer rather than in `segment()` itself.
+
+```R
+var_cube <- FITSio::readFITS("manga-8140-12703-VARCUBE.fits")
+
+choice <- choose_ncomp_by_snr(
+  cube,
+  var_cube = var_cube$imDat,
+  k_values = 4:20,
+  target_snr = 20
+)
+
+res <- segment(cube, Ncomp = choice$Ncomp)
+spec_summary <- summarize_cluster_spectra(res, var_cube = var_cube$imDat)
+```
+
+`median_spectra` are useful as robust representative spectra for inspection.
+For flux and SNR calculations, `sum_spectra` or the inverse-variance-weighted
+summary are usually better choices.
+
+## Release Notes
+
+See [NEWS.md](NEWS.md) for the `0.2.0` release summary.
+
+## Attribution
+
+Please cite de Souza et al. (2025) if you find this code useful in your
+research. A BibTeX entry for the paper is:
+
+    @article{desouza2025capivara,
+      author = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},
+      title = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},
+      journal = {Monthly Notices of the Royal Astronomical Society},
+      year = {2025},
+      volume = {539},
+      number = {4},
+      pages = {3166--3179},
+      doi = {10.1093/mnras/staf688}
+    }
 
 ## Dependencies
 
-- **torch**: Efficient tensor computations with GPU support.
+- **torch**: Optional GPU-accelerated tensor computations.
 - **ggplot2**: Visualization.
 - **FITSio**: Reading and handling FITS files.
 - **reshape2**: Data manipulation.
@@ -80,7 +150,5 @@ research. The temporary BibTeX entry for the paper is:
 1. **MaNGA Survey**: Bundy, Kevin, et al. "Overview of the SDSS-IV MaNGA Survey: Mapping Nearby Galaxies at Apache Point Observatory." The Astrophysical Journal 798.1 (2015): 7. DOI: [10.1088/0004-637X/798/1/7](https://doi.org/10.1088/0004-637X/798/1/7)
 2. **Capivara Methodology**: Souza, R. S. de, *et al.* (2025). **CAPIVARA: A spectral-based segmentation method for IFU data cubes.** *Monthly Notices of the Royal Astronomical Society*, **539**(4), 3166–3179. [https://doi.org/10.1093/mnras/staf688](https://doi.org/10.1093/mnras/staf688)
 3. **Torch in R**: Paszke, Adam, et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library." Advances in Neural Information Processing Systems 2019.
----
+
 For more information, check the [Capivara GitHub webpage](https://rafaelsdesouza.github.io/capivara/).
-
-

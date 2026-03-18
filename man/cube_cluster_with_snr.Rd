@@ -2,7 +2,7 @@
 % Please edit documentation in R/cube_cluster_with_snr.R
 \name{cube_cluster_with_snr}
 \alias{cube_cluster_with_snr}
-\title{Cluster a 2D Representation of an IFU Cube Based on Target SNR}
+\title{Legacy Target-SNR Wrapper for Capivara Segmentation}
 \usage{
 cube_cluster_with_snr(input, target_snr, redshift = 0, scale_fn = median_scale)
 }
@@ -29,26 +29,10 @@ A list containing:
 }
 }
 \description{
-This function takes an IFU data cube, computes the signal-to-noise ratio (SNR)
-for each spaxel, and performs clustering using hierarchical methods to group
-spaxels into regions with similar spectral properties, ensuring that the bins
-achieve the desired target SNR.
-}
-\details{
-Steps performed by the function:
-\enumerate{
-  \item Converts the 3D data cube into a 2D matrix where rows correspond to spatial pixels
-        and columns to spectral channels.
-  \item Calculates the signal (sum of flux across wavelengths) and noise (square root of the signal).
-  \item Initializes bins starting from the spaxel with the highest SNR and iteratively
-        adds neighboring spaxels until the target SNR is met for each bin.
-  \item Performs hierarchical clustering with Ward's D2 method on the scaled spectral matrix.
-  \item Reshapes the resulting cluster assignments into a 2D map consistent with the original
-        spatial dimensions of the data cube.
-}
-
-This approach is suitable for analyzing IFU data to identify regions with
-similar spectral characteristics while meeting SNR constraints for robust analysis.
+This function is kept for backward compatibility and now forwards to
+\code{\link{choose_ncomp_by_snr}} using the original flux-only SNR
+approximation. For variance-aware SNR cuts, use
+\code{\link{choose_ncomp_by_snr}} directly.
 }
 \examples{
 if (torch::torch_is_installed()) {
@@ -66,6 +50,6 @@ if (torch::torch_is_installed()) {
 
 }
 \seealso{
-\code{\link[FITSio]{readFITS}}, \code{\link[fastcluster]{hclust}},
-  \code{\link[stats]{cutree}}, \code{\link{median_scale}}
+\code{\link{choose_ncomp_by_snr}}, \code{\link{segment}},
+  \code{\link{segment_masked}}
 }

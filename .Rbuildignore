@@ -1,3 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
+^_site$
+^.*\.DS_Store$
