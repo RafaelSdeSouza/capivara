@@ -151,4 +151,8 @@ research. A BibTeX entry for the paper is:
 2. **Capivara Methodology**: Souza, R. S. de, *et al.* (2025). **CAPIVARA: A spectral-based segmentation method for IFU data cubes.** *Monthly Notices of the Royal Astronomical Society*, **539**(4), 3166–3179. [https://doi.org/10.1093/mnras/staf688](https://doi.org/10.1093/mnras/staf688)
 3. **Torch in R**: Paszke, Adam, et al. "PyTorch: An Imperative Style, High-Performance Deep Learning Library." Advances in Neural Information Processing Systems 2019.
 
+<<<<<<< HEAD
+=======
+---
+>>>>>>> 2b8d6e3f168bc1198433a6f7f5abe74ec50aace5
 For more information, check the [Capivara GitHub webpage](https://rafaelsdesouza.github.io/capivara/).
