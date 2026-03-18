@@ -1,6 +1,6 @@
 
 
-# Capivara <img align="right" src="images/logo_capivara.png" width="100">
+# Capivara <img align="right" src="images/logo_capivara.png" width="150">
 
 [![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
 [![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara.png)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE)
