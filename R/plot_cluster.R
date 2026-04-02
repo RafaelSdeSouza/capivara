@@ -1,3 +1,16 @@
+.starry_night_palette <- function(n) {
+  stops <- c(
+    "#80B7FF",
+    "#547FFF",
+    "#405CFF",
+    "#263C8B",
+    "#FFFAA3",
+    "#FFDE38",
+    "#BFA524"
+  )
+  grDevices::colorRampPalette(stops, space = "Lab")(n)
+}
+
 #' Plot a Cluster Map with Discrete Cluster Colors
 #'
 #' This function visualizes the output of a clustering algorithm applied to
@@ -8,9 +21,11 @@
 #'     \item \code{cluster_map}: A matrix representing the spatial layout of the clusters.
 #'     \item \code{cluster_snr}: A numeric vector with the SNR values for each cluster.
 #'   }
-#' @param palette Character. Name of the Viridis color palette to use for the
-#'   discrete cluster colors.
-#'   Options include "magma", "inferno", "plasma", "viridis", and "cividis". Defaults to "magma".
+#' @param palette Character or vector of colours used for the discrete cluster
+#'   colors. The default \code{"starry_night"} uses the Van Gogh inspired blue
+#'   and gold palette used in the companion workflows. Viridis palette names
+#'   such as \code{"magma"}, \code{"inferno"}, \code{"plasma"},
+#'   \code{"viridis"}, and \code{"cividis"} are also supported.
 #'
 #' @return A \code{ggplot2} object representing the cluster map.
 #'
@@ -27,7 +42,7 @@
 #' )
 #'
 #' # Plot the cluster map
-#' plot <- plot_cluster(cluster_data, title = "Cluster Map by SNR", palette = "viridis")
+#' plot <- plot_cluster(cluster_data, palette = "starry_night")
 #' print(plot)
 #' }
 #'
@@ -36,7 +51,7 @@
 #' @importFrom dplyr mutate
 #' @importFrom viridis scale_fill_viridis
 #' @export
-plot_cluster <- function(cluster_data, palette = "magma") {
+plot_cluster <- function(cluster_data, palette = "starry_night") {
   # Extract cluster map and SNR values
   cluster_map <- cluster_data$cluster_map
   cluster_snr <- cluster_data$cluster_snr
@@ -44,8 +59,17 @@ plot_cluster <- function(cluster_data, palette = "magma") {
   # Convert the cluster map to a long-format data frame
   cluster_df <- reshape2::melt(cluster_map, varnames = c("Row", "Col"), value.name = "Cluster")
 
-  # Optionally add SNR information (here not used for fill)
-  cluster_df <- dplyr::mutate(cluster_df, SNR = ifelse(!is.na(Cluster), cluster_snr[Cluster], NA))
+  # Keep plotting robust for outputs that do not provide cluster SNR values.
+  cluster_ids <- suppressWarnings(as.integer(cluster_df$Cluster))
+  if (!is.null(cluster_snr) && length(cluster_snr) > 0L) {
+    cluster_df$SNR <- ifelse(
+      !is.na(cluster_ids) & cluster_ids >= 1L & cluster_ids <= length(cluster_snr),
+      cluster_snr[cluster_ids],
+      NA_real_
+    )
+  } else {
+    cluster_df$SNR <- NA_real_
+  }
 
   # Convert Cluster to factor for discrete coloring
   cluster_df$Cluster <- as.factor(cluster_df$Cluster)
@@ -55,8 +79,12 @@ plot_cluster <- function(cluster_data, palette = "magma") {
 
   # Create a palette based on the input:
   if (is.character(palette) && length(palette) == 1) {
-    # Generate discrete colors using viridis if a single option is given
-    colors <- viridis::viridis(n_clusters, option = palette)
+    if (identical(palette, "starry_night")) {
+      colors <- .starry_night_palette(n_clusters)
+    } else {
+      # Generate discrete colors using viridis if a single option is given
+      colors <- viridis::viridis(n_clusters, option = palette)
+    }
   } else if (is.character(palette) && length(palette) > 1) {
     # If a custom color vector is provided, ensure there are enough colors
     if(length(palette) < n_clusters) {

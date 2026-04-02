@@ -4,7 +4,7 @@
 \alias{plot_cluster}
 \title{Plot a Cluster Map with Discrete Cluster Colors}
 \usage{
-plot_cluster(cluster_data, palette = "magma")
+plot_cluster(cluster_data, palette = "starry_night")
 }
 \arguments{
 \item{cluster_data}{A list containing the clustering results with the following components:
@@ -13,9 +13,11 @@ plot_cluster(cluster_data, palette = "magma")
   \item \code{cluster_snr}: A numeric vector with the SNR values for each cluster.
 }}
 
-\item{palette}{Character. Name of the Viridis color palette to use for the
-discrete cluster colors.
-Options include "magma", "inferno", "plasma", "viridis", and "cividis". Defaults to "magma".}
+\item{palette}{Character or vector of colours used for the discrete cluster
+colors. The default \code{"starry_night"} uses the Van Gogh inspired blue
+and gold palette used in the companion workflows. Viridis palette names
+such as \code{"magma"}, \code{"inferno"}, \code{"plasma"},
+\code{"viridis"}, and \code{"cividis"} are also supported.}
 }
 \value{
 A \code{ggplot2} object representing the cluster map.
@@ -37,7 +39,7 @@ cluster_data <- list(
 )
 
 # Plot the cluster map
-plot <- plot_cluster(cluster_data, title = "Cluster Map by SNR", palette = "viridis")
+plot <- plot_cluster(cluster_data, palette = "starry_night")
 print(plot)
 }
 
