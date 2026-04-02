@@ -5,6 +5,7 @@ Released: 2026-03-18
 ## Added
 
 - `segment_masked()` for missing-data-safe segmentation with the same clustering logic as `segment()`.
+- `segment_big_cube()` as a clearer user-facing name for scalable large-cube segmentation when exact all-pairs distances would exceed available RAM.
 - `build_starlet_mask()` and `segment_starlet()` for Sagui-style white-light starlet masking before clustering.
 - `summarize_cluster_spectra()` for median, summed, and inverse-variance-weighted cluster spectra.
 - `choose_ncomp_by_snr()` for variance-aware component selection from an SNR threshold.

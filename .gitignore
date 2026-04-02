@@ -6,4 +6,5 @@
 .DS_Store
 /.quarto/
 /_site/
+/outputs/
 **/*.quarto_ipynb

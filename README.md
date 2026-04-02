@@ -1,7 +1,13 @@
-# Capivara <img align="right" src="images/logo_capivara.png" width="200">
+
+
+# Capivara <img align="right" src="images/logo_capivara.png" width="100">
+
 [![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
 [![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara.png)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png)](https://github.com/RafaelSdeSouza/capivara/commits)
+[![Coverage
+Status](https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara.png)](https://codecov.io/gh/RafaelSdeSouza/capivara)
+[![Last
+Commit](https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png)](https://github.com/RafaelSdeSouza/capivara/commits)
 
 ## Overview
 
@@ -11,13 +17,25 @@ path, Sagui-style white-light starlet masking, variance-aware spectral
 summaries, and SNR-guided component selection while keeping the original
 `segment()` workflow intact.
 
+The core segmentation API is intentionally small:
+
+- `segment()` for the standard exact workflow.
+- `segment_masked()` for the same workflow when spectra contain missing
+  channels.
+- `segment_big_cube()` for very large cubes where exact pairwise
+  distances are too expensive in RAM.
+
+`segment_starlet()` is an optional masking layer on top of the exact
+path. `segment_blockward()`, `segment_robust()`, and `segment_approx()`
+are retained as technical or legacy helpers.
+
 ### Current Capivara Mosaic
 
-<img src="images/mosaic_segmented.png" width="1100" height="561" alt="Current Capivara mosaic">
+<img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic">
 
 ### Sagui Comparison Mosaic
 
-<img src="images/mosaic_segmented_sagui.png" width="1100" height="561" alt="Sagui comparison mosaic">
+<img src="images/mosaic_segmented_sagui.png" width="1040" height="561" alt="Sagui comparison mosaic">
 
 Both mosaics are displayed with the same fixed size to make the visual
 comparison easier.
@@ -71,6 +89,16 @@ but you want the same clustering workflow as `segment()`.
 
 ``` r
 res_masked <- segment_masked(cube, Ncomp = 20)
+```
+
+### Large Cubes
+
+Use `segment_big_cube()` when the cube is too large for the traditional
+exact workflow and the all-pairs distance matrix would likely exhaust
+available RAM.
+
+``` r
+res_large <- segment_big_cube(cube, Ncomp = 20, block_size = 6)
 ```
 
 ### Sagui-style Starlet Masking

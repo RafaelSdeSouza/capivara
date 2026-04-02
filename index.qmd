@@ -13,6 +13,15 @@ Sagui-style white-light starlet masking, variance-aware spectral summaries,
 and SNR-guided component selection while keeping the original `segment()`
 workflow intact.
 
+The core segmentation API is intentionally small:
+
+- `segment()` for the standard exact workflow.
+- `segment_masked()` for the same workflow when spectra contain missing channels.
+- `segment_big_cube()` for very large cubes where exact pairwise distances are too expensive in RAM.
+
+`segment_starlet()` is an optional masking layer on top of the exact path.
+`segment_blockward()`, `segment_robust()`, and `segment_approx()` are retained as technical or legacy helpers.
+
 ### Current Capivara Mosaic
 
 <img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic">
@@ -61,6 +70,12 @@ plot_cluster(res)
 
 ```R
 res_masked <- segment_masked(cube, Ncomp = 20)
+```
+
+### Large-cube Segmentation
+
+```R
+res_large <- segment_big_cube(cube, Ncomp = 20, block_size = 6)
 ```
 
 ### Sagui-style Starlet Segmentation

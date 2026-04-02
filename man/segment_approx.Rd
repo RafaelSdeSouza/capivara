@@ -2,7 +2,7 @@
 % Please edit documentation in R/segment_approx.R
 \name{segment_approx}
 \alias{segment_approx}
-\title{Approximate Ward Segmentation of a Data Cube (Scalable)}
+\title{Legacy Sampled Approximation for Large-cube Segmentation}
 \usage{
 segment_approx(input, Ncomp = 5, sample_n = 10000, pca_k = 20, redshift = 0)
 }
@@ -28,17 +28,17 @@ A list containing:
 \item{centers}{A \code{Ncomp x pca_k} matrix of cluster centroids in PCA space.}
 }
 \description{
-This function performs a scalable, approximate version of Ward hierarchical
+This function performs a sampled approximation to Ward hierarchical
 clustering for IFU/hyperspectral data cubes. The cube is flattened into a
 2D matrix (spatial pixels \eqn{\times} spectral variables), robustly scaled
-row-wise, optionally projected into a low-dimensional PCA space, and then
-clustered using Ward's D2 linkage on a random subset of pixels. All remaining
-valid pixels are assigned to the nearest cluster centroid in PCA space.
+row-wise, projected into a low-dimensional PCA space, and then clustered
+using Ward's D2 linkage on a random subset of pixels. All remaining valid
+pixels are assigned to the nearest cluster centroid in PCA space.
 }
 \details{
-Compared to \code{\link{segment}} (exact Ward on all valid pixels), this method
-avoids constructing an \eqn{O(n^2)} distance object and is therefore suitable
-for large cubes with many spatial pixels.
+This helper is retained for compatibility. For new large-cube workflows,
+prefer \code{\link{segment_blockward}}, which preserves more spatial
+structure and scales more predictably than the older sampled approximation.
 
 
 Steps performed by the function:
@@ -72,7 +72,7 @@ large-scale segmentations at a fraction of the computational cost.
 # Read a FITS cube and run scalable Ward segmentation
 input_cube <- FITSio::readFITS("manga_7443_12703_LOGCUBE.fits")
 
-seg <- segment_ward_approx(
+seg <- segment_approx(
   input    = input_cube,
   Ncomp    = 5,
   sample_n = 10000,
