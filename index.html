@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.27">
+<meta name="generator" content="quarto-1.9.36">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Capivara</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -67,15 +70,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-f22cb6c089997a81367434f43c98cc47.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-d75338ce7ded4b94253b6e1e721ebbaf.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -169,6 +171,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.2.0</code> adds a missing-data-safe segmentation path, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection while keeping the original <code>segment()</code> workflow intact.</p>
+<p>The core segmentation API is intentionally small:</p>
+<ul>
+<li><code>segment()</code> for the standard exact workflow.</li>
+<li><code>segment_masked()</code> for the same workflow when spectra contain missing channels.</li>
+<li><code>segment_big_cube()</code> for very large cubes where exact pairwise distances are too expensive in RAM.</li>
+</ul>
+<p><code>segment_starlet()</code> is an optional masking layer on top of the exact path. <code>segment_blockward()</code>, <code>segment_robust()</code>, and <code>segment_approx()</code> are retained as technical or legacy helpers.</p>
 <section id="current-capivara-mosaic" class="level3">
 <h3 class="anchored" data-anchor-id="current-capivara-mosaic">Current Capivara Mosaic</h3>
 <p><img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic"></p>
@@ -210,20 +219,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="missing-data-safe-segmentation">Missing-data-safe Segmentation</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>res_masked <span class="ot">&lt;-</span> <span class="fu">segment_masked</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
+<section id="large-cube-segmentation" class="level3">
+<h3 class="anchored" data-anchor-id="large-cube-segmentation">Large-cube Segmentation</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_large <span class="ot">&lt;-</span> <span class="fu">segment_big_cube</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>, <span class="at">block_size =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 <section id="sagui-style-starlet-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="sagui-style-starlet-segmentation">Sagui-style Starlet Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
-<span id="cb5-2"><a href="#cb5-2"></a>  cube,</span>
-<span id="cb5-3"><a href="#cb5-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
-<span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
-<span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
-<span id="cb5-6"><a href="#cb5-6"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb5-7"><a href="#cb5-7"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
-<span id="cb5-8"><a href="#cb5-8"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb5-9"><a href="#cb5-9"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
-<span id="cb5-10"><a href="#cb5-10"></a>)</span>
-<span id="cb5-11"><a href="#cb5-11"></a></span>
-<span id="cb5-12"><a href="#cb5-12"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
+<span id="cb6-2"><a href="#cb6-2"></a>  cube,</span>
+<span id="cb6-3"><a href="#cb6-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
+<span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
+<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb6-6"><a href="#cb6-6"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb6-7"><a href="#cb6-7"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
+<span id="cb6-8"><a href="#cb6-8"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-9"><a href="#cb6-9"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a>)</span>
+<span id="cb6-11"><a href="#cb6-11"></a></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/manga_8140_starlet_comparison_full.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
@@ -232,22 +245,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="variance-aware-summaries" class="level3">
 <h3 class="anchored" data-anchor-id="variance-aware-summaries">Variance-aware Summaries</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>var_cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-VARCUBE.fits"</span>)</span>
-<span id="cb6-2"><a href="#cb6-2"></a></span>
-<span id="cb6-3"><a href="#cb6-3"></a>choice <span class="ot">&lt;-</span> <span class="fu">choose_ncomp_by_snr</span>(</span>
-<span id="cb6-4"><a href="#cb6-4"></a>  cube,</span>
-<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat,</span>
-<span id="cb6-6"><a href="#cb6-6"></a>  <span class="at">k_values =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">20</span>,</span>
-<span id="cb6-7"><a href="#cb6-7"></a>  <span class="at">target_snr =</span> <span class="dv">20</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a>)</span>
-<span id="cb6-9"><a href="#cb6-9"></a></span>
-<span id="cb6-10"><a href="#cb6-10"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> choice<span class="sc">$</span>Ncomp)</span>
-<span id="cb6-11"><a href="#cb6-11"></a>spec_summary <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(res, <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>var_cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-VARCUBE.fits"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2"></a></span>
+<span id="cb7-3"><a href="#cb7-3"></a>choice <span class="ot">&lt;-</span> <span class="fu">choose_ncomp_by_snr</span>(</span>
+<span id="cb7-4"><a href="#cb7-4"></a>  cube,</span>
+<span id="cb7-5"><a href="#cb7-5"></a>  <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat,</span>
+<span id="cb7-6"><a href="#cb7-6"></a>  <span class="at">k_values =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">20</span>,</span>
+<span id="cb7-7"><a href="#cb7-7"></a>  <span class="at">target_snr =</span> <span class="dv">20</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9"></a></span>
+<span id="cb7-10"><a href="#cb7-10"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> choice<span class="sc">$</span>Ncomp)</span>
+<span id="cb7-11"><a href="#cb7-11"></a>spec_summary <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(res, <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="reconstructed-cubes" class="level3">
 <h3 class="anchored" data-anchor-id="reconstructed-cubes">Reconstructed Cubes</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>rep_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_cluster_cube</span>(res_star, <span class="at">template =</span> <span class="st">"median"</span>)</span>
-<span id="cb7-2"><a href="#cb7-2"></a>fit_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_flux_preserving_cube</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>rep_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_cluster_cube</span>(res_star, <span class="at">template =</span> <span class="st">"median"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2"></a>fit_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_flux_preserving_cube</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="attribution" class="level2">
