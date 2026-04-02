@@ -60,15 +60,12 @@ torch_dist <- function(x, p = 1, device = NULL) {
     ))
   }
 
-  # Initialize distance matrix
-  mat <- matrix(0, nrow = N, ncol = N)
-
-  # Fill lower triangle
-  mat[lower.tri(mat, diag = FALSE)] <- pd
-
-  # Mirror to upper triangle
-  mat <- mat + t(mat)
-
-  # Return as dist object
-  as.dist(mat)
+  structure(
+    pd,
+    Size = N,
+    Diag = FALSE,
+    Upper = FALSE,
+    method = if (p == 1) "manhattan" else if (p == 2) "euclidean" else paste0("minkowski_p_", p),
+    class = "dist"
+  )
 }
