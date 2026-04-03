@@ -6,8 +6,9 @@ Capivara is an R package for segmentation and post-processing of IFU data
 cubes.
 
 This documentation site is published from the Quarto sources in this
-repository and mirrors the GitHub README and release notes. Version `0.2.0`
-introduces:
+repository and mirrors the GitHub README and release notes. The examples shown
+in the README and homepage are generated from real Capivara runs on MaNGA data
+rather than schematic placeholders. Version `0.2.0` introduces:
 
 - missing-data-safe exact segmentation with `segment()`
 - medoid-based large-cube segmentation with `segment_big_cube()`

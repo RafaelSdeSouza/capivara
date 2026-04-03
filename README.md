@@ -132,6 +132,28 @@ Comparison on `manga-8140-12703-LOGCUBE.fits` using the full frame: the
 starlet mask is computed from the white-light image, not from a cropped
 cube.
 
+### Reproducible MaNGA Examples
+
+These comparison panels were generated with the current public API on
+full MaNGA cubes, using the exact and large-cube backends under the same
+package configuration.
+
+#### MaNGA 8135-12701
+
+<img src="images/examples/manga_8135_12701_compare.png" width="960" alt="MaNGA 8135-12701 comparison">
+
+#### MaNGA 8443-6102
+
+<img src="images/examples/manga_8443_6102_compare.png" width="960" alt="MaNGA 8443-6102 comparison">
+
+#### MaNGA 10224-6104
+
+<img src="images/examples/manga_10224_6104_compare.png" width="960" alt="MaNGA 10224-6104 comparison">
+
+#### MaNGA 11749-12701
+
+<img src="images/examples/manga_11749_12701_compare.png" width="960" alt="MaNGA 11749-12701 comparison">
+
 ### Variance-aware Analysis
 
 When a variance cube is available, use it in the post-segmentation

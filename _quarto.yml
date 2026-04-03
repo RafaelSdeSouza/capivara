@@ -9,7 +9,7 @@ website:
   title: "Capivara"
 
   navbar:
-    background: "#6b1d6b"
+    background: "#17386d"
     foreground: white
     left:
       - text: Home

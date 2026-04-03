@@ -102,6 +102,28 @@ res_star_large <- segment_big_cube(
 
 ![](images/manga_8140_starlet_comparison_full.png){fig-align="center" width="100%"}
 
+## Reproducible MaNGA Examples
+
+These panels were generated with the current public API on full MaNGA cubes,
+so the website examples reflect real package outputs rather than placeholder
+figures.
+
+### MaNGA 8135-12701
+
+![](images/examples/manga_8135_12701_compare.png){fig-align="center" width="100%"}
+
+### MaNGA 8443-6102
+
+![](images/examples/manga_8443_6102_compare.png){fig-align="center" width="100%"}
+
+### MaNGA 10224-6104
+
+![](images/examples/manga_10224_6104_compare.png){fig-align="center" width="100%"}
+
+### MaNGA 11749-12701
+
+![](images/examples/manga_11749_12701_compare.png){fig-align="center" width="100%"}
+
 ### Variance-aware Summaries
 
 ```R

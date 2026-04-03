@@ -5,39 +5,39 @@
 /* ---------- Global Variables ---------- */
 
 :root {
-  --capivara-primary: #6b1d6b;
-  --capivara-primary-dark: #4a124a;
-  --capivara-accent: #3b6ea8;
-  --capivara-light-bg: #f8f5fb;
-  --capivara-border: #e6e6e6;
+  --capivara-primary: #234f9a;
+  --capivara-primary-dark: #17386d;
+  --capivara-accent: #f2cd45;
+  --capivara-light-bg: #f5f8fe;
+  --capivara-border: #d7dfed;
 }
 
 /* ---------- Typography ---------- */
 
 body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
   font-size: 1.05rem;
   line-height: 1.65;
-  background-color: #ffffff;
-  color: #1f2937;
+  background-color: #fbfcff;
+  color: #1f2d3d;
 }
 
 h1 {
   font-weight: 700;
-  color: #2c3e50;
-  border-bottom: 3px solid #6b1d6b;
+  color: #17386d;
+  border-bottom: 3px solid var(--capivara-accent);
   padding-bottom: 0.4rem;
 }
 
 h2 {
-  color: #34495e;
-  border-left: 6px solid #6b1d6b;
+  color: #234f9a;
+  border-left: 6px solid var(--capivara-accent);
   padding-left: 0.6rem;
   margin-top: 2.5rem;
 }
 
 h3 {
-  color: #5c3c88;
+  color: #2d4d88;
   font-weight: 600;
 }
 
@@ -50,8 +50,8 @@ p {
 .navbar {
   background: linear-gradient(
     90deg,
-    var(--capivara-primary),
-    #8a2d8a
+    var(--capivara-primary-dark),
+    var(--capivara-primary)
   );
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -74,7 +74,7 @@ p {
 .hero {
   padding: 6rem 2rem 4rem 2rem;
   text-align: center;
-  background: linear-gradient(to bottom, #fafafa, #ffffff);
+  background: linear-gradient(to bottom, #eef3ff, #fbfcff);
   border-bottom: 1px solid var(--capivara-border);
 }
 
@@ -145,6 +145,7 @@ a:hover {
 .btn-primary {
   background-color: var(--capivara-primary);
   border-color: var(--capivara-primary);
+  color: #ffffff;
 }
 
 .btn-primary:hover {
@@ -160,7 +161,7 @@ pre code {
 }
 
 code {
-  background-color: #f3f4f6;
+  background-color: #eef3fb;
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -170,6 +171,7 @@ code {
 img {
   border-radius: 6px;
   max-width: 100%;
+  box-shadow: 0 10px 28px rgba(23, 56, 109, 0.08);
 }
 
 /* ---------- Horizontal Rules ---------- */
