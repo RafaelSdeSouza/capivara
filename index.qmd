@@ -8,19 +8,16 @@
 ## Overview
 
 Capivara provides spectral segmentation tools for Integral Field Unit (IFU)
-data cubes. Version `0.2.0` adds a missing-data-safe segmentation path,
-Sagui-style white-light starlet masking, variance-aware spectral summaries,
-and SNR-guided component selection while keeping the original `segment()`
-workflow intact.
+data cubes. Version `0.2.0` adds built-in missing-data support in the exact
+workflow, a medoid-based large-cube engine, Sagui-style white-light starlet
+masking, variance-aware spectral summaries, and SNR-guided component
+selection.
 
 The core segmentation API is intentionally small:
 
-- `segment()` for the standard exact workflow.
-- `segment_masked()` for the same workflow when spectra contain missing channels.
+- `segment()` for the standard exact workflow, including missing spectral channels.
 - `segment_big_cube()` for very large cubes where exact pairwise distances are too expensive in RAM.
-
-`segment_starlet()` is an optional masking layer on top of the exact path.
-`segment_blockward()`, `segment_robust()`, and `segment_approx()` are retained as technical or legacy helpers.
+- `segment_starlet()` for the optional white-light starlet support mask with either backend.
 
 ### Current Capivara Mosaic
 
@@ -35,7 +32,8 @@ comparison easier.
 
 ## What's New In 0.2.0
 
-- `segment_masked()` reproduces `segment()` while handling missing channels.
+- `segment()` now handles missing spectral channels by default.
+- `segment_big_cube()` now uses block medoids rather than block averages, improving compact structures in large cubes.
 - `segment_starlet()` adds a Sagui-style starlet mask from the white-light image.
 - `summarize_cluster_spectra()` supports median, summed, and weighted spectra.
 - `choose_ncomp_by_snr()` selects `Ncomp` from a variance-aware SNR cut.
@@ -68,9 +66,7 @@ plot_cluster(res)
 
 ### Missing-data-safe Segmentation
 
-```R
-res_masked <- segment_masked(cube, Ncomp = 20)
-```
+`segment()` now handles missing spectral channels directly.
 
 ### Large-cube Segmentation
 
@@ -84,6 +80,7 @@ res_large <- segment_big_cube(cube, Ncomp = 20, block_size = 6)
 res_star <- segment_starlet(
   cube,
   Ncomp = 20,
+  engine = "standard",
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
@@ -93,6 +90,15 @@ res_star <- segment_starlet(
 )
 
 plot_cluster(res_star)
+```
+
+```R
+res_star_large <- segment_starlet(
+  cube,
+  Ncomp = 20,
+  engine = "big_cube",
+  block_size = 6
+)
 ```
 
 ![](images/manga_8140_starlet_comparison_full.png){fig-align="center" width="100%"}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/segment_big_cube.R
 \name{segment_big_cube}
 \alias{segment_big_cube}
-\title{Scalable Segmentation for Very Large IFU Cubes}
+\title{Scalable Segmentation for Very Large IFU Cubes via Block Medoids}
 \usage{
 segment_big_cube(
   input,
@@ -13,15 +13,11 @@ segment_big_cube(
   ram_gb = 32,
   frac_for_dist = 0.25,
   m_cap = NULL,
-  agg_fn = c("median", "mean"),
   valid_mode = c("signal", "finite_frac"),
   min_finite_frac = 0.8,
-  min_block_finite_frac = 0.8,
   use_pca = FALSE,
   pca_k = 30,
   seed = 42,
-  scale_first = TRUE,
-  full_res_assign = TRUE,
   dist_method = c("capivara_l1", "euclidean"),
   pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
   polish_iters = 0L,
@@ -32,59 +28,79 @@ segment_big_cube(
 )
 }
 \arguments{
-\item{input}{A FITS-like object with field \code{imDat} as a 3-D numeric array
-[n_row, n_col, n_wave]. Compatible with \code{cube_to_matrix()}.}
+\item{input}{A FITS-like object with an \code{imDat} 3-D numeric cube, or a
+raw 3-D numeric array.}
 
-\item{Ncomp}{Integer, number of clusters.}
+\item{Ncomp}{Integer, the number of clusters to form.}
 
-\item{redshift}{Numeric, redshift for wavelength correction (placeholder here; not applied).}
+\item{redshift}{Numeric redshift placeholder kept for API compatibility.}
 
-\item{scale_fn}{Function for robust row-wise scaling. If NULL, uses internal \code{safe_scale()}.}
+\item{scale_fn}{Row-wise scaling function. If \code{NULL}, an internal
+robust median/MAD scaler is used.}
 
-\item{block_size}{Integer, block size in pixels. If NULL, chosen from RAM via \code{choose_block_size()}.}
+\item{block_size}{Spatial block size in pixels. If \code{NULL}, it is chosen
+automatically from \code{ram_gb}.}
 
-\item{ram_gb}{Numeric, available RAM used for selecting block_size when \code{block_size=NULL}.}
+\item{ram_gb}{Approximate RAM budget used when choosing \code{block_size}.}
 
-\item{frac_for_dist}{Fraction of RAM to budget for the condensed distance vector.}
+\item{frac_for_dist}{Fraction of \code{ram_gb} allocated to the block-level
+condensed distance object.}
 
-\item{m_cap}{Practical cap on number of blocks to avoid time blowups; defaults depend on ram_gb.}
+\item{m_cap}{Optional cap on the number of block representatives kept for
+clustering.}
 
-\item{agg_fn}{Aggregation for block spectra: "median" (default) or "mean".}
+\item{valid_mode}{Either \code{"signal"} or \code{"finite_frac"}.}
 
-\item{min_finite_frac}{Minimum fraction of finite values required per pixel spectrum to be valid.
-Used for boundary refinement (and for optional pixel validity masks).}
+\item{min_finite_frac}{Minimum finite fraction required when
+\code{valid_mode = "finite_frac"}.}
 
-\item{min_block_finite_frac}{Minimum fraction of finite values required per *block spectrum*.}
+\item{use_pca}{Logical; if \code{TRUE}, run PCA on block medoid spectra
+before clustering.}
 
-\item{use_pca}{Logical. If TRUE, run PCA on scaled block spectra before Ward.}
+\item{pca_k}{Number of PCA components if \code{use_pca = TRUE}.}
 
-\item{pca_k}{Integer, number of PCA components if use_pca=TRUE.}
+\item{seed}{Integer random seed used when boundary refinement must sample a
+subset of candidate pixels.}
 
-\item{seed}{Integer random seed (only used if needed; currently not used).}
+\item{dist_method}{Either \code{"capivara_l1"} or \code{"euclidean"} for
+block-level clustering.}
 
-\item{refine}{Logical. If TRUE, refine only boundary pixels at full resolution.}
+\item{pixel_assign}{Either \code{"l1_nearest_center"} or
+\code{"l2_nearest_center"} for full-resolution reassignment.}
 
-\item{refine_radius}{Integer, neighborhood radius (in pixels) for detecting boundary pixels.}
+\item{polish_iters}{Number of medoid-polishing iterations in full pixel
+space after the initial assignment.}
 
-\item{refine_max_pixels}{Integer cap on number of pixels to refine (safety).}
+\item{refine}{Logical; if \code{TRUE}, only boundary pixels are reassigned
+after medoid polishing.}
+
+\item{refine_radius}{Neighborhood radius in pixels used to detect boundary
+pixels.}
+
+\item{refine_max_pixels}{Maximum number of boundary pixels to refine.}
 
 \item{verbose}{Logical.}
 }
 \value{
-A list with the same fields returned by \code{\link{segment_blockward}}.
+A list containing the full-resolution \code{cluster_map}, block
+  metadata, medoid centers, axis/header data, the original cube, and
+  \code{backend = "medoid"}.
 }
 \description{
-This is the user-facing large-cube entry point for Capivara. It forwards to
-\code{\link{segment_blockward}}, which approximates Ward-style clustering by
-aggregating spectra in spatial blocks before clustering and then assigning
-labels back at full spatial resolution.
+This is the user-facing large-cube entry point for Capivara. It keeps the
+exact \code{\link{segment}} workflow philosophy, but replaces the full
+all-pairs pixel clustering with a scalable approximation based on spatial
+blocks and medoid spectra. Each block is represented by a real pixel spectrum
+(its medoid) rather than by a coordinate-wise aggregated spectrum.
 }
 \details{
-Use this function when the exact \code{\link{segment}} /
-\code{\link{segment_masked}} workflow would require too much RAM because it
-must build an all-pairs distance object over all valid spaxels.
+This medoid backend behaves more faithfully on compact structures such as
+galaxy nuclei, bars, and HII-like knots than block-averaging approaches.
+
+Use this function when the exact \code{\link{segment}} workflow would require
+too much RAM because it must build an all-pairs distance object over all
+valid spaxels.
 }
 \seealso{
-\code{\link{segment}}, \code{\link{segment_masked}},
-  \code{\link{segment_blockward}}, \code{\link{segment_starlet}}
+\code{\link{segment}}, \code{\link{segment_starlet}}
 }

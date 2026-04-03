@@ -4,8 +4,7 @@ Released: 2026-03-18
 
 ## Added
 
-- `segment_masked()` for missing-data-safe segmentation with the same clustering logic as `segment()`.
-- `segment_big_cube()` as a clearer user-facing name for scalable large-cube segmentation when exact all-pairs distances would exceed available RAM.
+- `segment_big_cube()` as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.
 - `build_starlet_mask()` and `segment_starlet()` for Sagui-style white-light starlet masking before clustering.
 - `summarize_cluster_spectra()` for median, summed, and inverse-variance-weighted cluster spectra.
 - `choose_ncomp_by_snr()` for variance-aware component selection from an SNR threshold.
@@ -14,9 +13,11 @@ Released: 2026-03-18
 
 ## Changed
 
-- `segment()` and `segment_masked()` now share the same internal segmentation core.
+- `segment()` now handles missing spectral channels directly in the exact workflow.
+- `segment_big_cube()` now uses block medoids rather than block averages, improving compact structures in large cubes.
+- `segment_starlet()` can now apply the white-light mask before either the exact or big-cube backend.
 - `torch` is now optional; Capivara falls back to base R distance calculations when `torch` is unavailable.
-- `segment_robust()` and `cube_cluster_with_snr()` are preserved as compatibility wrappers around the new API.
+- The public segmentation API is now limited to `segment()`, `segment_big_cube()`, and `segment_starlet()` to avoid duplicate legacy entry points.
 - GitHub and website documentation now describe the missing-data, starlet-mask, and variance-aware workflows.
 
 ## Fixed

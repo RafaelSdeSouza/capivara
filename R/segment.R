@@ -7,6 +7,11 @@
 #' with the original spatial dimensions. The function also retains the original data cube
 #' for reference and post-processing.
 #'
+#' Missing spectral channels are handled automatically: non-finite values produced
+#' during row-wise scaling are replaced with zero before distances are computed.
+#' This keeps the standard exact workflow usable for masked cubes without a
+#' separate public entry point.
+#'
 #' @param input A FITS object representing the input data cube. Typically, this is an IFU data cube.
 #' @param Ncomp Integer, the number of clusters to form.
 #' @param redshift Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).
@@ -35,7 +40,9 @@
 #' This process is often used in IFU data analysis, where clustering is applied to grouped
 #' spectral profiles of spatial pixels to identify regions with similar characteristics.
 #'
-#' @seealso \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}}, \code{\link[stats]{cutree}}
+#' @seealso \code{\link{segment_big_cube}}, \code{\link{segment_starlet}},
+#'   \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
+#'   \code{\link[stats]{cutree}}
 #'
 #' @examples
 #' if (torch::torch_is_installed()) {
@@ -56,6 +63,6 @@ segment <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
     Ncomp = Ncomp,
     redshift = redshift,
     scale_fn = scale_fn,
-    na_to_zero = FALSE
+    na_to_zero = TRUE
   )
 }

@@ -143,18 +143,49 @@
 #' (its medoid) rather than by a coordinate-wise aggregated spectrum.
 #'
 #' This medoid backend behaves more faithfully on compact structures such as
-#' galaxy nuclei, bars, and HII-like knots than the legacy
-#' \code{\link{segment_blockward}} block-aggregation approximation.
+#' galaxy nuclei, bars, and HII-like knots than block-averaging approaches.
 #'
-#' Use this function when the exact \code{\link{segment}} /
-#' \code{\link{segment_masked}} workflow would require too much RAM because it
-#' must build an all-pairs distance object over all valid spaxels.
+#' Use this function when the exact \code{\link{segment}} workflow would require
+#' too much RAM because it must build an all-pairs distance object over all
+#' valid spaxels.
 #'
-#' @inheritParams segment_blockward
-#' @return A list with the same main fields returned by
-#'   \code{\link{segment_blockward}}, plus \code{backend = "medoid"}.
-#' @seealso \code{\link{segment}}, \code{\link{segment_masked}},
-#'   \code{\link{segment_starlet}}, \code{\link{segment_blockward}}
+#' @param input A FITS-like object with an \code{imDat} 3-D numeric cube, or a
+#'   raw 3-D numeric array.
+#' @param Ncomp Integer, the number of clusters to form.
+#' @param redshift Numeric redshift placeholder kept for API compatibility.
+#' @param scale_fn Row-wise scaling function. If \code{NULL}, an internal
+#'   robust median/MAD scaler is used.
+#' @param block_size Spatial block size in pixels. If \code{NULL}, it is chosen
+#'   automatically from \code{ram_gb}.
+#' @param ram_gb Approximate RAM budget used when choosing \code{block_size}.
+#' @param frac_for_dist Fraction of \code{ram_gb} allocated to the block-level
+#'   condensed distance object.
+#' @param m_cap Optional cap on the number of block representatives kept for
+#'   clustering.
+#' @param valid_mode Either \code{"signal"} or \code{"finite_frac"}.
+#' @param min_finite_frac Minimum finite fraction required when
+#'   \code{valid_mode = "finite_frac"}.
+#' @param use_pca Logical; if \code{TRUE}, run PCA on block medoid spectra
+#'   before clustering.
+#' @param pca_k Number of PCA components if \code{use_pca = TRUE}.
+#' @param seed Integer random seed used when boundary refinement must sample a
+#'   subset of candidate pixels.
+#' @param dist_method Either \code{"capivara_l1"} or \code{"euclidean"} for
+#'   block-level clustering.
+#' @param pixel_assign Either \code{"l1_nearest_center"} or
+#'   \code{"l2_nearest_center"} for full-resolution reassignment.
+#' @param polish_iters Number of medoid-polishing iterations in full pixel
+#'   space after the initial assignment.
+#' @param refine Logical; if \code{TRUE}, only boundary pixels are reassigned
+#'   after medoid polishing.
+#' @param refine_radius Neighborhood radius in pixels used to detect boundary
+#'   pixels.
+#' @param refine_max_pixels Maximum number of boundary pixels to refine.
+#' @param verbose Logical.
+#' @return A list containing the full-resolution \code{cluster_map}, block
+#'   metadata, medoid centers, axis/header data, the original cube, and
+#'   \code{backend = "medoid"}.
+#' @seealso \code{\link{segment}}, \code{\link{segment_starlet}}
 #' @export
 segment_big_cube <- function(input,
                              Ncomp = 5,
@@ -164,15 +195,11 @@ segment_big_cube <- function(input,
                              ram_gb = 32,
                              frac_for_dist = 0.25,
                              m_cap = NULL,
-                             agg_fn = c("median", "mean"),
                              valid_mode = c("signal", "finite_frac"),
                              min_finite_frac = 0.80,
-                             min_block_finite_frac = 0.80,
                              use_pca = FALSE,
                              pca_k = 30,
                              seed = 42,
-                             scale_first = TRUE,
-                             full_res_assign = TRUE,
                              dist_method = c("capivara_l1", "euclidean"),
                              pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
                              polish_iters = 0L,
@@ -180,17 +207,9 @@ segment_big_cube <- function(input,
                              refine_radius = 1L,
                              refine_max_pixels = 50000L,
                              verbose = TRUE) {
-  agg_fn <- match.arg(agg_fn)
   valid_mode <- match.arg(valid_mode)
   dist_method <- match.arg(dist_method)
   pixel_assign <- match.arg(pixel_assign)
-
-  if (!missing(agg_fn) && verbose) {
-    message("`segment_big_cube()` now uses medoid block representatives; `agg_fn` is kept for compatibility and ignored.")
-  }
-  if (!missing(min_block_finite_frac) && verbose) {
-    message("`min_block_finite_frac` is kept for compatibility and ignored by the medoid backend.")
-  }
 
   cubedat <- .as_cubedat(input)
   cube <- cubedat$imDat
@@ -250,12 +269,7 @@ segment_big_cube <- function(input,
   }
 
   X_valid <- IFU2D[valid_pix, , drop = FALSE]
-  if (scale_first) {
-    X_pix <- .scale_rows(X_valid, scale_fn = scale_fn, na_to_zero = TRUE)
-  } else {
-    X_pix <- as.matrix(X_valid)
-    X_pix[!is.finite(X_pix)] <- 0
-  }
+  X_pix <- .scale_rows(X_valid, scale_fn = scale_fn, na_to_zero = TRUE)
 
   center_metric <- if (pixel_assign == "l2_nearest_center") "l2" else "l1"
 
@@ -324,63 +338,57 @@ segment_big_cube <- function(input,
 
   cluster_map <- matrix(NA_integer_, nrow = n_row, ncol = n_col)
 
-  if (full_res_assign) {
-    pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
+  pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
 
-    if (polish_iters > 0L) {
-      if (verbose) {
-        message(sprintf("Polishing %d iterations in full pixel space...", polish_iters))
-      }
-      for (it in seq_len(polish_iters)) {
-        centers <- .segment_bigcube_compute_cluster_medoids(
-          feat_pixels,
-          labels = pix_lbl,
-          K = Ncomp,
-          metric = center_metric
-        )
-        pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
-      }
+  if (polish_iters > 0L) {
+    if (verbose) {
+      message(sprintf("Polishing %d iterations in full pixel space...", polish_iters))
     }
-
-    cluster_map[valid_pix] <- pix_lbl
-
-    if (refine) {
-      if (verbose) {
-        message("Boundary refinement...")
-      }
-      ref_centers <- .segment_bigcube_compute_cluster_medoids(
+    for (it in seq_len(polish_iters)) {
+      centers <- .segment_bigcube_compute_cluster_medoids(
         feat_pixels,
         labels = pix_lbl,
         K = Ncomp,
         metric = center_metric
       )
-      bp <- .segment_bigcube_boundary_pixels(cluster_map, r = refine_radius)
-      if (nrow(bp) > refine_max_pixels) {
-        set.seed(seed)
-        bp <- bp[sample.int(nrow(bp), refine_max_pixels), , drop = FALSE]
-      }
-      if (nrow(bp) > 0L) {
-        lin <- bp[, 1] + (bp[, 2] - 1L) * n_row
-        pos <- match(lin, valid_pix)
-        ok <- !is.na(pos)
-        if (any(ok)) {
-          pos <- pos[ok]
-          lin <- lin[ok]
-          new_lbl <- .segment_bigcube_assign_nearest(
-            feat_pixels[pos, , drop = FALSE],
-            ref_centers,
-            metric = center_metric
-          )
-          cluster_map[lin] <- new_lbl
-          pix_lbl[pos] <- new_lbl
-          centers <- ref_centers
-        }
+      pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
+    }
+  }
+
+  cluster_map[valid_pix] <- pix_lbl
+
+  if (refine) {
+    if (verbose) {
+      message("Boundary refinement...")
+    }
+    ref_centers <- .segment_bigcube_compute_cluster_medoids(
+      feat_pixels,
+      labels = pix_lbl,
+      K = Ncomp,
+      metric = center_metric
+    )
+    bp <- .segment_bigcube_boundary_pixels(cluster_map, r = refine_radius)
+    if (nrow(bp) > refine_max_pixels) {
+      set.seed(seed)
+      bp <- bp[sample.int(nrow(bp), refine_max_pixels), , drop = FALSE]
+    }
+    if (nrow(bp) > 0L) {
+      lin <- bp[, 1] + (bp[, 2] - 1L) * n_row
+      pos <- match(lin, valid_pix)
+      ok <- !is.na(pos)
+      if (any(ok)) {
+        pos <- pos[ok]
+        lin <- lin[ok]
+        new_lbl <- .segment_bigcube_assign_nearest(
+          feat_pixels[pos, , drop = FALSE],
+          ref_centers,
+          metric = center_metric
+        )
+        cluster_map[lin] <- new_lbl
+        pix_lbl[pos] <- new_lbl
+        centers <- ref_centers
       }
     }
-  } else {
-    block_labels <- rep(NA_integer_, n_blocks)
-    block_labels[valid_blocks] <- bl
-    cluster_map[valid_pix] <- block_labels[block_vec_valid]
   }
 
   list(

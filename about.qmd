@@ -9,7 +9,8 @@ This documentation site is published from the Quarto sources in this
 repository and mirrors the GitHub README and release notes. Version `0.2.0`
 introduces:
 
-- missing-data-safe segmentation with `segment_masked()`
+- missing-data-safe exact segmentation with `segment()`
+- medoid-based large-cube segmentation with `segment_big_cube()`
 - Sagui-style starlet masking with `segment_starlet()`
 - variance-aware summaries with `summarize_cluster_spectra()`
 - SNR-guided component selection with `choose_ncomp_by_snr()`

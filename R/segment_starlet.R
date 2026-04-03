@@ -3,13 +3,17 @@
 #' This adds the photometric masking layer used by \code{sagui} before running
 #' Capivara's spectral clustering. The cube is collapsed to white light,
 #' decomposed with the starlet transform, reconstructed from selected scales,
-#' masked spatially, and then segmented with \code{\link{segment_masked}}.
+#' masked spatially, and then segmented with either \code{\link{segment}} or
+#' \code{\link{segment_big_cube}}.
 #'
 #' @param input A FITS-like object with an \code{imDat} cube, or a raw
 #'   3-D numeric array.
 #' @param Ncomp Integer, the number of clusters to form.
 #' @param redshift Numeric redshift placeholder kept for API compatibility.
 #' @param scale_fn Row-wise scaling function used during segmentation.
+#' @param engine Segmentation backend after masking: \code{"standard"} uses
+#'   \code{\link{segment}}, while \code{"big_cube"} uses
+#'   \code{\link{segment_big_cube}}.
 #' @param collapse_fn Function used to build the white-light image.
 #' @param starlet_J Number of starlet scales.
 #' @param starlet_scales Integer vector of scales kept in the reconstruction.
@@ -18,6 +22,8 @@
 #' @param mode Thresholding mode for starlet reconstruction.
 #' @param positive_only Logical; keep only positive reconstructed values.
 #' @param mask_mode Either \code{"na"} or \code{"zero"} for masked spaxels.
+#' @param ... Additional arguments forwarded to \code{\link{segment_big_cube}}
+#'   when \code{engine = "big_cube"}.
 #'
 #' @return A standard segmentation result plus the starlet products used to
 #'   build the mask.
@@ -26,6 +32,7 @@ segment_starlet <- function(input,
                             Ncomp = 5,
                             redshift = 0,
                             scale_fn = median_scale,
+                            engine = c("standard", "big_cube"),
                             collapse_fn = collapse_white_light,
                             starlet_J = 5,
                             starlet_scales = 2:5,
@@ -33,7 +40,9 @@ segment_starlet <- function(input,
                             denoise_k = 0,
                             mode = c("soft", "hard"),
                             positive_only = TRUE,
-                            mask_mode = c("na", "zero")) {
+                            mask_mode = c("na", "zero"),
+                            ...) {
+  engine <- match.arg(engine)
   mode <- match.arg(mode)
   mask_mode <- match.arg(mask_mode)
 
@@ -56,12 +65,22 @@ segment_starlet <- function(input,
   masked_input <- cubedat
   masked_input$imDat <- masked_cube
 
-  out <- segment_masked(
-    input = masked_input,
-    Ncomp = Ncomp,
-    redshift = redshift,
-    scale_fn = scale_fn
-  )
+  out <- if (engine == "big_cube") {
+    segment_big_cube(
+      input = masked_input,
+      Ncomp = Ncomp,
+      redshift = redshift,
+      scale_fn = scale_fn,
+      ...
+    )
+  } else {
+    segment(
+      input = masked_input,
+      Ncomp = Ncomp,
+      redshift = redshift,
+      scale_fn = scale_fn
+    )
+  }
 
   c(out, list(
     mask = mask_info$mask,

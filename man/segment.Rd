@@ -36,6 +36,12 @@ with the original spatial dimensions. The function also retains the original dat
 for reference and post-processing.
 }
 \details{
+Missing spectral channels are handled automatically: non-finite values produced
+during row-wise scaling are replaced with zero before distances are computed.
+This keeps the standard exact workflow usable for masked cubes without a
+separate public entry point.
+
+
 Steps performed by the function:
 \enumerate{
   \item Reads the input FITS data cube.
@@ -60,5 +66,7 @@ if (torch::torch_is_installed()) {
 
 }
 \seealso{
-\code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}}, \code{\link[stats]{cutree}}
+\code{\link{segment_big_cube}}, \code{\link{segment_starlet}},
+  \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
+  \code{\link[stats]{cutree}}
 }

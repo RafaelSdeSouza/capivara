@@ -9,6 +9,7 @@ segment_starlet(
   Ncomp = 5,
   redshift = 0,
   scale_fn = median_scale,
+  engine = c("standard", "big_cube"),
   collapse_fn = collapse_white_light,
   starlet_J = 5,
   starlet_scales = 2:5,
@@ -16,7 +17,8 @@ segment_starlet(
   denoise_k = 0,
   mode = c("soft", "hard"),
   positive_only = TRUE,
-  mask_mode = c("na", "zero")
+  mask_mode = c("na", "zero"),
+  ...
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ segment_starlet(
 \item{redshift}{Numeric redshift placeholder kept for API compatibility.}
 
 \item{scale_fn}{Row-wise scaling function used during segmentation.}
+
+\item{engine}{Segmentation backend after masking: \code{"standard"} uses
+\code{\link{segment}}, while \code{"big_cube"} uses
+\code{\link{segment_big_cube}}.}
 
 \item{collapse_fn}{Function used to build the white-light image.}
 
@@ -44,6 +50,9 @@ segment_starlet(
 \item{positive_only}{Logical; keep only positive reconstructed values.}
 
 \item{mask_mode}{Either \code{"na"} or \code{"zero"} for masked spaxels.}
+
+\item{...}{Additional arguments forwarded to \code{\link{segment_big_cube}}
+when \code{engine = "big_cube"}.}
 }
 \value{
 A standard segmentation result plus the starlet products used to
@@ -53,5 +62,6 @@ A standard segmentation result plus the starlet products used to
 This adds the photometric masking layer used by \code{sagui} before running
 Capivara's spectral clustering. The cube is collapsed to white light,
 decomposed with the starlet transform, reconstructed from selected scales,
-masked spatially, and then segmented with \code{\link{segment_masked}}.
+masked spatially, and then segmented with either \code{\link{segment}} or
+\code{\link{segment_big_cube}}.
 }

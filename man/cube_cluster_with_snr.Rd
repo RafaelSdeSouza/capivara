@@ -51,5 +51,5 @@ if (torch::torch_is_installed()) {
 }
 \seealso{
 \code{\link{choose_ncomp_by_snr}}, \code{\link{segment}},
-  \code{\link{segment_masked}}
+  \code{\link{segment}}
 }

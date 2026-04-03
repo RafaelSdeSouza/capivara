@@ -26,7 +26,7 @@
 #' @importFrom stats cutree
 #'
 #' @seealso \code{\link{choose_ncomp_by_snr}}, \code{\link{segment}},
-#'   \code{\link{segment_masked}}
+#'   \code{\link{segment}}
 #'
 #' @examples
 #' if (torch::torch_is_installed()) {

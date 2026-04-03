@@ -12,22 +12,19 @@ Commit](https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png)](
 ## Overview
 
 Capivara provides spectral segmentation tools for Integral Field Unit
-(IFU) data cubes. Version `0.2.0` adds a missing-data-safe segmentation
-path, Sagui-style white-light starlet masking, variance-aware spectral
-summaries, and SNR-guided component selection while keeping the original
-`segment()` workflow intact.
+(IFU) data cubes. Version `0.2.0` adds built-in missing-data support in
+the exact workflow, a medoid-based large-cube engine, Sagui-style
+white-light starlet masking, variance-aware spectral summaries, and
+SNR-guided component selection.
 
 The core segmentation API is intentionally small:
 
-- `segment()` for the standard exact workflow.
-- `segment_masked()` for the same workflow when spectra contain missing
-  channels.
+- `segment()` for the standard exact workflow, including missing
+  spectral channels.
 - `segment_big_cube()` for very large cubes where exact pairwise
   distances are too expensive in RAM.
-
-`segment_starlet()` is an optional masking layer on top of the exact
-path. `segment_blockward()`, `segment_robust()`, and `segment_approx()`
-are retained as technical or legacy helpers.
+- `segment_starlet()` for the optional white-light starlet support mask
+  with either backend.
 
 ### Current Capivara Mosaic
 
@@ -42,8 +39,9 @@ comparison easier.
 
 ## What’s New In 0.2.0
 
-- `segment_masked()` reproduces `segment()` while tolerating missing
-  spectral channels.
+- `segment()` now handles missing spectral channels by default.
+- `segment_big_cube()` now uses block medoids rather than block
+  averages, improving compact structures in large cubes.
 - `segment_starlet()` adds a Sagui-style photometric mask built from the
   white-light image.
 - `summarize_cluster_spectra()` returns median, summed, and
@@ -84,12 +82,8 @@ plot_cluster(res)
 
 ### Missing Data
 
-Use `segment_masked()` when the cube contains missing spectral channels
-but you want the same clustering workflow as `segment()`.
-
-``` r
-res_masked <- segment_masked(cube, Ncomp = 20)
-```
+`segment()` now handles missing spectral channels directly, so the same
+exact workflow works on masked cubes without a separate function.
 
 ### Large Cubes
 
@@ -110,6 +104,7 @@ to the full cube before clustering.
 res_star <- segment_starlet(
   cube,
   Ncomp = 20,
+  engine = "standard",
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
@@ -119,6 +114,18 @@ res_star <- segment_starlet(
 )
 
 plot_cluster(res_star)
+```
+
+For large cubes, the same white-light mask can be combined with the
+scalable backend:
+
+``` r
+res_star_large <- segment_starlet(
+  cube,
+  Ncomp = 20,
+  engine = "big_cube",
+  block_size = 6
+)
 ```
 
 ![](images/manga_8140_starlet_comparison_full.png)
