@@ -218,6 +218,121 @@
   )
 }
 
+.segment_bigcube_vector_cap <- function(ram_gb = 32) {
+  if (ram_gb <= 16) {
+    return(4000L)
+  }
+  if (ram_gb <= 32) {
+    return(8000L)
+  }
+  12000L
+}
+
+.segment_bigcube_vector_cluster <- function(feat_pixels,
+                                            valid_pix,
+                                            n_row,
+                                            n_col,
+                                            Ncomp = NULL,
+                                            target_snr = NULL,
+                                            flux_mat_valid,
+                                            var_mat_valid = NULL,
+                                            wavelengths,
+                                            wavelength_range = NULL,
+                                            k_values = NULL,
+                                            snr_stat = c("integrated", "median_per_wavelength"),
+                                            variance_inflation = 1,
+                                            verbose = FALSE) {
+  snr_stat <- match.arg(snr_stat)
+
+  if (verbose) {
+    message(sprintf(
+      "Using fastcluster::hclust.vector on %d valid pixels...",
+      nrow(feat_pixels)
+    ))
+  }
+
+  hc <- fastcluster::hclust.vector(
+    feat_pixels,
+    method = "ward",
+    metric = "euclidean"
+  )
+
+  if (is.null(target_snr)) {
+    chosen_k <- Ncomp
+    pix_lbl <- stats::cutree(hc, k = chosen_k)
+    snr_grid <- NULL
+  } else {
+    if (is.null(var_mat_valid)) {
+      stop("`var_mat_valid` must be supplied when `target_snr` is used.")
+    }
+
+    if (is.null(wavelength_range)) {
+      wave_idx <- seq_len(ncol(flux_mat_valid))
+    } else {
+      if (length(wavelength_range) != 2) {
+        stop("`wavelength_range` must have length 2.")
+      }
+      wave_idx <- which(
+        wavelengths >= min(wavelength_range) &
+          wavelengths <= max(wavelength_range)
+      )
+      if (!length(wave_idx)) {
+        stop("No wavelengths fall inside `wavelength_range`.")
+      }
+    }
+
+    max_k <- nrow(feat_pixels)
+    if (is.null(k_values)) {
+      k_values <- seq(from = min(max_k, 50L), to = 1L, by = -1L)
+    } else {
+      k_values <- sort(unique(as.integer(k_values)), decreasing = TRUE)
+      k_values <- k_values[k_values >= 1L & k_values <= max_k]
+    }
+    if (!length(k_values)) {
+      stop("No valid `k_values` to test.")
+    }
+
+    snr_grid <- lapply(k_values, function(k) {
+      pix_lbl_k <- stats::cutree(hc, k = k)
+      cluster_snr_k <- .compute_cluster_snr_from_variance(
+        flux_mat = flux_mat_valid,
+        var_mat = var_mat_valid,
+        clusters = pix_lbl_k,
+        wave_idx = wave_idx,
+        snr_stat = snr_stat,
+        variance_inflation = variance_inflation
+      )
+      screen <- .evaluate_cluster_snr_screen(cluster_snr_k, target_snr)
+
+      data.frame(
+        Ncomp = k,
+        min_cluster_snr = screen$min_cluster_snr,
+        all_clusters_pass = screen$all_clusters_pass
+      )
+    })
+    snr_grid <- do.call(rbind, snr_grid)
+
+    ok <- which(snr_grid$all_clusters_pass)
+    if (!length(ok)) {
+      stop("No clustering configuration satisfies the target SNR.")
+    }
+
+    chosen_k <- snr_grid$Ncomp[ok[1]]
+    pix_lbl <- stats::cutree(hc, k = chosen_k)
+  }
+
+  cluster_map <- matrix(NA_integer_, nrow = n_row, ncol = n_col)
+  cluster_map[valid_pix] <- pix_lbl
+
+  list(
+    cluster_map = cluster_map,
+    pixel_labels = pix_lbl,
+    hclust = hc,
+    Ncomp = chosen_k,
+    snr_grid = snr_grid
+  )
+}
+
 #' Scalable Segmentation for Very Large IFU Cubes via Block Medoids
 #'
 #' This is the user-facing large-cube entry point for Capivara. It keeps the
@@ -240,7 +355,11 @@
 #' @param scale_fn Row-wise scaling function. If \code{NULL}, an internal
 #'   robust median/MAD scaler is used.
 #' @param block_size Spatial block size in pixels. If \code{NULL}, it is chosen
-#'   automatically from \code{ram_gb}.
+#'   automatically from \code{ram_gb}. When left as \code{NULL},
+#'   \code{segment_big_cube()} first tries a memory-saving
+#'   \code{fastcluster::hclust.vector()} Ward backend on the full set of valid
+#'   pixels for medium-large cubes, then falls back to block medoids only when
+#'   the cube is too large for that path.
 #' @param ram_gb Approximate RAM budget used when choosing \code{block_size}.
 #' @param frac_for_dist Fraction of \code{ram_gb} allocated to the block-level
 #'   condensed distance object.
@@ -264,10 +383,11 @@
 #' @param pca_k Number of PCA components if \code{use_pca = TRUE}.
 #' @param seed Integer random seed used when boundary refinement must sample a
 #'   subset of candidate pixels.
-#' @param dist_method Either \code{"capivara_l1"} or \code{"euclidean"} for
-#'   block-level clustering.
-#' @param pixel_assign Either \code{"l1_nearest_center"} or
-#'   \code{"l2_nearest_center"} for full-resolution reassignment.
+#' @param dist_method Either \code{"euclidean"} or \code{"capivara_l1"} for
+#'   block-level clustering. The default \code{"euclidean"} is the most
+#'   coherent choice with Ward's D2 linkage in the scalable backend.
+#' @param pixel_assign Either \code{"l2_nearest_center"} or
+#'   \code{"l1_nearest_center"} for full-resolution reassignment.
 #' @param snr_stat Either integrated SNR or median per-wavelength SNR when
 #'   \code{target_snr} is supplied.
 #' @param variance_inflation Multiplicative factor applied to propagated
@@ -299,9 +419,11 @@
 #' @param verbose Logical.
 #' @return A list containing the full-resolution \code{cluster_map}, the
 #'   chosen \code{Ncomp}, a per-cluster SNR summary, axis/header data, the
-#'   original cube, and \code{backend = "medoid"}. Scalable-engine diagnostics
-#'   are stored under \code{backend_info}. When \code{use_starlet_mask = TRUE},
-#'   starlet products are stored under \code{starlet_info}.
+#'   original cube, and \code{backend} indicating whether the scalable result
+#'   used the exact-ish vector Ward backend or the block-medoid approximation.
+#'   Scalable-engine diagnostics are stored under \code{backend_info}. When
+#'   \code{use_starlet_mask = TRUE}, starlet products are stored under
+#'   \code{starlet_info}.
 #' @seealso \code{\link{segment}}, \code{\link{build_starlet_mask}}
 #' @export
 segment_big_cube <- function(input,
@@ -321,8 +443,8 @@ segment_big_cube <- function(input,
                              use_pca = FALSE,
                              pca_k = 30,
                              seed = 42,
-                             dist_method = c("capivara_l1", "euclidean"),
-                             pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
+                             dist_method = c("euclidean", "capivara_l1"),
+                             pixel_assign = c("l2_nearest_center", "l1_nearest_center"),
                              snr_stat = c("integrated", "median_per_wavelength"),
                              variance_inflation = 1,
                              use_starlet_mask = FALSE,
@@ -374,32 +496,7 @@ segment_big_cube <- function(input,
   if (is.null(scale_fn)) {
     scale_fn <- .segment_bigcube_safe_scale
   }
-
-  if (is.null(block_size)) {
-    sel <- .segment_bigcube_choose_block_size(
-      n_row = n_row,
-      n_col = n_col,
-      ram_gb = ram_gb,
-      frac_for_dist = frac_for_dist,
-      m_cap = m_cap
-    )
-    block_size <- sel$block_size
-    if (verbose) {
-      message(sprintf(
-        "Chosen block_size=%d (target blocks<=%d, expected n_blocks≈%d)",
-        block_size, sel$m_target, sel$n_blocks
-      ))
-    }
-  } else if (verbose) {
-    message(sprintf("Using user block_size=%d", block_size))
-  }
-
-  br <- ceiling(seq_len(n_row) / block_size)
-  bc <- ceiling(seq_len(n_col) / block_size)
-  nb_r <- max(br)
-  nb_c <- max(bc)
-  n_blocks <- nb_r * nb_c
-  block_map <- outer(br, bc, FUN = function(r, c) (r - 1L) * nb_c + c)
+  block_size_user_supplied <- !is.null(block_size)
 
   IFU2D <- cube_to_matrix(cubedat)
 
@@ -422,101 +519,17 @@ segment_big_cube <- function(input,
 
   X_valid <- IFU2D[valid_pix, , drop = FALSE]
   X_pix <- .scale_rows(X_valid, scale_fn = scale_fn, na_to_zero = TRUE)
+  flux_mat_valid <- IFU2D[valid_pix, , drop = FALSE]
 
   center_metric <- if (pixel_assign == "l2_nearest_center") "l2" else "l1"
-
-  block_vec <- as.vector(block_map)
-  block_vec_valid <- block_vec[valid_pix]
-  by_block <- split(seq_along(valid_pix), block_vec_valid)
-
-  block_rep <- matrix(NA_real_, nrow = n_blocks, ncol = ncol(X_pix))
-  block_medoid_pos <- rep(NA_integer_, n_blocks)
-
-  if (verbose) {
-    message("Selecting medoid representatives per block...")
-  }
-  for (b in names(by_block)) {
-    idx <- by_block[[b]]
-    M <- X_pix[idx, , drop = FALSE]
-    midx <- .segment_bigcube_medoid_index(M, metric = center_metric)
-    b_int <- as.integer(b)
-    block_rep[b_int, ] <- M[midx, ]
-    block_medoid_pos[b_int] <- idx[midx]
-  }
-
-  valid_blocks <- which(!is.na(block_medoid_pos))
-  if (!length(valid_blocks)) {
-    stop("No valid blocks after medoid selection.")
-  }
-  if (is.null(target_snr) && !is.null(Ncomp) && Ncomp > length(valid_blocks)) {
-    stop("`Ncomp` is larger than the number of valid block medoids.")
-  }
-
-  feat_blocks <- block_rep[valid_blocks, , drop = FALSE]
-  feat_pixels <- X_pix
-  pca <- NULL
-
-  if (use_pca) {
-    if (!requireNamespace("irlba", quietly = TRUE)) {
-      stop("Package 'irlba' required for PCA. Install it or set use_pca = FALSE.")
-    }
-    pca_k_use <- min(pca_k, ncol(feat_blocks), max(1L, nrow(feat_blocks) - 1L))
-    if (pca_k_use < 1L) {
-      stop("Not enough valid blocks to compute PCA for `segment_big_cube()`.")
-    }
-    if (verbose) {
-      message(sprintf("PCA with k=%d on medoid block representatives...", pca_k_use))
-    }
-    pca <- irlba::prcomp_irlba(feat_blocks, n = pca_k_use, center = FALSE, scale. = FALSE)
-    feat_blocks <- pca$x
-    feat_pixels <- X_pix %*% pca$rotation
-  }
-
-  if (verbose) {
-    message(sprintf("Computing distances for %d block medoids...", nrow(feat_blocks)))
-  }
-  d <- if (dist_method == "capivara_l1") {
-    torch_dist(feat_blocks, p = 1)
-  } else {
-    torch_dist(feat_blocks, p = 2)
-  }
-
-  hc <- fastcluster::hclust(d, method = "ward.D2")
-  flux_mat_valid <- IFU2D[valid_pix, , drop = FALSE]
   wavelengths <- if (!is.null(cubedat$axDat)) {
     FITSio::axVec(3, cubedat$axDat)
   } else {
     seq_len(ncol(flux_mat_valid))
   }
 
-  if (is.null(target_snr)) {
-    chosen_k <- Ncomp
-    bl <- stats::cutree(hc, k = chosen_k)
-    centers <- .segment_bigcube_compute_cluster_medoids(
-      feat_blocks,
-      labels = bl,
-      K = chosen_k,
-      metric = center_metric
-    )
-    assigned <- .segment_bigcube_assign_map(
-      feat_pixels = feat_pixels,
-      centers = centers,
-      valid_pix = valid_pix,
-      n_row = n_row,
-      n_col = n_col,
-      center_metric = center_metric,
-      polish_iters = polish_iters,
-      refine = refine,
-      refine_radius = refine_radius,
-      refine_max_pixels = refine_max_pixels,
-      seed = seed,
-      verbose = verbose
-    )
-    cluster_map <- assigned$cluster_map
-    pix_lbl <- assigned$pixel_labels
-    centers <- assigned$centers
-    snr_grid <- NULL
-  } else {
+  var_mat_valid <- NULL
+  if (!is.null(target_snr)) {
     if (is.null(var_cube)) {
       var_mat_valid <- pmax(flux_mat_valid, 0)
     } else {
@@ -527,41 +540,157 @@ segment_big_cube <- function(input,
       var_mat_valid <- cube_to_matrix(var_input)[valid_pix, , drop = FALSE]
     }
     var_mat_valid[!is.finite(var_mat_valid) | var_mat_valid < 0] <- NA_real_
+  }
 
-    if (is.null(wavelength_range)) {
-      wave_idx <- seq_len(ncol(flux_mat_valid))
-    } else {
-      if (length(wavelength_range) != 2) {
-        stop("`wavelength_range` must have length 2.")
+  vector_cap <- .segment_bigcube_vector_cap(ram_gb = ram_gb)
+  use_vector_backend <- !block_size_user_supplied && length(valid_pix) <= vector_cap
+
+  block_map <- NULL
+  n_blocks <- NA_integer_
+  valid_blocks <- integer()
+  bl <- integer()
+  block_medoid_pos <- integer()
+  feat_blocks <- NULL
+  pca <- NULL
+  centers <- NULL
+
+  if (use_vector_backend) {
+    feat_pixels <- X_pix
+
+    if (use_pca) {
+      if (!requireNamespace("irlba", quietly = TRUE)) {
+        stop("Package 'irlba' required for PCA. Install it or set use_pca = FALSE.")
       }
-      wave_idx <- which(wavelengths >= min(wavelength_range) & wavelengths <= max(wavelength_range))
-      if (!length(wave_idx)) {
-        stop("No wavelengths fall inside `wavelength_range`.")
+      pca_k_use <- min(pca_k, ncol(feat_pixels), max(1L, nrow(feat_pixels) - 1L))
+      if (pca_k_use < 1L) {
+        stop("Not enough valid pixels to compute PCA for `segment_big_cube()`.")
       }
+      if (verbose) {
+        message(sprintf("PCA with k=%d on full valid pixels...", pca_k_use))
+      }
+      pca <- irlba::prcomp_irlba(feat_pixels, n = pca_k_use, center = FALSE, scale. = FALSE)
+      feat_pixels <- pca$x
     }
 
-    max_k <- nrow(feat_blocks)
-    if (is.null(k_values)) {
-      k_values <- seq(from = min(max_k, 50L), to = 1L, by = -1L)
+    vector_fit <- .segment_bigcube_vector_cluster(
+      feat_pixels = feat_pixels,
+      valid_pix = valid_pix,
+      n_row = n_row,
+      n_col = n_col,
+      Ncomp = Ncomp,
+      target_snr = target_snr,
+      flux_mat_valid = flux_mat_valid,
+      var_mat_valid = var_mat_valid,
+      wavelengths = wavelengths,
+      wavelength_range = wavelength_range,
+      k_values = k_values,
+      snr_stat = snr_stat,
+      variance_inflation = variance_inflation,
+      verbose = verbose
+    )
+
+    cluster_map <- vector_fit$cluster_map
+    pix_lbl <- vector_fit$pixel_labels
+    hc <- vector_fit$hclust
+    chosen_k <- vector_fit$Ncomp
+    snr_grid <- vector_fit$snr_grid
+    backend_name <- "vector_ward"
+  } else {
+    if (is.null(block_size)) {
+      sel <- .segment_bigcube_choose_block_size(
+        n_row = n_row,
+        n_col = n_col,
+        ram_gb = ram_gb,
+        frac_for_dist = frac_for_dist,
+        m_cap = m_cap
+      )
+      block_size <- sel$block_size
+      if (verbose) {
+        message(sprintf(
+          "Chosen block_size=%d (target blocks<=%d, expected n_blocks≈%d)",
+          block_size, sel$m_target, sel$n_blocks
+        ))
+      }
+    } else if (verbose) {
+      message(sprintf("Using user block_size=%d", block_size))
+    }
+
+    br <- ceiling(seq_len(n_row) / block_size)
+    bc <- ceiling(seq_len(n_col) / block_size)
+    nb_r <- max(br)
+    nb_c <- max(bc)
+    n_blocks <- nb_r * nb_c
+    block_map <- outer(br, bc, FUN = function(r, c) (r - 1L) * nb_c + c)
+
+    block_vec <- as.vector(block_map)
+    block_vec_valid <- block_vec[valid_pix]
+    by_block <- split(seq_along(valid_pix), block_vec_valid)
+
+    block_rep <- matrix(NA_real_, nrow = n_blocks, ncol = ncol(X_pix))
+    block_medoid_pos <- rep(NA_integer_, n_blocks)
+
+    if (verbose) {
+      message("Selecting medoid representatives per block...")
+    }
+    for (b in names(by_block)) {
+      idx <- by_block[[b]]
+      M <- X_pix[idx, , drop = FALSE]
+      midx <- .segment_bigcube_medoid_index(M, metric = center_metric)
+      b_int <- as.integer(b)
+      block_rep[b_int, ] <- M[midx, ]
+      block_medoid_pos[b_int] <- idx[midx]
+    }
+
+    valid_blocks <- which(!is.na(block_medoid_pos))
+    if (!length(valid_blocks)) {
+      stop("No valid blocks after medoid selection.")
+    }
+    if (is.null(target_snr) && !is.null(Ncomp) && Ncomp > length(valid_blocks)) {
+      stop("`Ncomp` is larger than the number of valid block medoids.")
+    }
+
+    feat_blocks <- block_rep[valid_blocks, , drop = FALSE]
+    feat_pixels <- X_pix
+
+    if (use_pca) {
+      if (!requireNamespace("irlba", quietly = TRUE)) {
+        stop("Package 'irlba' required for PCA. Install it or set use_pca = FALSE.")
+      }
+      pca_k_use <- min(pca_k, ncol(feat_blocks), max(1L, nrow(feat_blocks) - 1L))
+      if (pca_k_use < 1L) {
+        stop("Not enough valid blocks to compute PCA for `segment_big_cube()`.")
+      }
+      if (verbose) {
+        message(sprintf("PCA with k=%d on medoid block representatives...", pca_k_use))
+      }
+      pca <- irlba::prcomp_irlba(feat_blocks, n = pca_k_use, center = FALSE, scale. = FALSE)
+      feat_blocks <- pca$x
+      feat_pixels <- X_pix %*% pca$rotation
+    }
+
+    if (verbose) {
+      message(sprintf("Computing distances for %d block medoids...", nrow(feat_blocks)))
+    }
+    d <- if (dist_method == "capivara_l1") {
+      torch_dist(feat_blocks, p = 1)
     } else {
-      k_values <- sort(unique(as.integer(k_values)), decreasing = TRUE)
-      k_values <- k_values[k_values >= 1L & k_values <= max_k]
-    }
-    if (!length(k_values)) {
-      stop("No valid `k_values` to test.")
+      torch_dist(feat_blocks, p = 2)
     }
 
-    snr_grid <- lapply(k_values, function(k) {
-      labels_k <- stats::cutree(hc, k = k)
-      centers_k <- .segment_bigcube_compute_cluster_medoids(
+    hc <- fastcluster::hclust(d, method = "ward.D2")
+
+    if (is.null(target_snr)) {
+      chosen_k <- Ncomp
+      bl <- stats::cutree(hc, k = chosen_k)
+      centers <- .segment_bigcube_compute_cluster_medoids(
         feat_blocks,
-        labels = labels_k,
-        K = k,
+        labels = bl,
+        K = chosen_k,
         metric = center_metric
       )
-      assigned_k <- .segment_bigcube_assign_map(
+      assigned <- .segment_bigcube_assign_map(
         feat_pixels = feat_pixels,
-        centers = centers_k,
+        centers = centers,
         valid_pix = valid_pix,
         n_row = n_row,
         n_col = n_col,
@@ -571,56 +700,109 @@ segment_big_cube <- function(input,
         refine_radius = refine_radius,
         refine_max_pixels = refine_max_pixels,
         seed = seed,
-        verbose = FALSE
+        verbose = verbose
       )
-      cluster_snr_k <- .compute_cluster_snr_from_variance(
-        flux_mat = flux_mat_valid,
-        var_mat = var_mat_valid,
-        clusters = assigned_k$pixel_labels,
-        wave_idx = wave_idx,
-        snr_stat = snr_stat,
-        variance_inflation = variance_inflation
-      )
-      screen <- .evaluate_cluster_snr_screen(cluster_snr_k, target_snr)
+      cluster_map <- assigned$cluster_map
+      pix_lbl <- assigned$pixel_labels
+      centers <- assigned$centers
+      snr_grid <- NULL
+    } else {
+      if (is.null(wavelength_range)) {
+        wave_idx <- seq_len(ncol(flux_mat_valid))
+      } else {
+        if (length(wavelength_range) != 2) {
+          stop("`wavelength_range` must have length 2.")
+        }
+        wave_idx <- which(wavelengths >= min(wavelength_range) & wavelengths <= max(wavelength_range))
+        if (!length(wave_idx)) {
+          stop("No wavelengths fall inside `wavelength_range`.")
+        }
+      }
 
-      data.frame(
-        Ncomp = k,
-        min_cluster_snr = screen$min_cluster_snr,
-        all_clusters_pass = screen$all_clusters_pass
-      )
-    })
-    snr_grid <- do.call(rbind, snr_grid)
+      max_k <- nrow(feat_blocks)
+      if (is.null(k_values)) {
+        k_values <- seq(from = min(max_k, 50L), to = 1L, by = -1L)
+      } else {
+        k_values <- sort(unique(as.integer(k_values)), decreasing = TRUE)
+        k_values <- k_values[k_values >= 1L & k_values <= max_k]
+      }
+      if (!length(k_values)) {
+        stop("No valid `k_values` to test.")
+      }
 
-    ok <- which(snr_grid$all_clusters_pass)
-    if (!length(ok)) {
-      stop("No clustering configuration satisfies the target SNR.")
+      snr_grid <- lapply(k_values, function(k) {
+        labels_k <- stats::cutree(hc, k = k)
+        centers_k <- .segment_bigcube_compute_cluster_medoids(
+          feat_blocks,
+          labels = labels_k,
+          K = k,
+          metric = center_metric
+        )
+        assigned_k <- .segment_bigcube_assign_map(
+          feat_pixels = feat_pixels,
+          centers = centers_k,
+          valid_pix = valid_pix,
+          n_row = n_row,
+          n_col = n_col,
+          center_metric = center_metric,
+          polish_iters = polish_iters,
+          refine = refine,
+          refine_radius = refine_radius,
+          refine_max_pixels = refine_max_pixels,
+          seed = seed,
+          verbose = FALSE
+        )
+        cluster_snr_k <- .compute_cluster_snr_from_variance(
+          flux_mat = flux_mat_valid,
+          var_mat = var_mat_valid,
+          clusters = assigned_k$pixel_labels,
+          wave_idx = wave_idx,
+          snr_stat = snr_stat,
+          variance_inflation = variance_inflation
+        )
+        screen <- .evaluate_cluster_snr_screen(cluster_snr_k, target_snr)
+
+        data.frame(
+          Ncomp = k,
+          min_cluster_snr = screen$min_cluster_snr,
+          all_clusters_pass = screen$all_clusters_pass
+        )
+      })
+      snr_grid <- do.call(rbind, snr_grid)
+
+      ok <- which(snr_grid$all_clusters_pass)
+      if (!length(ok)) {
+        stop("No clustering configuration satisfies the target SNR.")
+      }
+
+      chosen_k <- snr_grid$Ncomp[ok[1]]
+      bl <- stats::cutree(hc, k = chosen_k)
+      centers <- .segment_bigcube_compute_cluster_medoids(
+        feat_blocks,
+        labels = bl,
+        K = chosen_k,
+        metric = center_metric
+      )
+      assigned <- .segment_bigcube_assign_map(
+        feat_pixels = feat_pixels,
+        centers = centers,
+        valid_pix = valid_pix,
+        n_row = n_row,
+        n_col = n_col,
+        center_metric = center_metric,
+        polish_iters = polish_iters,
+        refine = refine,
+        refine_radius = refine_radius,
+        refine_max_pixels = refine_max_pixels,
+        seed = seed,
+        verbose = verbose
+      )
+      cluster_map <- assigned$cluster_map
+      pix_lbl <- assigned$pixel_labels
+      centers <- assigned$centers
     }
 
-    chosen_k <- snr_grid$Ncomp[ok[1]]
-    bl <- stats::cutree(hc, k = chosen_k)
-    centers <- .segment_bigcube_compute_cluster_medoids(
-      feat_blocks,
-      labels = bl,
-      K = chosen_k,
-      metric = center_metric
-    )
-    assigned <- .segment_bigcube_assign_map(
-      feat_pixels = feat_pixels,
-      centers = centers,
-      valid_pix = valid_pix,
-      n_row = n_row,
-      n_col = n_col,
-      center_metric = center_metric,
-      polish_iters = polish_iters,
-      refine = refine,
-      refine_radius = refine_radius,
-      refine_max_pixels = refine_max_pixels,
-      seed = seed,
-      verbose = verbose
-    )
-    cluster_map <- assigned$cluster_map
-    pix_lbl <- assigned$pixel_labels
-    centers <- assigned$centers
+    backend_name <- "medoid"
   }
 
   if (is.null(target_snr)) {
@@ -650,21 +832,31 @@ segment_big_cube <- function(input,
     header = cubedat$hdr,
     axDat = cubedat$axDat,
     original_cube = cubedat,
-    backend = "medoid"
+    backend = backend_name
   )
 
-  out$backend_info <- list(
-    block_map = block_map,
-    block_size = block_size,
-    n_blocks = n_blocks,
-    valid_blocks = valid_blocks,
-    block_labels_valid = bl,
-    block_features = feat_blocks,
-    block_medoid_pos = block_medoid_pos,
-    pca = pca,
-    centers = centers,
-    valid_pix = valid_pix
-  )
+  if (identical(backend_name, "vector_ward")) {
+    out$backend_info <- list(
+      strategy = "fastcluster::hclust.vector",
+      vector_cap = vector_cap,
+      pca = pca,
+      valid_pix = valid_pix
+    )
+  } else {
+    out$backend_info <- list(
+      strategy = "block_medoids",
+      block_map = block_map,
+      block_size = block_size,
+      n_blocks = n_blocks,
+      valid_blocks = valid_blocks,
+      block_labels_valid = bl,
+      block_features = feat_blocks,
+      block_medoid_pos = block_medoid_pos,
+      pca = pca,
+      centers = centers,
+      valid_pix = valid_pix
+    )
+  }
 
   if (!is.null(starlet_prep$starlet_info)) {
     out$starlet_info <- starlet_prep$starlet_info
