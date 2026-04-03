@@ -149,7 +149,8 @@ ul.task-list li input[type="checkbox"] {
 <p>Capivara is an R package for segmentation and post-processing of IFU data cubes.</p>
 <p>This documentation site is published from the Quarto sources in this repository and mirrors the GitHub README and release notes. Version <code>0.2.0</code> introduces:</p>
 <ul>
-<li>missing-data-safe segmentation with <code>segment_masked()</code></li>
+<li>missing-data-safe exact segmentation with <code>segment()</code></li>
+<li>medoid-based large-cube segmentation with <code>segment_big_cube()</code></li>
 <li>Sagui-style starlet masking with <code>segment_starlet()</code></li>
 <li>variance-aware summaries with <code>summarize_cluster_spectra()</code></li>
 <li>SNR-guided component selection with <code>choose_ncomp_by_snr()</code></li>

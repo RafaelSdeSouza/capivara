@@ -170,14 +170,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><a href="https://arxiv.org/abs/2410.21962"><img src="https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&amp;color=%2321609D" class="img-fluid" alt="arXiv"></a> <a href="https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE"><img src="https://img.shields.io/github/license/RafaelSdeSouza/capivara.png" class="img-fluid" alt="GitHub"></a> <a href="https://codecov.io/gh/RafaelSdeSouza/capivara"><img src="https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Coverage Status"></a> <a href="https://github.com/RafaelSdeSouza/capivara/commits"><img src="https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Last Commit"></a></p>
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.2.0</code> adds a missing-data-safe segmentation path, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection while keeping the original <code>segment()</code> workflow intact.</p>
+<p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.2.0</code> adds built-in missing-data support in the exact workflow, a medoid-based large-cube engine, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection.</p>
 <p>The core segmentation API is intentionally small:</p>
 <ul>
-<li><code>segment()</code> for the standard exact workflow.</li>
-<li><code>segment_masked()</code> for the same workflow when spectra contain missing channels.</li>
+<li><code>segment()</code> for the standard exact workflow, including missing spectral channels.</li>
 <li><code>segment_big_cube()</code> for very large cubes where exact pairwise distances are too expensive in RAM.</li>
+<li><code>segment_starlet()</code> for the optional white-light starlet support mask with either backend.</li>
 </ul>
-<p><code>segment_starlet()</code> is an optional masking layer on top of the exact path. <code>segment_blockward()</code>, <code>segment_robust()</code>, and <code>segment_approx()</code> are retained as technical or legacy helpers.</p>
 <section id="current-capivara-mosaic" class="level3">
 <h3 class="anchored" data-anchor-id="current-capivara-mosaic">Current Capivara Mosaic</h3>
 <p><img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic"></p>
@@ -191,7 +190,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="whats-new-in-0.2.0" class="level2">
 <h2 class="anchored" data-anchor-id="whats-new-in-0.2.0">What’s New In 0.2.0</h2>
 <ul>
-<li><code>segment_masked()</code> reproduces <code>segment()</code> while handling missing channels.</li>
+<li><code>segment()</code> now handles missing spectral channels by default.</li>
+<li><code>segment_big_cube()</code> now uses block medoids rather than block averages, improving compact structures in large cubes.</li>
 <li><code>segment_starlet()</code> adds a Sagui-style starlet mask from the white-light image.</li>
 <li><code>summarize_cluster_spectra()</code> supports median, summed, and weighted spectra.</li>
 <li><code>choose_ncomp_by_snr()</code> selects <code>Ncomp</code> from a variance-aware SNR cut.</li>
@@ -217,26 +217,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="missing-data-safe-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="missing-data-safe-segmentation">Missing-data-safe Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>res_masked <span class="ot">&lt;-</span> <span class="fu">segment_masked</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>segment()</code> now handles missing spectral channels directly.</p>
 </section>
 <section id="large-cube-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="large-cube-segmentation">Large-cube Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_large <span class="ot">&lt;-</span> <span class="fu">segment_big_cube</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>, <span class="at">block_size =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>res_large <span class="ot">&lt;-</span> <span class="fu">segment_big_cube</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>, <span class="at">block_size =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sagui-style-starlet-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="sagui-style-starlet-segmentation">Sagui-style Starlet Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
+<span id="cb5-2"><a href="#cb5-2"></a>  cube,</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">engine =</span> <span class="st">"standard"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
+<span id="cb5-6"><a href="#cb5-6"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb5-7"><a href="#cb5-7"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-8"><a href="#cb5-8"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
+<span id="cb5-9"><a href="#cb5-9"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-10"><a href="#cb5-10"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a>)</span>
+<span id="cb5-12"><a href="#cb5-12"></a></span>
+<span id="cb5-13"><a href="#cb5-13"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star_large <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
 <span id="cb6-2"><a href="#cb6-2"></a>  cube,</span>
 <span id="cb6-3"><a href="#cb6-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
-<span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
-<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
-<span id="cb6-6"><a href="#cb6-6"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb6-7"><a href="#cb6-7"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
-<span id="cb6-8"><a href="#cb6-8"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb6-9"><a href="#cb6-9"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a>)</span>
-<span id="cb6-11"><a href="#cb6-11"></a></span>
-<span id="cb6-12"><a href="#cb6-12"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">engine =</span> <span class="st">"big_cube"</span>,</span>
+<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">block_size =</span> <span class="dv">6</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/manga_8140_starlet_comparison_full.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
