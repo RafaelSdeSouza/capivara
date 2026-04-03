@@ -4,7 +4,18 @@
 \alias{segment}
 \title{Cluster a 2D Representation of a Data Cube}
 \usage{
-segment(input, Ncomp = 5, redshift = 0, scale_fn = median_scale)
+segment(
+  input,
+  Ncomp = 5,
+  redshift = 0,
+  scale_fn = median_scale,
+  target_snr = NULL,
+  var_cube = NULL,
+  k_values = NULL,
+  wavelength_range = NULL,
+  snr_stat = c("integrated", "median_per_wavelength"),
+  variance_inflation = 1
+)
 }
 \arguments{
 \item{input}{A FITS object representing the input data cube. Typically, this is an IFU data cube.}
@@ -15,6 +26,25 @@ segment(input, Ncomp = 5, redshift = 0, scale_fn = median_scale)
 
 \item{scale_fn}{A function used to scale each row of the 2D representation of the data cube.
 Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.}
+
+\item{target_snr}{Optional minimum accepted SNR per cluster. When supplied,
+Capivara chooses the largest number of clusters whose minimum cluster SNR
+remains above this threshold.}
+
+\item{var_cube}{Optional variance cube matching the input cube. Used only
+when \code{target_snr} is supplied.}
+
+\item{k_values}{Optional candidate cluster counts tested when
+\code{target_snr} is supplied.}
+
+\item{wavelength_range}{Optional wavelength interval used to compute SNR when
+\code{target_snr} is supplied.}
+
+\item{snr_stat}{Either integrated SNR or median per-wavelength SNR when
+\code{target_snr} is supplied.}
+
+\item{variance_inflation}{Multiplicative factor applied to propagated
+variances when \code{target_snr} is supplied.}
 }
 \value{
 A list containing:
@@ -49,7 +79,9 @@ Steps performed by the function:
   \item Scales the data row-wise using \code{scale_fn}.
   \item Computes pairwise distances between rows using \code{\link{torch_dist}}.
   \item Performs hierarchical clustering using Ward's D2 method via \code{\link[fastcluster]{hclust}}.
-  \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map.
+  \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map,
+  or, when \code{target_snr} is supplied, chooses the largest cut whose minimum cluster SNR
+  remains above the requested threshold.
   \item Calculates the signal-to-noise ratio (SNR) for each cluster.
 }
 }

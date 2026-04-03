@@ -183,8 +183,8 @@
 #' @param refine_max_pixels Maximum number of boundary pixels to refine.
 #' @param verbose Logical.
 #' @return A list containing the full-resolution \code{cluster_map}, block
-#'   metadata, medoid centers, axis/header data, the original cube, and
-#'   \code{backend = "medoid"}.
+#'   metadata, medoid centers, a per-cluster SNR summary, axis/header data, the
+#'   original cube, and \code{backend = "medoid"}.
 #' @seealso \code{\link{segment}}, \code{\link{segment_starlet}}
 #' @export
 segment_big_cube <- function(input,
@@ -391,8 +391,16 @@ segment_big_cube <- function(input,
     }
   }
 
+  sn <- .compute_signal_noise(IFU2D)
+  cluster_snr <- .compute_cluster_snr(
+    clusters = cluster_map[valid_pix],
+    signal_valid = sn$signal[valid_pix],
+    noise_valid = sn$noise[valid_pix]
+  )
+
   list(
     cluster_map = cluster_map,
+    cluster_snr = cluster_snr,
     block_map = block_map,
     block_size = block_size,
     n_blocks = n_blocks,

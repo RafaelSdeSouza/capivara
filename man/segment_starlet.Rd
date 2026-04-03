@@ -10,6 +10,12 @@ segment_starlet(
   redshift = 0,
   scale_fn = median_scale,
   engine = c("standard", "big_cube"),
+  target_snr = NULL,
+  var_cube = NULL,
+  k_values = NULL,
+  wavelength_range = NULL,
+  snr_stat = c("integrated", "median_per_wavelength"),
+  variance_inflation = 1,
   collapse_fn = collapse_white_light,
   starlet_J = 5,
   starlet_scales = 2:5,
@@ -34,6 +40,25 @@ segment_starlet(
 \item{engine}{Segmentation backend after masking: \code{"standard"} uses
 \code{\link{segment}}, while \code{"big_cube"} uses
 \code{\link{segment_big_cube}}.}
+
+\item{target_snr}{Optional minimum accepted SNR per cluster for the exact
+backend. When supplied, the masked cube is cut at the largest
+\code{Ncomp} whose minimum cluster SNR remains above this threshold.}
+
+\item{var_cube}{Optional variance cube used only when \code{target_snr} is
+supplied with \code{engine = "standard"}.}
+
+\item{k_values}{Optional candidate cluster counts tested only when
+\code{target_snr} is supplied with \code{engine = "standard"}.}
+
+\item{wavelength_range}{Optional wavelength interval used to compute SNR only
+when \code{target_snr} is supplied with \code{engine = "standard"}.}
+
+\item{snr_stat}{Either integrated SNR or median per-wavelength SNR when
+\code{target_snr} is supplied with \code{engine = "standard"}.}
+
+\item{variance_inflation}{Multiplicative factor applied to propagated
+variances when \code{target_snr} is supplied with \code{engine = "standard"}.}
 
 \item{collapse_fn}{Function used to build the white-light image.}
 

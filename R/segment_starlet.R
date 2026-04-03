@@ -14,6 +14,19 @@
 #' @param engine Segmentation backend after masking: \code{"standard"} uses
 #'   \code{\link{segment}}, while \code{"big_cube"} uses
 #'   \code{\link{segment_big_cube}}.
+#' @param target_snr Optional minimum accepted SNR per cluster for the exact
+#'   backend. When supplied, the masked cube is cut at the largest
+#'   \code{Ncomp} whose minimum cluster SNR remains above this threshold.
+#' @param var_cube Optional variance cube used only when \code{target_snr} is
+#'   supplied with \code{engine = "standard"}.
+#' @param k_values Optional candidate cluster counts tested only when
+#'   \code{target_snr} is supplied with \code{engine = "standard"}.
+#' @param wavelength_range Optional wavelength interval used to compute SNR only
+#'   when \code{target_snr} is supplied with \code{engine = "standard"}.
+#' @param snr_stat Either integrated SNR or median per-wavelength SNR when
+#'   \code{target_snr} is supplied with \code{engine = "standard"}.
+#' @param variance_inflation Multiplicative factor applied to propagated
+#'   variances when \code{target_snr} is supplied with \code{engine = "standard"}.
 #' @param collapse_fn Function used to build the white-light image.
 #' @param starlet_J Number of starlet scales.
 #' @param starlet_scales Integer vector of scales kept in the reconstruction.
@@ -33,6 +46,12 @@ segment_starlet <- function(input,
                             redshift = 0,
                             scale_fn = median_scale,
                             engine = c("standard", "big_cube"),
+                            target_snr = NULL,
+                            var_cube = NULL,
+                            k_values = NULL,
+                            wavelength_range = NULL,
+                            snr_stat = c("integrated", "median_per_wavelength"),
+                            variance_inflation = 1,
                             collapse_fn = collapse_white_light,
                             starlet_J = 5,
                             starlet_scales = 2:5,
@@ -45,6 +64,11 @@ segment_starlet <- function(input,
   engine <- match.arg(engine)
   mode <- match.arg(mode)
   mask_mode <- match.arg(mask_mode)
+  snr_stat <- match.arg(snr_stat)
+
+  if (engine == "big_cube" && !is.null(target_snr)) {
+    stop("`target_snr` is currently supported only with `engine = \"standard\"`.")
+  }
 
   cubedat <- .as_cubedat(input)
   mask_info <- build_starlet_mask(
@@ -74,12 +98,26 @@ segment_starlet <- function(input,
       ...
     )
   } else {
-    segment(
-      input = masked_input,
-      Ncomp = Ncomp,
-      redshift = redshift,
-      scale_fn = scale_fn
-    )
+    if (is.null(target_snr)) {
+      segment(
+        input = masked_input,
+        Ncomp = Ncomp,
+        redshift = redshift,
+        scale_fn = scale_fn
+      )
+    } else {
+      segment(
+        input = masked_input,
+        redshift = redshift,
+        scale_fn = scale_fn,
+        target_snr = target_snr,
+        var_cube = var_cube,
+        k_values = k_values,
+        wavelength_range = wavelength_range,
+        snr_stat = snr_stat,
+        variance_inflation = variance_inflation
+      )
+    }
   }
 
   c(out, list(

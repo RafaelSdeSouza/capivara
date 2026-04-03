@@ -17,6 +17,19 @@
 #' @param redshift Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).
 #' @param scale_fn A function used to scale each row of the 2D representation of the data cube.
 #'   Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.
+#' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
+#'   Capivara chooses the largest number of clusters whose minimum cluster SNR
+#'   remains above this threshold.
+#' @param var_cube Optional variance cube matching the input cube. Used only
+#'   when \code{target_snr} is supplied.
+#' @param k_values Optional candidate cluster counts tested when
+#'   \code{target_snr} is supplied.
+#' @param wavelength_range Optional wavelength interval used to compute SNR when
+#'   \code{target_snr} is supplied.
+#' @param snr_stat Either integrated SNR or median per-wavelength SNR when
+#'   \code{target_snr} is supplied.
+#' @param variance_inflation Multiplicative factor applied to propagated
+#'   variances when \code{target_snr} is supplied.
 #'
 #' @details
 #' Steps performed by the function:
@@ -26,7 +39,9 @@
 #'   \item Scales the data row-wise using \code{scale_fn}.
 #'   \item Computes pairwise distances between rows using \code{\link{torch_dist}}.
 #'   \item Performs hierarchical clustering using Ward's D2 method via \code{\link[fastcluster]{hclust}}.
-#'   \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map.
+#'   \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map,
+#'   or, when \code{target_snr} is supplied, chooses the largest cut whose minimum cluster SNR
+#'   remains above the requested threshold.
 #'   \item Calculates the signal-to-noise ratio (SNR) for each cluster.
 #' }
 #'
@@ -56,8 +71,35 @@
 #' }
 #'
 #' @export
-# Cluster the IFU cube data
-segment <- function(input, Ncomp = 5, redshift = 0, scale_fn = median_scale) {
+segment <- function(input,
+                    Ncomp = 5,
+                    redshift = 0,
+                    scale_fn = median_scale,
+                    target_snr = NULL,
+                    var_cube = NULL,
+                    k_values = NULL,
+                    wavelength_range = NULL,
+                    snr_stat = c("integrated", "median_per_wavelength"),
+                    variance_inflation = 1) {
+  if (!is.null(target_snr)) {
+    if (!missing(Ncomp)) {
+      stop("Specify either `Ncomp` or `target_snr`, not both.")
+    }
+
+    return(choose_ncomp_by_snr(
+      input = input,
+      target_snr = target_snr,
+      var_cube = var_cube,
+      k_values = k_values,
+      wavelength_range = wavelength_range,
+      redshift = redshift,
+      scale_fn = scale_fn,
+      snr_stat = snr_stat,
+      variance_inflation = variance_inflation,
+      na_safe = TRUE
+    ))
+  }
+
   .segment_core(
     input = input,
     Ncomp = Ncomp,

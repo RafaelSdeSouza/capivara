@@ -83,8 +83,8 @@ pixels.}
 }
 \value{
 A list containing the full-resolution \code{cluster_map}, block
-  metadata, medoid centers, axis/header data, the original cube, and
-  \code{backend = "medoid"}.
+  metadata, medoid centers, a per-cluster SNR summary, axis/header data, the
+  original cube, and \code{backend = "medoid"}.
 }
 \description{
 This is the user-facing large-cube entry point for Capivara. It keeps the
