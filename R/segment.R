@@ -13,7 +13,7 @@
 #' separate public entry point.
 #'
 #' @param input A FITS object representing the input data cube. Typically, this is an IFU data cube.
-#' @param Ncomp Integer, the number of clusters to form.
+#' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
 #' @param redshift Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).
 #' @param scale_fn A function used to scale each row of the 2D representation of the data cube.
 #'   Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.
@@ -72,7 +72,7 @@
 #'
 #' @export
 segment <- function(input,
-                    Ncomp = 5,
+                    Ncomp = 15,
                     redshift = 0,
                     scale_fn = median_scale,
                     target_snr = NULL,

@@ -6,13 +6,17 @@
 \usage{
 segment_big_cube(
   input,
-  Ncomp = 5,
+  Ncomp = 15,
   redshift = 0,
   scale_fn = NULL,
   block_size = NULL,
   ram_gb = 32,
   frac_for_dist = 0.25,
   m_cap = NULL,
+  target_snr = NULL,
+  var_cube = NULL,
+  k_values = NULL,
+  wavelength_range = NULL,
   valid_mode = c("signal", "finite_frac"),
   min_finite_frac = 0.8,
   use_pca = FALSE,
@@ -20,6 +24,8 @@ segment_big_cube(
   seed = 42,
   dist_method = c("capivara_l1", "euclidean"),
   pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
+  snr_stat = c("integrated", "median_per_wavelength"),
+  variance_inflation = 1,
   polish_iters = 0L,
   refine = TRUE,
   refine_radius = 1L,
@@ -31,7 +37,7 @@ segment_big_cube(
 \item{input}{A FITS-like object with an \code{imDat} 3-D numeric cube, or a
 raw 3-D numeric array.}
 
-\item{Ncomp}{Integer, the number of clusters to form.}
+\item{Ncomp}{Integer, the number of clusters to form. Defaults to `15`.}
 
 \item{redshift}{Numeric redshift placeholder kept for API compatibility.}
 
@@ -48,6 +54,20 @@ condensed distance object.}
 
 \item{m_cap}{Optional cap on the number of block representatives kept for
 clustering.}
+
+\item{target_snr}{Optional minimum accepted SNR per cluster. When supplied,
+Capivara chooses the largest number of clusters whose minimum cluster SNR
+remains above this threshold.}
+
+\item{var_cube}{Optional variance cube matching the input cube. Used only
+when \code{target_snr} is supplied.}
+
+\item{k_values}{Optional candidate cluster counts tested when
+\code{target_snr} is supplied. If omitted, the scalable backend screens up
+to the largest 50 cuts.}
+
+\item{wavelength_range}{Optional wavelength interval used to compute SNR when
+\code{target_snr} is supplied.}
 
 \item{valid_mode}{Either \code{"signal"} or \code{"finite_frac"}.}
 
@@ -67,6 +87,12 @@ block-level clustering.}
 
 \item{pixel_assign}{Either \code{"l1_nearest_center"} or
 \code{"l2_nearest_center"} for full-resolution reassignment.}
+
+\item{snr_stat}{Either integrated SNR or median per-wavelength SNR when
+\code{target_snr} is supplied.}
+
+\item{variance_inflation}{Multiplicative factor applied to propagated
+variances when \code{target_snr} is supplied.}
 
 \item{polish_iters}{Number of medoid-polishing iterations in full pixel
 space after the initial assignment.}

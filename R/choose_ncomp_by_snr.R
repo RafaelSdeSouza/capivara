@@ -27,6 +27,22 @@
   }, numeric(1))
 }
 
+.evaluate_cluster_snr_screen <- function(cluster_snr, target_snr) {
+  finite <- is.finite(cluster_snr)
+  min_cluster_snr <- if (any(finite)) {
+    min(cluster_snr[finite])
+  } else {
+    NA_real_
+  }
+
+  all_clusters_pass <- all(finite) && all(cluster_snr[finite] >= target_snr)
+
+  list(
+    min_cluster_snr = min_cluster_snr,
+    all_clusters_pass = all_clusters_pass
+  )
+}
+
 #' Choose the Number of Clusters from a Target SNR Cut
 #'
 #' This function computes the Capivara dendrogram once, evaluates a grid of cuts,
@@ -125,11 +141,12 @@ choose_ncomp_by_snr <- function(input,
       snr_stat = snr_stat,
       variance_inflation = variance_inflation
     )
+    screen <- .evaluate_cluster_snr_screen(cluster_snr, target_snr)
 
     data.frame(
       Ncomp = k,
-      min_cluster_snr = min(cluster_snr, na.rm = TRUE),
-      all_clusters_pass = all(cluster_snr >= target_snr, na.rm = TRUE)
+      min_cluster_snr = screen$min_cluster_snr,
+      all_clusters_pass = screen$all_clusters_pass
     )
   })
   snr_grid <- do.call(rbind, snr_grid)

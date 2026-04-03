@@ -6,7 +6,7 @@
 \usage{
 segment_starlet(
   input,
-  Ncomp = 5,
+  Ncomp = 15,
   redshift = 0,
   scale_fn = median_scale,
   engine = c("standard", "big_cube"),
@@ -31,7 +31,7 @@ segment_starlet(
 \item{input}{A FITS-like object with an \code{imDat} cube, or a raw
 3-D numeric array.}
 
-\item{Ncomp}{Integer, the number of clusters to form.}
+\item{Ncomp}{Integer, the number of clusters to form. Defaults to `15`.}
 
 \item{redshift}{Numeric redshift placeholder kept for API compatibility.}
 
@@ -41,24 +41,24 @@ segment_starlet(
 \code{\link{segment}}, while \code{"big_cube"} uses
 \code{\link{segment_big_cube}}.}
 
-\item{target_snr}{Optional minimum accepted SNR per cluster for the exact
-backend. When supplied, the masked cube is cut at the largest
+\item{target_snr}{Optional minimum accepted SNR per cluster. When supplied,
+the masked cube is cut at the largest
 \code{Ncomp} whose minimum cluster SNR remains above this threshold.}
 
 \item{var_cube}{Optional variance cube used only when \code{target_snr} is
-supplied with \code{engine = "standard"}.}
+supplied.}
 
 \item{k_values}{Optional candidate cluster counts tested only when
-\code{target_snr} is supplied with \code{engine = "standard"}.}
+\code{target_snr} is supplied.}
 
 \item{wavelength_range}{Optional wavelength interval used to compute SNR only
-when \code{target_snr} is supplied with \code{engine = "standard"}.}
+when \code{target_snr} is supplied.}
 
 \item{snr_stat}{Either integrated SNR or median per-wavelength SNR when
-\code{target_snr} is supplied with \code{engine = "standard"}.}
+\code{target_snr} is supplied.}
 
 \item{variance_inflation}{Multiplicative factor applied to propagated
-variances when \code{target_snr} is supplied with \code{engine = "standard"}.}
+variances when \code{target_snr} is supplied.}
 
 \item{collapse_fn}{Function used to build the white-light image.}
 

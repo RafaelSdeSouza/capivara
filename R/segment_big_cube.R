@@ -118,13 +118,20 @@
   out
 }
 
-.segment_bigcube_compute_cluster_medoids <- function(X, labels, K, metric = c("l1", "l2")) {
+.segment_bigcube_compute_cluster_medoids <- function(X,
+                                                     labels,
+                                                     K,
+                                                     metric = c("l1", "l2"),
+                                                     fallback_centers = NULL) {
   metric <- match.arg(metric)
   centers <- matrix(NA_real_, nrow = K, ncol = ncol(X))
 
   for (k in seq_len(K)) {
     idx <- which(labels == k)
     if (!length(idx)) {
+      if (!is.null(fallback_centers)) {
+        centers[k, ] <- fallback_centers[k, ]
+      }
       next
     }
     mk <- .segment_bigcube_medoid_index(X[idx, , drop = FALSE], metric = metric)
@@ -132,6 +139,83 @@
   }
 
   centers
+}
+
+.segment_bigcube_assign_map <- function(feat_pixels,
+                                        centers,
+                                        valid_pix,
+                                        n_row,
+                                        n_col,
+                                        center_metric = c("l1", "l2"),
+                                        polish_iters = 0L,
+                                        refine = TRUE,
+                                        refine_radius = 1L,
+                                        refine_max_pixels = 50000L,
+                                        seed = 42,
+                                        verbose = FALSE) {
+  center_metric <- match.arg(center_metric)
+
+  cluster_map <- matrix(NA_integer_, nrow = n_row, ncol = n_col)
+  pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
+
+  if (polish_iters > 0L) {
+    if (verbose) {
+      message(sprintf("Polishing %d iterations in full pixel space...", polish_iters))
+    }
+    for (it in seq_len(polish_iters)) {
+      centers <- .segment_bigcube_compute_cluster_medoids(
+        feat_pixels,
+        labels = pix_lbl,
+        K = nrow(centers),
+        metric = center_metric,
+        fallback_centers = centers
+      )
+      pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
+    }
+  }
+
+  cluster_map[valid_pix] <- pix_lbl
+
+  if (refine) {
+    if (verbose) {
+      message("Boundary refinement...")
+    }
+    ref_centers <- .segment_bigcube_compute_cluster_medoids(
+      feat_pixels,
+      labels = pix_lbl,
+      K = nrow(centers),
+      metric = center_metric,
+      fallback_centers = centers
+    )
+    bp <- .segment_bigcube_boundary_pixels(cluster_map, r = refine_radius)
+    if (nrow(bp) > refine_max_pixels) {
+      set.seed(seed)
+      bp <- bp[sample.int(nrow(bp), refine_max_pixels), , drop = FALSE]
+    }
+    if (nrow(bp) > 0L) {
+      lin <- bp[, 1] + (bp[, 2] - 1L) * n_row
+      pos <- match(lin, valid_pix)
+      ok <- !is.na(pos)
+      if (any(ok)) {
+        pos <- pos[ok]
+        lin <- lin[ok]
+        new_lbl <- .segment_bigcube_assign_nearest(
+          feat_pixels[pos, , drop = FALSE],
+          ref_centers,
+          metric = center_metric
+        )
+        cluster_map[lin] <- new_lbl
+        pix_lbl[pos] <- new_lbl
+        centers <- ref_centers
+      }
+    }
+  }
+
+  list(
+    cluster_map = cluster_map,
+    pixel_labels = pix_lbl,
+    centers = centers
+  )
 }
 
 #' Scalable Segmentation for Very Large IFU Cubes via Block Medoids
@@ -151,7 +235,7 @@
 #'
 #' @param input A FITS-like object with an \code{imDat} 3-D numeric cube, or a
 #'   raw 3-D numeric array.
-#' @param Ncomp Integer, the number of clusters to form.
+#' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
 #' @param redshift Numeric redshift placeholder kept for API compatibility.
 #' @param scale_fn Row-wise scaling function. If \code{NULL}, an internal
 #'   robust median/MAD scaler is used.
@@ -162,6 +246,16 @@
 #'   condensed distance object.
 #' @param m_cap Optional cap on the number of block representatives kept for
 #'   clustering.
+#' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
+#'   Capivara chooses the largest number of clusters whose minimum cluster SNR
+#'   remains above this threshold.
+#' @param var_cube Optional variance cube matching the input cube. Used only
+#'   when \code{target_snr} is supplied.
+#' @param k_values Optional candidate cluster counts tested when
+#'   \code{target_snr} is supplied. If omitted, the scalable backend screens up
+#'   to the largest 50 cuts.
+#' @param wavelength_range Optional wavelength interval used to compute SNR when
+#'   \code{target_snr} is supplied.
 #' @param valid_mode Either \code{"signal"} or \code{"finite_frac"}.
 #' @param min_finite_frac Minimum finite fraction required when
 #'   \code{valid_mode = "finite_frac"}.
@@ -174,6 +268,10 @@
 #'   block-level clustering.
 #' @param pixel_assign Either \code{"l1_nearest_center"} or
 #'   \code{"l2_nearest_center"} for full-resolution reassignment.
+#' @param snr_stat Either integrated SNR or median per-wavelength SNR when
+#'   \code{target_snr} is supplied.
+#' @param variance_inflation Multiplicative factor applied to propagated
+#'   variances when \code{target_snr} is supplied.
 #' @param polish_iters Number of medoid-polishing iterations in full pixel
 #'   space after the initial assignment.
 #' @param refine Logical; if \code{TRUE}, only boundary pixels are reassigned
@@ -188,13 +286,17 @@
 #' @seealso \code{\link{segment}}, \code{\link{segment_starlet}}
 #' @export
 segment_big_cube <- function(input,
-                             Ncomp = 5,
+                             Ncomp = 15,
                              redshift = 0,
                              scale_fn = NULL,
                              block_size = NULL,
                              ram_gb = 32,
                              frac_for_dist = 0.25,
                              m_cap = NULL,
+                             target_snr = NULL,
+                             var_cube = NULL,
+                             k_values = NULL,
+                             wavelength_range = NULL,
                              valid_mode = c("signal", "finite_frac"),
                              min_finite_frac = 0.80,
                              use_pca = FALSE,
@@ -202,6 +304,8 @@ segment_big_cube <- function(input,
                              seed = 42,
                              dist_method = c("capivara_l1", "euclidean"),
                              pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
+                             snr_stat = c("integrated", "median_per_wavelength"),
+                             variance_inflation = 1,
                              polish_iters = 0L,
                              refine = TRUE,
                              refine_radius = 1L,
@@ -210,6 +314,11 @@ segment_big_cube <- function(input,
   valid_mode <- match.arg(valid_mode)
   dist_method <- match.arg(dist_method)
   pixel_assign <- match.arg(pixel_assign)
+  snr_stat <- match.arg(snr_stat)
+
+  if (!is.null(target_snr) && !missing(Ncomp)) {
+    stop("Specify either `Ncomp` or `target_snr`, not both.")
+  }
 
   cubedat <- .as_cubedat(input)
   cube <- cubedat$imDat
@@ -264,7 +373,7 @@ segment_big_cube <- function(input,
   if (!length(valid_pix)) {
     stop("No valid pixels after filtering.")
   }
-  if (!is.null(Ncomp) && length(valid_pix) < Ncomp) {
+  if (is.null(target_snr) && !is.null(Ncomp) && length(valid_pix) < Ncomp) {
     stop("`Ncomp` is larger than the number of valid pixels.")
   }
 
@@ -295,6 +404,9 @@ segment_big_cube <- function(input,
   valid_blocks <- which(!is.na(block_medoid_pos))
   if (!length(valid_blocks)) {
     stop("No valid blocks after medoid selection.")
+  }
+  if (is.null(target_snr) && !is.null(Ncomp) && Ncomp > length(valid_blocks)) {
+    stop("`Ncomp` is larger than the number of valid block medoids.")
   }
 
   feat_blocks <- block_rep[valid_blocks, , drop = FALSE]
@@ -327,80 +439,171 @@ segment_big_cube <- function(input,
   }
 
   hc <- fastcluster::hclust(d, method = "ward.D2")
-  bl <- stats::cutree(hc, k = Ncomp)
-
-  centers <- .segment_bigcube_compute_cluster_medoids(
-    feat_blocks,
-    labels = bl,
-    K = Ncomp,
-    metric = center_metric
-  )
-
-  cluster_map <- matrix(NA_integer_, nrow = n_row, ncol = n_col)
-
-  pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
-
-  if (polish_iters > 0L) {
-    if (verbose) {
-      message(sprintf("Polishing %d iterations in full pixel space...", polish_iters))
-    }
-    for (it in seq_len(polish_iters)) {
-      centers <- .segment_bigcube_compute_cluster_medoids(
-        feat_pixels,
-        labels = pix_lbl,
-        K = Ncomp,
-        metric = center_metric
-      )
-      pix_lbl <- .segment_bigcube_assign_nearest(feat_pixels, centers, metric = center_metric)
-    }
+  flux_mat_valid <- IFU2D[valid_pix, , drop = FALSE]
+  wavelengths <- if (!is.null(cubedat$axDat)) {
+    FITSio::axVec(3, cubedat$axDat)
+  } else {
+    seq_len(ncol(flux_mat_valid))
   }
 
-  cluster_map[valid_pix] <- pix_lbl
-
-  if (refine) {
-    if (verbose) {
-      message("Boundary refinement...")
-    }
-    ref_centers <- .segment_bigcube_compute_cluster_medoids(
-      feat_pixels,
-      labels = pix_lbl,
-      K = Ncomp,
+  if (is.null(target_snr)) {
+    chosen_k <- Ncomp
+    bl <- stats::cutree(hc, k = chosen_k)
+    centers <- .segment_bigcube_compute_cluster_medoids(
+      feat_blocks,
+      labels = bl,
+      K = chosen_k,
       metric = center_metric
     )
-    bp <- .segment_bigcube_boundary_pixels(cluster_map, r = refine_radius)
-    if (nrow(bp) > refine_max_pixels) {
-      set.seed(seed)
-      bp <- bp[sample.int(nrow(bp), refine_max_pixels), , drop = FALSE]
+    assigned <- .segment_bigcube_assign_map(
+      feat_pixels = feat_pixels,
+      centers = centers,
+      valid_pix = valid_pix,
+      n_row = n_row,
+      n_col = n_col,
+      center_metric = center_metric,
+      polish_iters = polish_iters,
+      refine = refine,
+      refine_radius = refine_radius,
+      refine_max_pixels = refine_max_pixels,
+      seed = seed,
+      verbose = verbose
+    )
+    cluster_map <- assigned$cluster_map
+    pix_lbl <- assigned$pixel_labels
+    centers <- assigned$centers
+    snr_grid <- NULL
+  } else {
+    if (is.null(var_cube)) {
+      var_mat_valid <- pmax(flux_mat_valid, 0)
+    } else {
+      var_input <- .as_cubedat(var_cube)
+      if (!identical(dim(var_input$imDat), dim(cubedat$imDat))) {
+        stop("`var_cube` must have the same dimensions as the input cube.")
+      }
+      var_mat_valid <- cube_to_matrix(var_input)[valid_pix, , drop = FALSE]
     }
-    if (nrow(bp) > 0L) {
-      lin <- bp[, 1] + (bp[, 2] - 1L) * n_row
-      pos <- match(lin, valid_pix)
-      ok <- !is.na(pos)
-      if (any(ok)) {
-        pos <- pos[ok]
-        lin <- lin[ok]
-        new_lbl <- .segment_bigcube_assign_nearest(
-          feat_pixels[pos, , drop = FALSE],
-          ref_centers,
-          metric = center_metric
-        )
-        cluster_map[lin] <- new_lbl
-        pix_lbl[pos] <- new_lbl
-        centers <- ref_centers
+    var_mat_valid[!is.finite(var_mat_valid) | var_mat_valid < 0] <- NA_real_
+
+    if (is.null(wavelength_range)) {
+      wave_idx <- seq_len(ncol(flux_mat_valid))
+    } else {
+      if (length(wavelength_range) != 2) {
+        stop("`wavelength_range` must have length 2.")
+      }
+      wave_idx <- which(wavelengths >= min(wavelength_range) & wavelengths <= max(wavelength_range))
+      if (!length(wave_idx)) {
+        stop("No wavelengths fall inside `wavelength_range`.")
       }
     }
+
+    max_k <- nrow(feat_blocks)
+    if (is.null(k_values)) {
+      k_values <- seq(from = min(max_k, 50L), to = 1L, by = -1L)
+    } else {
+      k_values <- sort(unique(as.integer(k_values)), decreasing = TRUE)
+      k_values <- k_values[k_values >= 1L & k_values <= max_k]
+    }
+    if (!length(k_values)) {
+      stop("No valid `k_values` to test.")
+    }
+
+    snr_grid <- lapply(k_values, function(k) {
+      labels_k <- stats::cutree(hc, k = k)
+      centers_k <- .segment_bigcube_compute_cluster_medoids(
+        feat_blocks,
+        labels = labels_k,
+        K = k,
+        metric = center_metric
+      )
+      assigned_k <- .segment_bigcube_assign_map(
+        feat_pixels = feat_pixels,
+        centers = centers_k,
+        valid_pix = valid_pix,
+        n_row = n_row,
+        n_col = n_col,
+        center_metric = center_metric,
+        polish_iters = polish_iters,
+        refine = refine,
+        refine_radius = refine_radius,
+        refine_max_pixels = refine_max_pixels,
+        seed = seed,
+        verbose = FALSE
+      )
+      cluster_snr_k <- .compute_cluster_snr_from_variance(
+        flux_mat = flux_mat_valid,
+        var_mat = var_mat_valid,
+        clusters = assigned_k$pixel_labels,
+        wave_idx = wave_idx,
+        snr_stat = snr_stat,
+        variance_inflation = variance_inflation
+      )
+      screen <- .evaluate_cluster_snr_screen(cluster_snr_k, target_snr)
+
+      data.frame(
+        Ncomp = k,
+        min_cluster_snr = screen$min_cluster_snr,
+        all_clusters_pass = screen$all_clusters_pass
+      )
+    })
+    snr_grid <- do.call(rbind, snr_grid)
+
+    ok <- which(snr_grid$all_clusters_pass)
+    if (!length(ok)) {
+      stop("No clustering configuration satisfies the target SNR.")
+    }
+
+    chosen_k <- snr_grid$Ncomp[ok[1]]
+    bl <- stats::cutree(hc, k = chosen_k)
+    centers <- .segment_bigcube_compute_cluster_medoids(
+      feat_blocks,
+      labels = bl,
+      K = chosen_k,
+      metric = center_metric
+    )
+    assigned <- .segment_bigcube_assign_map(
+      feat_pixels = feat_pixels,
+      centers = centers,
+      valid_pix = valid_pix,
+      n_row = n_row,
+      n_col = n_col,
+      center_metric = center_metric,
+      polish_iters = polish_iters,
+      refine = refine,
+      refine_radius = refine_radius,
+      refine_max_pixels = refine_max_pixels,
+      seed = seed,
+      verbose = verbose
+    )
+    cluster_map <- assigned$cluster_map
+    pix_lbl <- assigned$pixel_labels
+    centers <- assigned$centers
   }
 
-  sn <- .compute_signal_noise(IFU2D)
-  cluster_snr <- .compute_cluster_snr(
-    clusters = cluster_map[valid_pix],
-    signal_valid = sn$signal[valid_pix],
-    noise_valid = sn$noise[valid_pix]
-  )
+  if (is.null(target_snr)) {
+    sn <- .compute_signal_noise(IFU2D)
+    cluster_snr <- .compute_cluster_snr(
+      clusters = pix_lbl,
+      signal_valid = sn$signal[valid_pix],
+      noise_valid = sn$noise[valid_pix]
+    )
+  } else {
+    cluster_snr <- .compute_cluster_snr_from_variance(
+      flux_mat = flux_mat_valid,
+      var_mat = var_mat_valid,
+      clusters = pix_lbl,
+      wave_idx = wave_idx,
+      snr_stat = snr_stat,
+      variance_inflation = variance_inflation
+    )
+  }
 
   list(
     cluster_map = cluster_map,
     cluster_snr = cluster_snr,
+    Ncomp = chosen_k,
+    snr_grid = snr_grid,
+    hclust = hc,
     block_map = block_map,
     block_size = block_size,
     n_blocks = n_blocks,

@@ -6,7 +6,7 @@
 \usage{
 segment(
   input,
-  Ncomp = 5,
+  Ncomp = 15,
   redshift = 0,
   scale_fn = median_scale,
   target_snr = NULL,
@@ -20,7 +20,7 @@ segment(
 \arguments{
 \item{input}{A FITS object representing the input data cube. Typically, this is an IFU data cube.}
 
-\item{Ncomp}{Integer, the number of clusters to form.}
+\item{Ncomp}{Integer, the number of clusters to form. Defaults to `15`.}
 
 \item{redshift}{Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).}
 
