@@ -358,3 +358,55 @@ build_starlet_mask <- function(input,
     mask = mask
   )
 }
+
+.apply_starlet_support <- function(input,
+                                   use_starlet_mask = FALSE,
+                                   collapse_fn = collapse_white_light,
+                                   starlet_J = 5,
+                                   starlet_scales = 2:5,
+                                   include_coarse = FALSE,
+                                   denoise_k = 0,
+                                   mode = c("soft", "hard"),
+                                   positive_only = TRUE,
+                                   mask_mode = c("na", "zero")) {
+  mode <- match.arg(mode)
+  mask_mode <- match.arg(mask_mode)
+  cubedat <- .as_cubedat(input)
+
+  if (!isTRUE(use_starlet_mask)) {
+    return(list(
+      input = cubedat,
+      starlet_info = NULL
+    ))
+  }
+
+  mask_info <- build_starlet_mask(
+    input = cubedat,
+    collapse_fn = collapse_fn,
+    starlet_J = starlet_J,
+    starlet_scales = starlet_scales,
+    include_coarse = include_coarse,
+    denoise_k = denoise_k,
+    mode = mode,
+    positive_only = positive_only
+  )
+
+  if (!any(mask_info$mask, na.rm = TRUE)) {
+    stop("The starlet mask is empty. Try different `starlet_scales`, `denoise_k`, or `positive_only = FALSE`.")
+  }
+
+  masked_cube <- mask_cube(cubedat$imDat, mask_info$mask, mode = mask_mode)
+  masked_input <- cubedat
+  masked_input$imDat <- masked_cube
+
+  list(
+    input = masked_input,
+    starlet_info = list(
+      mask = mask_info$mask,
+      collapsed = mask_info$collapsed,
+      decomposition = mask_info$decomposition,
+      reconstruction = mask_info$reconstruction,
+      masked_cube = masked_cube
+    )
+  )
+}

@@ -26,6 +26,15 @@ segment_big_cube(
   pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
   snr_stat = c("integrated", "median_per_wavelength"),
   variance_inflation = 1,
+  use_starlet_mask = FALSE,
+  collapse_fn = collapse_white_light,
+  starlet_J = 5,
+  starlet_scales = 2:5,
+  include_coarse = FALSE,
+  denoise_k = 0,
+  starlet_mode = c("soft", "hard"),
+  positive_only = TRUE,
+  mask_mode = c("na", "zero"),
   polish_iters = 0L,
   refine = TRUE,
   refine_radius = 1L,
@@ -94,6 +103,32 @@ block-level clustering.}
 \item{variance_inflation}{Multiplicative factor applied to propagated
 variances when \code{target_snr} is supplied.}
 
+\item{use_starlet_mask}{Logical; if \code{TRUE}, build a Sagui-style
+white-light starlet mask before clustering.}
+
+\item{collapse_fn}{Function used to collapse the cube to white light when
+\code{use_starlet_mask = TRUE}.}
+
+\item{starlet_J}{Number of starlet scales when \code{use_starlet_mask = TRUE}.}
+
+\item{starlet_scales}{Integer vector of scales kept in the reconstruction
+when \code{use_starlet_mask = TRUE}.}
+
+\item{include_coarse}{Logical; include the coarse starlet plane when
+\code{use_starlet_mask = TRUE}.}
+
+\item{denoise_k}{Optional denoising threshold in MAD units when
+\code{use_starlet_mask = TRUE}.}
+
+\item{starlet_mode}{Thresholding mode for the starlet reconstruction when
+\code{use_starlet_mask = TRUE}.}
+
+\item{positive_only}{Logical; keep only positive reconstructed values when
+\code{use_starlet_mask = TRUE}.}
+
+\item{mask_mode}{Either \code{"na"} or \code{"zero"} for masked spaxels
+when \code{use_starlet_mask = TRUE}.}
+
 \item{polish_iters}{Number of medoid-polishing iterations in full pixel
 space after the initial assignment.}
 
@@ -108,9 +143,11 @@ pixels.}
 \item{verbose}{Logical.}
 }
 \value{
-A list containing the full-resolution \code{cluster_map}, block
-  metadata, medoid centers, a per-cluster SNR summary, axis/header data, the
-  original cube, and \code{backend = "medoid"}.
+A list containing the full-resolution \code{cluster_map}, the
+  chosen \code{Ncomp}, a per-cluster SNR summary, axis/header data, the
+  original cube, and \code{backend = "medoid"}. Scalable-engine diagnostics
+  are stored under \code{backend_info}. When \code{use_starlet_mask = TRUE},
+  starlet products are stored under \code{starlet_info}.
 }
 \description{
 This is the user-facing large-cube entry point for Capivara. It keeps the
@@ -128,5 +165,5 @@ too much RAM because it must build an all-pairs distance object over all
 valid spaxels.
 }
 \seealso{
-\code{\link{segment}}, \code{\link{segment_starlet}}
+\code{\link{segment}}, \code{\link{build_starlet_mask}}
 }

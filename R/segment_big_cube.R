@@ -272,6 +272,23 @@
 #'   \code{target_snr} is supplied.
 #' @param variance_inflation Multiplicative factor applied to propagated
 #'   variances when \code{target_snr} is supplied.
+#' @param use_starlet_mask Logical; if \code{TRUE}, build a Sagui-style
+#'   white-light starlet mask before clustering.
+#' @param collapse_fn Function used to collapse the cube to white light when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param starlet_J Number of starlet scales when \code{use_starlet_mask = TRUE}.
+#' @param starlet_scales Integer vector of scales kept in the reconstruction
+#'   when \code{use_starlet_mask = TRUE}.
+#' @param include_coarse Logical; include the coarse starlet plane when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param denoise_k Optional denoising threshold in MAD units when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param starlet_mode Thresholding mode for the starlet reconstruction when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param positive_only Logical; keep only positive reconstructed values when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param mask_mode Either \code{"na"} or \code{"zero"} for masked spaxels
+#'   when \code{use_starlet_mask = TRUE}.
 #' @param polish_iters Number of medoid-polishing iterations in full pixel
 #'   space after the initial assignment.
 #' @param refine Logical; if \code{TRUE}, only boundary pixels are reassigned
@@ -280,10 +297,12 @@
 #'   pixels.
 #' @param refine_max_pixels Maximum number of boundary pixels to refine.
 #' @param verbose Logical.
-#' @return A list containing the full-resolution \code{cluster_map}, block
-#'   metadata, medoid centers, a per-cluster SNR summary, axis/header data, the
-#'   original cube, and \code{backend = "medoid"}.
-#' @seealso \code{\link{segment}}, \code{\link{segment_starlet}}
+#' @return A list containing the full-resolution \code{cluster_map}, the
+#'   chosen \code{Ncomp}, a per-cluster SNR summary, axis/header data, the
+#'   original cube, and \code{backend = "medoid"}. Scalable-engine diagnostics
+#'   are stored under \code{backend_info}. When \code{use_starlet_mask = TRUE},
+#'   starlet products are stored under \code{starlet_info}.
+#' @seealso \code{\link{segment}}, \code{\link{build_starlet_mask}}
 #' @export
 segment_big_cube <- function(input,
                              Ncomp = 15,
@@ -306,6 +325,15 @@ segment_big_cube <- function(input,
                              pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
                              snr_stat = c("integrated", "median_per_wavelength"),
                              variance_inflation = 1,
+                             use_starlet_mask = FALSE,
+                             collapse_fn = collapse_white_light,
+                             starlet_J = 5,
+                             starlet_scales = 2:5,
+                             include_coarse = FALSE,
+                             denoise_k = 0,
+                             starlet_mode = c("soft", "hard"),
+                             positive_only = TRUE,
+                             mask_mode = c("na", "zero"),
                              polish_iters = 0L,
                              refine = TRUE,
                              refine_radius = 1L,
@@ -315,12 +343,27 @@ segment_big_cube <- function(input,
   dist_method <- match.arg(dist_method)
   pixel_assign <- match.arg(pixel_assign)
   snr_stat <- match.arg(snr_stat)
+  starlet_mode <- match.arg(starlet_mode)
+  mask_mode <- match.arg(mask_mode)
 
   if (!is.null(target_snr) && !missing(Ncomp)) {
     stop("Specify either `Ncomp` or `target_snr`, not both.")
   }
 
-  cubedat <- .as_cubedat(input)
+  starlet_prep <- .apply_starlet_support(
+    input = input,
+    use_starlet_mask = use_starlet_mask,
+    collapse_fn = collapse_fn,
+    starlet_J = starlet_J,
+    starlet_scales = starlet_scales,
+    include_coarse = include_coarse,
+    denoise_k = denoise_k,
+    mode = starlet_mode,
+    positive_only = positive_only,
+    mask_mode = mask_mode
+  )
+
+  cubedat <- .as_cubedat(starlet_prep$input)
   cube <- cubedat$imDat
   stopifnot(!is.null(cube), length(dim(cube)) == 3L)
 
@@ -598,12 +641,19 @@ segment_big_cube <- function(input,
     )
   }
 
-  list(
+  out <- list(
     cluster_map = cluster_map,
     cluster_snr = cluster_snr,
     Ncomp = chosen_k,
     snr_grid = snr_grid,
     hclust = hc,
+    header = cubedat$hdr,
+    axDat = cubedat$axDat,
+    original_cube = cubedat,
+    backend = "medoid"
+  )
+
+  out$backend_info <- list(
     block_map = block_map,
     block_size = block_size,
     n_blocks = n_blocks,
@@ -613,10 +663,12 @@ segment_big_cube <- function(input,
     block_medoid_pos = block_medoid_pos,
     pca = pca,
     centers = centers,
-    valid_pix = valid_pix,
-    header = cubedat$hdr,
-    axDat = cubedat$axDat,
-    original_cube = cubedat,
-    backend = "medoid"
+    valid_pix = valid_pix
   )
+
+  if (!is.null(starlet_prep$starlet_info)) {
+    out$starlet_info <- starlet_prep$starlet_info
+  }
+
+  out
 }

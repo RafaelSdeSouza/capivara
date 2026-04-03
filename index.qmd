@@ -17,7 +17,6 @@ The core segmentation API is intentionally small:
 
 - `segment()` for the standard exact workflow, including missing spectral channels.
 - `segment_big_cube()` for very large cubes where exact pairwise distances are too expensive in RAM.
-- `segment_starlet()` for the optional white-light starlet support mask with either backend.
 
 ### Current Capivara Mosaic
 
@@ -34,7 +33,7 @@ comparison easier.
 
 - `segment()` now handles missing spectral channels by default.
 - `segment_big_cube()` now uses block medoids rather than block averages, improving compact structures in large cubes.
-- `segment_starlet()` adds a Sagui-style starlet mask from the white-light image.
+- both backends can optionally use a Sagui-style starlet mask from the white-light image.
 - `summarize_cluster_spectra()` supports median, summed, and weighted spectra.
 - `choose_ncomp_by_snr()` selects `Ncomp` from a variance-aware SNR cut.
 - `torch` is now optional.
@@ -77,10 +76,10 @@ res_large <- segment_big_cube(cube, Ncomp = 20, block_size = 6)
 ### Sagui-style Starlet Segmentation
 
 ```R
-res_star <- segment_starlet(
+res_star <- segment(
   cube,
   Ncomp = 20,
-  engine = "standard",
+  use_starlet_mask = TRUE,
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
@@ -93,10 +92,10 @@ plot_cluster(res_star)
 ```
 
 ```R
-res_star_large <- segment_starlet(
+res_star_large <- segment_big_cube(
   cube,
   Ncomp = 20,
-  engine = "big_cube",
+  use_starlet_mask = TRUE,
   block_size = 6
 )
 ```

@@ -14,7 +14,16 @@ segment(
   k_values = NULL,
   wavelength_range = NULL,
   snr_stat = c("integrated", "median_per_wavelength"),
-  variance_inflation = 1
+  variance_inflation = 1,
+  use_starlet_mask = FALSE,
+  collapse_fn = collapse_white_light,
+  starlet_J = 5,
+  starlet_scales = 2:5,
+  include_coarse = FALSE,
+  denoise_k = 0,
+  starlet_mode = c("soft", "hard"),
+  positive_only = TRUE,
+  mask_mode = c("na", "zero")
 )
 }
 \arguments{
@@ -45,6 +54,32 @@ when \code{target_snr} is supplied.}
 
 \item{variance_inflation}{Multiplicative factor applied to propagated
 variances when \code{target_snr} is supplied.}
+
+\item{use_starlet_mask}{Logical; if \code{TRUE}, build a Sagui-style
+white-light starlet mask before clustering.}
+
+\item{collapse_fn}{Function used to collapse the cube to white light when
+\code{use_starlet_mask = TRUE}.}
+
+\item{starlet_J}{Number of starlet scales when \code{use_starlet_mask = TRUE}.}
+
+\item{starlet_scales}{Integer vector of scales kept in the reconstruction
+when \code{use_starlet_mask = TRUE}.}
+
+\item{include_coarse}{Logical; include the coarse starlet plane when
+\code{use_starlet_mask = TRUE}.}
+
+\item{denoise_k}{Optional denoising threshold in MAD units when
+\code{use_starlet_mask = TRUE}.}
+
+\item{starlet_mode}{Thresholding mode for the starlet reconstruction when
+\code{use_starlet_mask = TRUE}.}
+
+\item{positive_only}{Logical; keep only positive reconstructed values when
+\code{use_starlet_mask = TRUE}.}
+
+\item{mask_mode}{Either \code{"na"} or \code{"zero"} for masked spaxels
+when \code{use_starlet_mask = TRUE}.}
 }
 \value{
 A list containing:
@@ -53,6 +88,9 @@ A list containing:
 \item{axDat}{Axis information (e.g., spatial and spectral axes) from the input FITS file.}
 \item{cluster_snr}{A numeric vector containing the signal-to-noise ratio (SNR) for each cluster.}
 \item{original_cube}{The original FITS data cube as input to the function, for reference and post-processing.}
+\item{starlet_info}{When \code{use_starlet_mask = TRUE}, a list containing
+the spatial mask, white-light image, starlet decomposition,
+reconstruction, and masked cube used before clustering.}
 
 This process is often used in IFU data analysis, where clustering is applied to grouped
 spectral profiles of spatial pixels to identify regions with similar characteristics.
@@ -98,7 +136,7 @@ if (torch::torch_is_installed()) {
 
 }
 \seealso{
-\code{\link{segment_big_cube}}, \code{\link{segment_starlet}},
+\code{\link{segment_big_cube}}, \code{\link{build_starlet_mask}},
   \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
   \code{\link[stats]{cutree}}
 }

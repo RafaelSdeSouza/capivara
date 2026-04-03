@@ -23,8 +23,6 @@ The core segmentation API is intentionally small:
   spectral channels.
 - `segment_big_cube()` for very large cubes where exact pairwise
   distances are too expensive in RAM.
-- `segment_starlet()` for the optional white-light starlet support mask
-  with either backend.
 
 ### Current Capivara Mosaic
 
@@ -42,8 +40,8 @@ comparison easier.
 - `segment()` now handles missing spectral channels by default.
 - `segment_big_cube()` now uses block medoids rather than block
   averages, improving compact structures in large cubes.
-- `segment_starlet()` adds a Sagui-style photometric mask built from the
-  white-light image.
+- both backends can optionally use a Sagui-style photometric mask built
+  from the white-light image.
 - `summarize_cluster_spectra()` returns median, summed, and
   inverse-variance-weighted spectra.
 - `choose_ncomp_by_snr()` helps select `Ncomp` from an SNR threshold
@@ -97,14 +95,14 @@ res_large <- segment_big_cube(cube, Ncomp = 20, block_size = 6)
 
 ### Sagui-style Starlet Masking
 
-The starlet mask is built from the white-light image, then applied back
-to the full cube before clustering.
+The starlet mask can be built from the white-light image, then applied
+back to the full cube before clustering.
 
 ``` r
-res_star <- segment_starlet(
+res_star <- segment(
   cube,
   Ncomp = 20,
-  engine = "standard",
+  use_starlet_mask = TRUE,
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
@@ -120,10 +118,10 @@ For large cubes, the same white-light mask can be combined with the
 scalable backend:
 
 ``` r
-res_star_large <- segment_starlet(
+res_star_large <- segment_big_cube(
   cube,
   Ncomp = 20,
-  engine = "big_cube",
+  use_starlet_mask = TRUE,
   block_size = 6
 )
 ```

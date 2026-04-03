@@ -30,6 +30,23 @@
 #'   \code{target_snr} is supplied.
 #' @param variance_inflation Multiplicative factor applied to propagated
 #'   variances when \code{target_snr} is supplied.
+#' @param use_starlet_mask Logical; if \code{TRUE}, build a Sagui-style
+#'   white-light starlet mask before clustering.
+#' @param collapse_fn Function used to collapse the cube to white light when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param starlet_J Number of starlet scales when \code{use_starlet_mask = TRUE}.
+#' @param starlet_scales Integer vector of scales kept in the reconstruction
+#'   when \code{use_starlet_mask = TRUE}.
+#' @param include_coarse Logical; include the coarse starlet plane when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param denoise_k Optional denoising threshold in MAD units when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param starlet_mode Thresholding mode for the starlet reconstruction when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param positive_only Logical; keep only positive reconstructed values when
+#'   \code{use_starlet_mask = TRUE}.
+#' @param mask_mode Either \code{"na"} or \code{"zero"} for masked spaxels
+#'   when \code{use_starlet_mask = TRUE}.
 #'
 #' @details
 #' Steps performed by the function:
@@ -51,11 +68,14 @@
 #' \item{axDat}{Axis information (e.g., spatial and spectral axes) from the input FITS file.}
 #' \item{cluster_snr}{A numeric vector containing the signal-to-noise ratio (SNR) for each cluster.}
 #' \item{original_cube}{The original FITS data cube as input to the function, for reference and post-processing.}
+#' \item{starlet_info}{When \code{use_starlet_mask = TRUE}, a list containing
+#' the spatial mask, white-light image, starlet decomposition,
+#' reconstruction, and masked cube used before clustering.}
 #'
 #' This process is often used in IFU data analysis, where clustering is applied to grouped
 #' spectral profiles of spatial pixels to identify regions with similar characteristics.
 #'
-#' @seealso \code{\link{segment_big_cube}}, \code{\link{segment_starlet}},
+#' @seealso \code{\link{segment_big_cube}}, \code{\link{build_starlet_mask}},
 #'   \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
 #'   \code{\link[stats]{cutree}}
 #'
@@ -80,13 +100,39 @@ segment <- function(input,
                     k_values = NULL,
                     wavelength_range = NULL,
                     snr_stat = c("integrated", "median_per_wavelength"),
-                    variance_inflation = 1) {
+                    variance_inflation = 1,
+                    use_starlet_mask = FALSE,
+                    collapse_fn = collapse_white_light,
+                    starlet_J = 5,
+                    starlet_scales = 2:5,
+                    include_coarse = FALSE,
+                    denoise_k = 0,
+                    starlet_mode = c("soft", "hard"),
+                    positive_only = TRUE,
+                    mask_mode = c("na", "zero")) {
+  starlet_mode <- match.arg(starlet_mode)
+  mask_mode <- match.arg(mask_mode)
+
+  starlet_prep <- .apply_starlet_support(
+    input = input,
+    use_starlet_mask = use_starlet_mask,
+    collapse_fn = collapse_fn,
+    starlet_J = starlet_J,
+    starlet_scales = starlet_scales,
+    include_coarse = include_coarse,
+    denoise_k = denoise_k,
+    mode = starlet_mode,
+    positive_only = positive_only,
+    mask_mode = mask_mode
+  )
+  input <- starlet_prep$input
+
   if (!is.null(target_snr)) {
     if (!missing(Ncomp)) {
       stop("Specify either `Ncomp` or `target_snr`, not both.")
     }
 
-    return(choose_ncomp_by_snr(
+    out <- choose_ncomp_by_snr(
       input = input,
       target_snr = target_snr,
       var_cube = var_cube,
@@ -97,14 +143,20 @@ segment <- function(input,
       snr_stat = snr_stat,
       variance_inflation = variance_inflation,
       na_safe = TRUE
-    ))
+    )
+  } else {
+    out <- .segment_core(
+      input = input,
+      Ncomp = Ncomp,
+      redshift = redshift,
+      scale_fn = scale_fn,
+      na_to_zero = TRUE
+    )
   }
 
-  .segment_core(
-    input = input,
-    Ncomp = Ncomp,
-    redshift = redshift,
-    scale_fn = scale_fn,
-    na_to_zero = TRUE
-  )
+  if (!is.null(starlet_prep$starlet_info)) {
+    out$starlet_info <- starlet_prep$starlet_info
+  }
+
+  out
 }

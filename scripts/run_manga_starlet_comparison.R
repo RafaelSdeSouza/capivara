@@ -63,8 +63,8 @@ collapse_sagui <- function(cube) {
 
 base_res <- segment(x, Ncomp = 8)
 star_res <- do.call(
-  segment_starlet,
-  c(list(input = x, Ncomp = 8, collapse_fn = collapse_sagui, mask_mode = "na"), starlet_cfg)
+  segment,
+  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na"), starlet_cfg)
 )
 
 collapsed <- collapse_sagui(cube)
@@ -112,7 +112,7 @@ base_plot <- plot_cluster(base_res, palette = cluster_palette) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
 
 star_plot <- plot_cluster(star_res, palette = cluster_palette) +
-  ggplot2::ggtitle(sprintf("segment_starlet(): %d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
+  ggplot2::ggtitle(sprintf("segment(use_starlet_mask=TRUE): %d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
 
 grDevices::png(png_path, width = 1600, height = 1400, res = 170)
