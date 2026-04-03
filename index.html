@@ -175,7 +175,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><code>segment()</code> for the standard exact workflow, including missing spectral channels.</li>
 <li><code>segment_big_cube()</code> for very large cubes where exact pairwise distances are too expensive in RAM.</li>
-<li><code>segment_starlet()</code> for the optional white-light starlet support mask with either backend.</li>
 </ul>
 <section id="current-capivara-mosaic" class="level3">
 <h3 class="anchored" data-anchor-id="current-capivara-mosaic">Current Capivara Mosaic</h3>
@@ -192,7 +191,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><code>segment()</code> now handles missing spectral channels by default.</li>
 <li><code>segment_big_cube()</code> now uses block medoids rather than block averages, improving compact structures in large cubes.</li>
-<li><code>segment_starlet()</code> adds a Sagui-style starlet mask from the white-light image.</li>
+<li>both backends can optionally use a Sagui-style starlet mask from the white-light image.</li>
 <li><code>summarize_cluster_spectra()</code> supports median, summed, and weighted spectra.</li>
 <li><code>choose_ncomp_by_snr()</code> selects <code>Ncomp</code> from a variance-aware SNR cut.</li>
 <li><code>torch</code> is now optional.</li>
@@ -225,10 +224,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sagui-style-starlet-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="sagui-style-starlet-segmentation">Sagui-style Starlet Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment</span>(</span>
 <span id="cb5-2"><a href="#cb5-2"></a>  cube,</span>
 <span id="cb5-3"><a href="#cb5-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
-<span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">engine =</span> <span class="st">"standard"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
 <span id="cb5-6"><a href="#cb5-6"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
 <span id="cb5-7"><a href="#cb5-7"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
@@ -238,10 +237,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-11"><a href="#cb5-11"></a>)</span>
 <span id="cb5-12"><a href="#cb5-12"></a></span>
 <span id="cb5-13"><a href="#cb5-13"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star_large <span class="ot">&lt;-</span> <span class="fu">segment_starlet</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star_large <span class="ot">&lt;-</span> <span class="fu">segment_big_cube</span>(</span>
 <span id="cb6-2"><a href="#cb6-2"></a>  cube,</span>
 <span id="cb6-3"><a href="#cb6-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
-<span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">engine =</span> <span class="st">"big_cube"</span>,</span>
+<span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">block_size =</span> <span class="dv">6</span></span>
 <span id="cb6-6"><a href="#cb6-6"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="quarto-figure quarto-figure-center">

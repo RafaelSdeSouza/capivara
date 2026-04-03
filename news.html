@@ -140,7 +140,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="added">Added</h2>
 <ul>
 <li><code>segment_big_cube()</code> as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.</li>
-<li><code>build_starlet_mask()</code> and <code>segment_starlet()</code> for Sagui-style white-light starlet masking before clustering.</li>
+<li><code>build_starlet_mask()</code> for Sagui-style white-light starlet masking before clustering.</li>
 <li><code>summarize_cluster_spectra()</code> for median, summed, and inverse-variance-weighted cluster spectra.</li>
 <li><code>choose_ncomp_by_snr()</code> for variance-aware component selection from an SNR threshold.</li>
 <li><code>reconstruct_cluster_cube()</code> and <code>reconstruct_flux_preserving_cube()</code> for representative and flux-preserving model cubes.</li>
@@ -152,9 +152,9 @@ ul.task-list li input[type="checkbox"] {
 <ul>
 <li><code>segment()</code> now handles missing spectral channels directly in the exact workflow.</li>
 <li><code>segment_big_cube()</code> now uses block medoids rather than block averages, improving compact structures in large cubes.</li>
-<li><code>segment_starlet()</code> can now apply the white-light mask before either the exact or big-cube backend.</li>
+<li><code>segment()</code> and <code>segment_big_cube()</code> now accept the optional white-light starlet mask directly.</li>
 <li><code>torch</code> is now optional; Capivara falls back to base R distance calculations when <code>torch</code> is unavailable.</li>
-<li>The public segmentation API is now limited to <code>segment()</code>, <code>segment_big_cube()</code>, and <code>segment_starlet()</code> to avoid duplicate legacy entry points.</li>
+<li>The public segmentation API is now limited to <code>segment()</code> and <code>segment_big_cube()</code> to avoid duplicate entry points.</li>
 <li>GitHub and website documentation now describe the missing-data, starlet-mask, and variance-aware workflows.</li>
 </ul>
 </section>
