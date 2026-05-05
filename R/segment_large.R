@@ -153,7 +153,7 @@
   wave_idx
 }
 
-#' Fast Capivara segmentation using sparse Ward clustering
+#' Large-cube Capivara segmentation
 #'
 #' This backend keeps Ward's merge criterion but restricts candidate merges to a
 #' k-nearest-neighbor graph. It is intended for large cubes where
@@ -213,34 +213,34 @@
 #'   \code{cluster_snr}, and \code{original_cube}. Scalable-backend diagnostics
 #'   are stored under \code{backend_info}.
 #' @export
-segment_sparse_ward <- function(input,
-                                Ncomp = 15,
-                                redshift = 0,
-                                scale_fn = NULL,
-                                target_snr = NULL,
-                                var_cube = NULL,
-                                k_values = NULL,
-                                wavelength_range = NULL,
-                                snr_stat = c("integrated", "median_per_wavelength"),
-                                variance_inflation = 1,
-                                use_starlet_mask = FALSE,
-                                collapse_fn = collapse_white_light,
-                                starlet_J = 5,
-                                starlet_scales = 2:5,
-                                include_coarse = FALSE,
-                                denoise_k = 0,
-                                starlet_mode = c("soft", "hard"),
-                                positive_only = TRUE,
-                                mask_mode = c("na", "zero"),
-                                knn_k = 40,
-                                auto_k = TRUE,
-                                max_k = NULL,
-                                feature_scale = c("none", "robust_col"),
-                                spatial_weight = 0,
-                                mask = NULL,
-                                valid_mode = c("signal", "finite"),
-                                return_details = FALSE,
-                                verbose = TRUE) {
+segment_large <- function(input,
+                          Ncomp = 15,
+                          redshift = 0,
+                          scale_fn = NULL,
+                          target_snr = NULL,
+                          var_cube = NULL,
+                          k_values = NULL,
+                          wavelength_range = NULL,
+                          snr_stat = c("integrated", "median_per_wavelength"),
+                          variance_inflation = 1,
+                          use_starlet_mask = FALSE,
+                          collapse_fn = collapse_white_light,
+                          starlet_J = 5,
+                          starlet_scales = 2:5,
+                          include_coarse = FALSE,
+                          denoise_k = 0,
+                          starlet_mode = c("soft", "hard"),
+                          positive_only = TRUE,
+                          mask_mode = c("na", "zero"),
+                          knn_k = 40,
+                          auto_k = TRUE,
+                          max_k = NULL,
+                          feature_scale = c("none", "robust_col"),
+                          spatial_weight = 0,
+                          mask = NULL,
+                          valid_mode = c("signal", "finite"),
+                          return_details = FALSE,
+                          verbose = TRUE) {
   feature_scale <- match.arg(feature_scale)
   valid_mode <- match.arg(valid_mode)
   snr_stat <- match.arg(snr_stat)
@@ -481,11 +481,3 @@ segment_sparse_ward <- function(input,
 
   out
 }
-
-#' @rdname segment_sparse_ward
-#' @export
-segment_snn <- segment_sparse_ward
-
-#' @rdname segment_sparse_ward
-#' @export
-segment_hgc_snn <- segment_sparse_ward
