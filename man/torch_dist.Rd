@@ -23,11 +23,8 @@ the `torch` backend. It leverages the highly efficient `nnf_pdist()` function,
 optionally using GPU if available.
 }
 \examples{
-if (torch::torch_is_installed()) {
-  x <- matrix(rnorm(100 * 5), nrow = 100)
-  d <- torch_dist(x, p = 2)
-  h <- hclust(d)
-  plot(h)
-}
+x <- matrix(rnorm(20 * 5), nrow = 20)
+d <- torch_dist(x, p = 2)
+h <- hclust(d)
 
 }

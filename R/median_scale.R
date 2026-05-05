@@ -18,5 +18,5 @@ median_scale <- function(x) {
     stop("Input must be a numeric vector.")
   }
 
-  x - median(x, na.rm = TRUE)
+  x - stats::median(x, na.rm = TRUE)
 }

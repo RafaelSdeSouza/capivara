@@ -24,6 +24,8 @@ Must include the following elements:
 
 \item{highlight_color}{A character string specifying the color for the median spectrum
 line in the plot (default: \code{"#FFDE38"}).}
+
+\item{map_palette}{A viridis palette name used for the cluster-map panel.}
 }
 \value{
 A \code{ggplot2} object representing the plot.
@@ -47,10 +49,10 @@ The plot is returned as a \code{ggplot2} object for further customization or sav
 cluster_result <- list(
   cluster_map = matrix(sample(1:3, 100, replace = TRUE), nrow = 10),
   original_cube = list(imDat = array(runif(1000), dim = c(10, 10, 10))),
-  axDat = list(c(1:10, 1:10, seq(4000, 7000, length.out = 10)))
+  axDat = NULL
 )
 
-plot <- capivara_plot_spectra(cluster_result, bin_id = 1)
-print(plot)
+plots <- capivara_plot_spectra_with_map(cluster_result, bin_id = 1)
+print(plots$spectra_plot)
 
 }

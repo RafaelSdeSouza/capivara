@@ -28,7 +28,7 @@ build_starlet_mask(
 
 \item{denoise_k}{Optional denoising threshold in MAD units.}
 
-\item{mode}{Thresholding mode passed to \code{\link{starlet_reconstruct}}.}
+\item{mode}{Thresholding mode used while reconstructing selected starlet scales.}
 
 \item{positive_only}{Logical; keep only positive reconstructed values.}
 }

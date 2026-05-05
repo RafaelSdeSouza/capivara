@@ -1,0 +1,12 @@
+utils::globalVariables(c(
+  "cluster",
+  "Cluster",
+  "Col",
+  "Flux",
+  "Highlighted",
+  "Median_Flux",
+  "Median_Spectrum",
+  "Row",
+  "Spectrum_ID",
+  "Wavelength"
+))

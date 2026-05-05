@@ -80,15 +80,10 @@
 #'   \code{\link[stats]{cutree}}
 #'
 #' @examples
-#' if (torch::torch_is_installed()) {
-#'   # Read a FITS cube and cluster it
-#'   input_cube <- FITSio::readFITS("manga_7443_12703_LOGCUBE.fits")
-#'   clustering_result <- segment(input = input_cube, Ncomp = 5)
-#'
-#'   # Access the cluster map and original cube
-#'   cluster_map <- clustering_result$cluster_map
-#'   original_cube <- clustering_result$original_cube
-#' }
+#' input_cube <- list(imDat = array(runif(5 * 5 * 12), dim = c(5, 5, 12)))
+#' clustering_result <- segment(input = input_cube, Ncomp = 5)
+#' cluster_map <- clustering_result$cluster_map
+#' original_cube <- clustering_result$original_cube
 #'
 #' @export
 segment <- function(input,

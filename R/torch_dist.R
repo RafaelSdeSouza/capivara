@@ -12,12 +12,9 @@
 #' @return An object of class `dist`, compatible with R clustering and multivariate analysis functions.
 #'
 #' @examples
-#' if (torch::torch_is_installed()) {
-#'   x <- matrix(rnorm(100 * 5), nrow = 100)
-#'   d <- torch_dist(x, p = 2)
-#'   h <- hclust(d)
-#'   plot(h)
-#' }
+#' x <- matrix(rnorm(20 * 5), nrow = 20)
+#' d <- torch_dist(x, p = 2)
+#' h <- hclust(d)
 #'
 #' @export
 torch_dist <- function(x, p = 1, device = NULL) {

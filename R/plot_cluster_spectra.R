@@ -111,7 +111,7 @@ plot_cluster_spectra <- function(cluster_result, scale_fn = median_scale, palett
     ggplot2::geom_line(linewidth = 0.15) +
     ggplot2::scale_color_manual(values = colors) +
     ggplot2::facet_wrap(~ cluster, scales = "free_y") +
-    ggplot2::labs(x = "Wavelength (Å)", y = "Flux") +
+    ggplot2::labs(x = "Wavelength (Angstrom)", y = "Flux") +
     ggplot2::theme(
       panel.background = ggplot2::element_rect(fill = "gray50"),
       axis.ticks.length = grid::unit(0.1, "cm"),

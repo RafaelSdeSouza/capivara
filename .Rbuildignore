@@ -1,7 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
+^\.quarto$
 ^_site$
 ^outputs$
 ^scripts$
+^LICENSE\.md$
 ^.*\.DS_Store$

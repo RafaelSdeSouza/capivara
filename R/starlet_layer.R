@@ -317,7 +317,7 @@ mask_cube <- function(cube, labels, mode = c("zero", "na")) {
 #' @param starlet_scales Integer vector of scales kept in the reconstruction.
 #' @param include_coarse Logical; include the coarse starlet plane.
 #' @param denoise_k Optional denoising threshold in MAD units.
-#' @param mode Thresholding mode passed to \code{\link{starlet_reconstruct}}.
+#' @param mode Thresholding mode used while reconstructing selected starlet scales.
 #' @param positive_only Logical; keep only positive reconstructed values.
 #'
 #' @return A list with \code{collapsed}, \code{decomposition},

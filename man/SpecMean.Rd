@@ -46,19 +46,11 @@ This legacy helper is retained for compatibility. For new workflows, prefer
 \code{\link{reconstruct_flux_preserving_cube}}.
 }
 \examples{
-# Example clustering result (pseudo-code)
-cluster_result <- list(
-  original_cube = FITSio::readFITS("manga-11749-12701-LOGCUBE.fits"),
-  cluster_map = some_cluster_map,
-  axDat = some_axDat
-)
-
-# Run SpecMean
+cube <- array(runif(4 * 4 * 8), dim = c(4, 4, 8))
+cluster_result <- segment(list(imDat = cube, hdr = NULL, axDat = NULL), Ncomp = 3)
 result <- SpecMean(cluster_result)
-
-# Access outputs
-median_specs       <- result$MeanSpec
+median_specs <- result$MeanSpec
 median_spectrum_cube <- result$reshaped_cube
-pixel_cluster_table  <- result$post_process_table
+pixel_cluster_table <- result$post_process_table
 
 }

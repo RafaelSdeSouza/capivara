@@ -16,9 +16,6 @@ Alternatively, this can be a `readFITS` object containing the data cube and its 
 
 \item{scale_fn}{A function to scale each spaxel spectrum. Defaults to `median_scale`,
 which centers each spectrum by subtracting its median value.}
-
-\item{sn_func}{A function to compute the signal-to-noise ratio for a group of spaxels.
-Defaults to a standard implementation that sums the signal and noise across spaxels.}
 }
 \value{
 A list containing:
@@ -35,21 +32,17 @@ approximation. For variance-aware SNR cuts, use
 \code{\link{choose_ncomp_by_snr}} directly.
 }
 \examples{
-if (torch::torch_is_installed()) {
-  # Read the FITS cube and cluster based on a target SNR
-  fits_data <- FITSio::readFITS("example_cube.fits")
-  result <- cube_cluster_with_snr(
-    input = fits_data,
-    target_snr = 50,
-    redshift = 0,
-    scale_fn = median_scale
-  )
-  cluster_map <- result$cluster_map
-  dim(cluster_map) # Dimensions match the spatial size of the FITS cube
-}
+cube <- list(imDat = array(runif(4 * 4 * 8, min = 1), dim = c(4, 4, 8)))
+result <- cube_cluster_with_snr(
+  input = cube,
+  target_snr = 1,
+  redshift = 0,
+  scale_fn = median_scale
+)
+cluster_map <- result$cluster_map
+dim(cluster_map)
 
 }
 \seealso{
-\code{\link{choose_ncomp_by_snr}}, \code{\link{segment}},
-  \code{\link{segment}}
+\code{\link{choose_ncomp_by_snr}}, \code{\link{segment}}
 }

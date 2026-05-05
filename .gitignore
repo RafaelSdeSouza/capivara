@@ -8,3 +8,7 @@
 /_site/
 /outputs/
 **/*.quarto_ipynb
+*.tar.gz
+src/*.o
+src/*.so
+src/symbols.rds

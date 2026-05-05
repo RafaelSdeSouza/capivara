@@ -11,9 +11,6 @@
 #' @param redshift Numeric. The redshift value used for any wavelength corrections. Default is 0.
 #' @param scale_fn A function to scale each spaxel spectrum. Defaults to `median_scale`,
 #'   which centers each spectrum by subtracting its median value.
-#' @param sn_func A function to compute the signal-to-noise ratio for a group of spaxels.
-#'   Defaults to a standard implementation that sums the signal and noise across spaxels.
-#'
 #' @return A list containing:
 #' \describe{
 #'   \item{\code{cluster_map}}{A matrix of cluster assignments (dimensions: rows x columns).}
@@ -25,22 +22,18 @@
 #' @importFrom fastcluster hclust
 #' @importFrom stats cutree
 #'
-#' @seealso \code{\link{choose_ncomp_by_snr}}, \code{\link{segment}},
-#'   \code{\link{segment}}
+#' @seealso \code{\link{choose_ncomp_by_snr}}, \code{\link{segment}}
 #'
 #' @examples
-#' if (torch::torch_is_installed()) {
-#'   # Read the FITS cube and cluster based on a target SNR
-#'   fits_data <- FITSio::readFITS("example_cube.fits")
-#'   result <- cube_cluster_with_snr(
-#'     input = fits_data,
-#'     target_snr = 50,
-#'     redshift = 0,
-#'     scale_fn = median_scale
-#'   )
-#'   cluster_map <- result$cluster_map
-#'   dim(cluster_map) # Dimensions match the spatial size of the FITS cube
-#' }
+#' cube <- list(imDat = array(runif(4 * 4 * 8, min = 1), dim = c(4, 4, 8)))
+#' result <- cube_cluster_with_snr(
+#'   input = cube,
+#'   target_snr = 1,
+#'   redshift = 0,
+#'   scale_fn = median_scale
+#' )
+#' cluster_map <- result$cluster_map
+#' dim(cluster_map)
 #'
 #' @export
 

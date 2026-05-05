@@ -607,7 +607,7 @@ segment_big_cube <- function(input,
       block_size <- sel$block_size
       if (verbose) {
         message(sprintf(
-          "Chosen block_size=%d (target blocks<=%d, expected n_blocks≈%d)",
+          "Chosen block_size=%d (target blocks<=%d, expected n_blocks about %d)",
           block_size, sel$m_target, sel$n_blocks
         ))
       }

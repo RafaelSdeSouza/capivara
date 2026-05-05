@@ -14,6 +14,7 @@
 #' @param bin_id An integer specifying the ID of the bin to be visualized.
 #' @param highlight_color A character string specifying the color for the median spectrum
 #'   line in the plot (default: \code{"#FFDE38"}).
+#' @param map_palette A viridis palette name used for the cluster-map panel.
 #'
 #' @details
 #' The function extracts the spectra for all pixels in the specified bin, computes the median spectrum,
@@ -31,11 +32,11 @@
 #' cluster_result <- list(
 #'   cluster_map = matrix(sample(1:3, 100, replace = TRUE), nrow = 10),
 #'   original_cube = list(imDat = array(runif(1000), dim = c(10, 10, 10))),
-#'   axDat = list(c(1:10, 1:10, seq(4000, 7000, length.out = 10)))
+#'   axDat = NULL
 #' )
 #'
-#' plot <- capivara_plot_spectra(cluster_result, bin_id = 1)
-#' print(plot)
+#' plots <- capivara_plot_spectra_with_map(cluster_result, bin_id = 1)
+#' print(plots$spectra_plot)
 #'
 #' @import ggplot2
 #' @importFrom tidyr pivot_longer
@@ -46,7 +47,11 @@ capivara_plot_spectra_with_map <- function(cluster_result, bin_id, highlight_col
   # Extract data from Capivara outputs
   cluster_map <- cluster_result$cluster_map
   original_cube <- cluster_result$original_cube
-  wavelengths <- FITSio::axVec(3, cluster_result$axDat)  # Extract wavelength axis
+  wavelengths <- if (!is.null(cluster_result$axDat)) {
+    FITSio::axVec(3, cluster_result$axDat)
+  } else {
+    seq_len(dim(original_cube$imDat)[3])
+  }
 
   # Validate bin_id
   if (!bin_id %in% unique(as.vector(cluster_map))) {
@@ -63,7 +68,7 @@ capivara_plot_spectra_with_map <- function(cluster_result, bin_id, highlight_col
   spectra_matrix <- t(spectra_list)
 
   # Compute the median spectrum for the bin
-  median_spectrum <- apply(spectra_matrix, 2, median, na.rm = TRUE)
+  median_spectrum <- apply(spectra_matrix, 2, stats::median, na.rm = TRUE)
   median_df <- data.frame(
     Wavelength = wavelengths,
     Median_Spectrum = median_spectrum
@@ -91,7 +96,7 @@ capivara_plot_spectra_with_map <- function(cluster_result, bin_id, highlight_col
     ggplot2::geom_line(data = median_df, ggplot2::aes(x = Wavelength, y = Median_Spectrum), color = highlight_color, size = 1.2) +
     ggplot2::labs(
       title = paste("Spectra for Bin", bin_id),
-      x = "Wavelength (Å)",
+      x = "Wavelength (Angstrom)",
       y = "Flux"
     ) +
     ggplot2::theme_minimal() +

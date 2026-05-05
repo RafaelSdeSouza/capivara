@@ -22,8 +22,8 @@ segment_big_cube(
   use_pca = FALSE,
   pca_k = 30,
   seed = 42,
-  dist_method = c("capivara_l1", "euclidean"),
-  pixel_assign = c("l1_nearest_center", "l2_nearest_center"),
+  dist_method = c("euclidean", "capivara_l1"),
+  pixel_assign = c("l2_nearest_center", "l1_nearest_center"),
   snr_stat = c("integrated", "median_per_wavelength"),
   variance_inflation = 1,
   use_starlet_mask = FALSE,
@@ -54,7 +54,11 @@ raw 3-D numeric array.}
 robust median/MAD scaler is used.}
 
 \item{block_size}{Spatial block size in pixels. If \code{NULL}, it is chosen
-automatically from \code{ram_gb}.}
+automatically from \code{ram_gb}. When left as \code{NULL},
+\code{segment_big_cube()} first tries a memory-saving
+\code{fastcluster::hclust.vector()} Ward backend on the full set of valid
+pixels for medium-large cubes, then falls back to block medoids only when
+the cube is too large for that path.}
 
 \item{ram_gb}{Approximate RAM budget used when choosing \code{block_size}.}
 
@@ -91,11 +95,12 @@ before clustering.}
 \item{seed}{Integer random seed used when boundary refinement must sample a
 subset of candidate pixels.}
 
-\item{dist_method}{Either \code{"capivara_l1"} or \code{"euclidean"} for
-block-level clustering.}
+\item{dist_method}{Either \code{"euclidean"} or \code{"capivara_l1"} for
+block-level clustering. The default \code{"euclidean"} is the most
+coherent choice with Ward's D2 linkage in the scalable backend.}
 
-\item{pixel_assign}{Either \code{"l1_nearest_center"} or
-\code{"l2_nearest_center"} for full-resolution reassignment.}
+\item{pixel_assign}{Either \code{"l2_nearest_center"} or
+\code{"l1_nearest_center"} for full-resolution reassignment.}
 
 \item{snr_stat}{Either integrated SNR or median per-wavelength SNR when
 \code{target_snr} is supplied.}
@@ -145,9 +150,11 @@ pixels.}
 \value{
 A list containing the full-resolution \code{cluster_map}, the
   chosen \code{Ncomp}, a per-cluster SNR summary, axis/header data, the
-  original cube, and \code{backend = "medoid"}. Scalable-engine diagnostics
-  are stored under \code{backend_info}. When \code{use_starlet_mask = TRUE},
-  starlet products are stored under \code{starlet_info}.
+  original cube, and \code{backend} indicating whether the scalable result
+  used the exact-ish vector Ward backend or the block-medoid approximation.
+  Scalable-engine diagnostics are stored under \code{backend_info}. When
+  \code{use_starlet_mask = TRUE}, starlet products are stored under
+  \code{starlet_info}.
 }
 \description{
 This is the user-facing large-cube entry point for Capivara. It keeps the
