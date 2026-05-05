@@ -75,7 +75,7 @@
 #' This process is often used in IFU data analysis, where clustering is applied to grouped
 #' spectral profiles of spatial pixels to identify regions with similar characteristics.
 #'
-#' @seealso \code{\link{segment_big_cube}}, \code{\link{build_starlet_mask}},
+#' @seealso \code{\link{segment_large}}, \code{\link{build_starlet_mask}},
 #'   \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
 #'   \code{\link[stats]{cutree}}
 #'

@@ -8,16 +8,15 @@
 ## Overview
 
 Capivara provides spectral segmentation tools for Integral Field Unit (IFU)
-data cubes. Version `0.2.0` adds built-in missing-data support in the exact
-workflow, a sparse-Ward backend for large cubes, a medoid-based large-cube engine, Sagui-style white-light starlet
+data cubes. Version `0.3.0` adds built-in missing-data support in the exact
+workflow, sparse-Ward segmentation for large cubes, Sagui-style white-light starlet
 masking, variance-aware spectral summaries, and SNR-guided component
 selection.
 
 The core segmentation API is intentionally small:
 
-- `segment()` for the standard exact workflow, including missing spectral channels.
-- `segment_sparse_ward()` for large cubes where exact pairwise distances are too expensive in RAM.
-- `segment_big_cube()` is retained as a block-medoid approximation for workflows that explicitly want spatial blocking.
+- `segment()` for the standard exact Ward workflow, including missing spectral channels.
+- `segment_large()` for large cubes where exact pairwise distances are too expensive in RAM.
 
 ### Current Capivara Mosaic
 
@@ -30,13 +29,12 @@ The core segmentation API is intentionally small:
 Both mosaics are displayed with the same fixed size to make the visual
 comparison easier.
 
-## What's New In 0.2.0
+## What's New In 0.3.0
 
 - `segment()` now handles missing spectral channels by default.
-- `segment_sparse_ward()` adds the calibrated kNN-restricted sparse-Ward backend for large cubes.
+- `segment_large()` adds the calibrated kNN-restricted sparse-Ward backend for large cubes.
 - `estimate_segment_memory()` reports the exact Ward distance-vector RAM lower bound before you allocate it.
-- `segment_big_cube()` now uses block medoids rather than block averages, improving compact structures in large cubes.
-- both backends can optionally use a Sagui-style starlet mask from the white-light image.
+- both segmentation backends can optionally use a Sagui-style starlet mask from the white-light image.
 - `summarize_cluster_spectra()` supports median, summed, and weighted spectra.
 - `choose_ncomp_by_snr()` selects `Ncomp` from a variance-aware SNR cut.
 - `torch` is now optional.
@@ -74,7 +72,7 @@ plot_cluster(res)
 
 ```R
 estimate_segment_memory(cube, knn_k = 30)
-res_large <- segment_sparse_ward(cube, Ncomp = 20, knn_k = 40)
+res_large <- segment_large(cube, Ncomp = 20, knn_k = 40)
 ```
 
 ### Sagui-style Starlet Segmentation
@@ -96,7 +94,7 @@ plot_cluster(res_star)
 ```
 
 ```R
-res_star_large <- segment_sparse_ward(
+res_star_large <- segment_large(
   cube,
   Ncomp = 20,
   use_starlet_mask = TRUE,

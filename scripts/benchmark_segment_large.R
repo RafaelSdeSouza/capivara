@@ -122,7 +122,7 @@ cat(sprintf("Exact Ward distance vector: %.2f GB\n", memory$exact_distance_gb))
 cat(sprintf("Exact Ward conservative estimate: %.2f GB\n", memory$exact_conservative_gb))
 cat(sprintf("Sparse kNN graph estimate: %.2f GB\n", memory$sparse_knn_graph_gb))
 
-sparse <- time_call(segment_sparse_ward(input, Ncomp = Ncomp, knn_k = knn_k, verbose = FALSE))
+sparse <- time_call(segment_large(input, Ncomp = Ncomp, knn_k = knn_k, verbose = FALSE))
 
 required_fields <- c("cluster_map", "header", "axDat", "cluster_snr", "original_cube")
 coherence_checks <- list(
@@ -132,7 +132,7 @@ coherence_checks <- list(
 )
 
 timing <- data.frame(
-  backend = "segment_sparse_ward",
+  backend = "segment_large",
   elapsed_sec = sparse$elapsed,
   clusters = length(unique(stats::na.omit(as.vector(sparse$value$cluster_map)))),
   valid_pixels = sum(!is.na(sparse$value$cluster_map))

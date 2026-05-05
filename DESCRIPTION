@@ -1,15 +1,16 @@
 Package: capivara
 Type: Package
 Title: Decomposition and Analysis of IFU Data Cubes
-Version: 0.2.0
+Version: 0.3.0
 Imports: FITSio, dplyr, fastcluster, ggplot2, matrixStats, reshape2, tidyr, viridis, RANN, Rcpp
 LinkingTo: Rcpp
-Suggests: torch, irlba
+Suggests: torch
 Author: Rafael S. de Souza
 Maintainer: Rafael S. de Souza <rd23aag@herts.ac.uk>
 Description: The 'capivara' package provides tools for spectral segmentation
     and analysis of Integral Field Unit (IFU) data cubes. It includes
-    missing-data-aware clustering, Sagui-style white-light starlet masks,
+    missing-data-aware exact clustering, sparse-Ward large-cube clustering,
+    Sagui-style white-light starlet masks,
     variance-aware cluster summaries, and signal-to-noise-guided component
     selection for astronomy workflows.
 License: MIT + file LICENSE
