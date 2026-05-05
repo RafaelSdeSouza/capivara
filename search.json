@@ -4,14 +4,14 @@
     "href": "news.html#added",
     "title": "Release Notes",
     "section": "Added",
-    "text": "Added\n\nsegment_sparse_ward() as the primary scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.\nsegment_snn() and segment_hgc_snn() remain available as compatibility aliases for the experimental backend names.\nestimate_segment_memory() to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.\nscripts/benchmark_segment_sparse_ward.R for RAM-aware sparse-Ward benchmarking. It skips segment() automatically when the exact distance vector would exceed the configured threshold."
+    "text": "Added\n\nsegment_large() as the scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.\nestimate_segment_memory() to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.\nscripts/benchmark_segment_large.R for RAM-aware sparse-Ward benchmarking. It skips segment() automatically when the exact distance vector would exceed the configured threshold."
   },
   {
     "objectID": "news.html#changed",
     "href": "news.html#changed",
     "title": "Release Notes",
     "section": "Changed",
-    "text": "Changed\n\nDocumentation now presents segment() as the exact backend, segment_sparse_ward() as the scalable large-cube backend, and segment_big_cube() as a retained block-medoid approximation rather than the main large-cube path."
+    "text": "Changed\n\nThe public segmentation API is now limited to segment() for exact Ward and segment_large() for scalable sparse Ward.\nRemoved the experimental segment_snn(), segment_hgc_snn(), and segment_big_cube() entry points from the exported API."
   },
   {
     "objectID": "news.html#added-1",

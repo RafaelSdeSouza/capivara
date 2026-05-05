@@ -133,21 +133,22 @@ ul.task-list li input[type="checkbox"] {
 <section id="release-notes" class="level1">
 <h1>Release Notes</h1>
 </section>
-<section id="capivara-development-version" class="level1">
-<h1>capivara (development version)</h1>
+<section id="capivara-0.3.0" class="level1">
+<h1>capivara 0.3.0</h1>
+<p>Released: 2026-05-05</p>
 <section id="added" class="level2">
 <h2 class="anchored" data-anchor-id="added">Added</h2>
 <ul>
-<li><code>segment_sparse_ward()</code> as the primary scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.</li>
-<li><code>segment_snn()</code> and <code>segment_hgc_snn()</code> remain available as compatibility aliases for the experimental backend names.</li>
+<li><code>segment_large()</code> as the scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.</li>
 <li><code>estimate_segment_memory()</code> to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.</li>
-<li><code>scripts/benchmark_segment_sparse_ward.R</code> for RAM-aware sparse-Ward benchmarking. It skips <code>segment()</code> automatically when the exact distance vector would exceed the configured threshold.</li>
+<li><code>scripts/benchmark_segment_large.R</code> for RAM-aware sparse-Ward benchmarking. It skips <code>segment()</code> automatically when the exact distance vector would exceed the configured threshold.</li>
 </ul>
 </section>
 <section id="changed" class="level2">
 <h2 class="anchored" data-anchor-id="changed">Changed</h2>
 <ul>
-<li>Documentation now presents <code>segment()</code> as the exact backend, <code>segment_sparse_ward()</code> as the scalable large-cube backend, and <code>segment_big_cube()</code> as a retained block-medoid approximation rather than the main large-cube path.</li>
+<li>The public segmentation API is now limited to <code>segment()</code> for exact Ward and <code>segment_large()</code> for scalable sparse Ward.</li>
+<li>Removed the experimental <code>segment_snn()</code>, <code>segment_hgc_snn()</code>, and <code>segment_big_cube()</code> entry points from the exported API.</li>
 </ul>
 </section>
 </section>
