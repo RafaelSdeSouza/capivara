@@ -1,15 +1,17 @@
-# capivara (development version)
+# capivara 0.3.0
+
+Released: 2026-05-05
 
 ## Added
 
-- `segment_sparse_ward()` as the primary scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.
-- `segment_snn()` and `segment_hgc_snn()` remain available as compatibility aliases for the experimental backend names.
+- `segment_large()` as the scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.
 - `estimate_segment_memory()` to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.
-- `scripts/benchmark_segment_sparse_ward.R` for RAM-aware sparse-Ward benchmarking. It skips `segment()` automatically when the exact distance vector would exceed the configured threshold.
+- `scripts/benchmark_segment_large.R` for RAM-aware sparse-Ward benchmarking. It skips `segment()` automatically when the exact distance vector would exceed the configured threshold.
 
 ## Changed
 
-- Documentation now presents `segment()` as the exact backend, `segment_sparse_ward()` as the scalable large-cube backend, and `segment_big_cube()` as a retained block-medoid approximation rather than the main large-cube path.
+- The public segmentation API is now limited to `segment()` for exact Ward and `segment_large()` for scalable sparse Ward.
+- Removed the experimental `segment_snn()`, `segment_hgc_snn()`, and `segment_big_cube()` entry points from the exported API.
 
 # capivara 0.2.0
 

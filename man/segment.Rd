@@ -131,7 +131,7 @@ original_cube <- clustering_result$original_cube
 
 }
 \seealso{
-\code{\link{segment_big_cube}}, \code{\link{build_starlet_mask}},
+\code{\link{segment_large}}, \code{\link{build_starlet_mask}},
   \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
   \code{\link[stats]{cutree}}
 }
