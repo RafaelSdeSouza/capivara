@@ -10,21 +10,22 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// capivara_hgc_snn_cut_cpp
-IntegerVector capivara_hgc_snn_cut_cpp(IntegerMatrix nn_idx, int target_k);
-RcppExport SEXP _capivara_capivara_hgc_snn_cut_cpp(SEXP nn_idxSEXP, SEXP target_kSEXP) {
+// capivara_sparse_ward_cut_cpp
+IntegerVector capivara_sparse_ward_cut_cpp(NumericMatrix features, IntegerMatrix nn_idx, int target_k);
+RcppExport SEXP _capivara_capivara_sparse_ward_cut_cpp(SEXP featuresSEXP, SEXP nn_idxSEXP, SEXP target_kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type features(featuresSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type nn_idx(nn_idxSEXP);
     Rcpp::traits::input_parameter< int >::type target_k(target_kSEXP);
-    rcpp_result_gen = Rcpp::wrap(capivara_hgc_snn_cut_cpp(nn_idx, target_k));
+    rcpp_result_gen = Rcpp::wrap(capivara_sparse_ward_cut_cpp(features, nn_idx, target_k));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_capivara_capivara_hgc_snn_cut_cpp", (DL_FUNC) &_capivara_capivara_hgc_snn_cut_cpp, 2},
+    {"_capivara_capivara_sparse_ward_cut_cpp", (DL_FUNC) &_capivara_capivara_sparse_ward_cut_cpp, 3},
     {NULL, NULL, 0}
 };
 

@@ -1,4 +1,15 @@
-.hgc_robust_col_scale <- function(X) {
+.sparse_ward_scale_features <- function(X, scale_fn = NULL) {
+  X <- as.matrix(X)
+
+  if (is.null(scale_fn)) {
+    X[!is.finite(X)] <- 0
+    return(X)
+  }
+
+  .scale_rows(X, scale_fn = scale_fn, na_to_zero = TRUE)
+}
+
+.sparse_ward_robust_col_scale <- function(X) {
   X <- as.matrix(X)
 
   center <- apply(X, 2, stats::median, na.rm = TRUE)
@@ -18,14 +29,14 @@
   X
 }
 
-.hgc_snn_cluster_matrix <- function(features,
-                                    Ncomp,
-                                    knn_k = 20,
-                                    auto_k = TRUE,
-                                    max_k = NULL,
-                                    verbose = FALSE) {
+.sparse_ward_cluster_matrix <- function(features,
+                                        Ncomp,
+                                        knn_k = 40,
+                                        auto_k = TRUE,
+                                        max_k = NULL,
+                                        verbose = FALSE) {
   if (!requireNamespace("RANN", quietly = TRUE)) {
-    stop("Package 'RANN' is required for the HGC-SNN backend.")
+    stop("Package 'RANN' is required for the sparse-Ward backend.")
   }
 
   features <- as.matrix(features)
@@ -59,7 +70,7 @@
   knn_k <- min(knn_k, n - 1L)
 
   if (is.null(max_k)) {
-    max_k <- min(n - 1L, max(knn_k, 100L))
+    max_k <- min(n - 1L, max(knn_k, 320L))
   } else {
     max_k <- min(as.integer(max_k), n - 1L)
   }
@@ -74,18 +85,18 @@
 
   repeat {
     if (verbose) {
-      message(sprintf("Building HGC-SNN kNN graph with k = %d...", used_k))
+      message(sprintf("Building sparse-Ward kNN graph with k = %d...", used_k))
     }
 
     nn <- RANN::nn2(features, k = used_k + 1L)$nn.idx
     nn <- nn[, -1L, drop = FALSE]
 
-    labels <- capivara_hgc_snn_cut_cpp(nn, as.integer(Ncomp))
+    labels <- capivara_sparse_ward_cut_cpp(features, nn, as.integer(Ncomp))
     actual_k <- length(unique(labels))
 
     if (verbose) {
       message(sprintf(
-        "HGC-SNN returned %d clusters for requested Ncomp = %d.",
+        "Sparse Ward returned %d clusters for requested Ncomp = %d.",
         actual_k,
         Ncomp
       ))
@@ -95,14 +106,14 @@
       break
     }
 
-    used_k <- min(max_k, max(used_k + 1L, ceiling(1.5 * used_k)))
+    used_k <- min(max_k, max(used_k + 1L, ceiling(2 * used_k)))
   }
 
   disconnected <- actual_k > Ncomp
 
   if (disconnected) {
     warning(
-      "HGC-SNN graph remained disconnected: requested ",
+      "Sparse-Ward graph remained disconnected: requested ",
       Ncomp,
       " clusters but obtained ",
       actual_k,
@@ -119,7 +130,7 @@
   )
 }
 
-.hgc_snn_wavelength_index <- function(cubedat, flux_mat, wavelength_range = NULL) {
+.sparse_ward_wavelength_index <- function(cubedat, flux_mat, wavelength_range = NULL) {
   wavelengths <- if (!is.null(cubedat$axDat)) {
     FITSio::axVec(3, cubedat$axDat)
   } else {
@@ -142,16 +153,20 @@
   wave_idx
 }
 
-#' Fast Capivara segmentation using SNN graph clustering
+#' Fast Capivara segmentation using sparse Ward clustering
 #'
-#' This backend replaces the all-pairs distance matrix plus Ward clustering
-#' with an approximate shared-nearest-neighbor graph cut. It is intended for
-#' large cubes where \code{\link{segment}} becomes memory-limited.
+#' This backend keeps Ward's merge criterion but restricts candidate merges to a
+#' k-nearest-neighbor graph. It is intended for large cubes where
+#' \code{\link{segment}} becomes memory-limited because exact Ward needs an
+#' all-pairs distance object.
 #'
 #' @param input A FITS-like object with `imDat`, or a raw 3D array.
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
 #' @param redshift Kept for API compatibility with `segment()`.
-#' @param scale_fn Row-wise spectral scaling function. Defaults to `median_scale`.
+#' @param scale_fn Optional row-wise spectral scaling function. The default
+#'   \code{NULL} follows the sparse-Ward calibration scripts and clusters the
+#'   finite-filled spectra directly. Pass \code{\link{median_scale}} to match
+#'   the default scaling style used by \code{\link{segment}}.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
 #'   Capivara chooses the largest number of clusters whose minimum cluster SNR
 #'   remains above this threshold.
@@ -183,7 +198,7 @@
 #'   \code{use_starlet_mask = TRUE}.
 #' @param mask_mode Either \code{"na"} or \code{"zero"} for masked spaxels
 #'   when \code{use_starlet_mask = TRUE}.
-#' @param knn_k Number of nearest neighbours for the SNN graph.
+#' @param knn_k Number of nearest neighbours for the sparse Ward graph.
 #' @param auto_k If TRUE, increase `knn_k` when the graph is too disconnected.
 #' @param max_k Maximum k allowed when `auto_k = TRUE`.
 #' @param feature_scale Optional column-wise feature scaling after row scaling.
@@ -198,34 +213,34 @@
 #'   \code{cluster_snr}, and \code{original_cube}. Scalable-backend diagnostics
 #'   are stored under \code{backend_info}.
 #' @export
-segment_snn <- function(input,
-                        Ncomp = 15,
-                        redshift = 0,
-                        scale_fn = median_scale,
-                        target_snr = NULL,
-                        var_cube = NULL,
-                        k_values = NULL,
-                        wavelength_range = NULL,
-                        snr_stat = c("integrated", "median_per_wavelength"),
-                        variance_inflation = 1,
-                        use_starlet_mask = FALSE,
-                        collapse_fn = collapse_white_light,
-                        starlet_J = 5,
-                        starlet_scales = 2:5,
-                        include_coarse = FALSE,
-                        denoise_k = 0,
-                        starlet_mode = c("soft", "hard"),
-                        positive_only = TRUE,
-                        mask_mode = c("na", "zero"),
-                        knn_k = 20,
-                        auto_k = TRUE,
-                        max_k = NULL,
-                        feature_scale = c("none", "robust_col"),
-                        spatial_weight = 0,
-                        mask = NULL,
-                        valid_mode = c("signal", "finite"),
-                        return_details = FALSE,
-                        verbose = TRUE) {
+segment_sparse_ward <- function(input,
+                                Ncomp = 15,
+                                redshift = 0,
+                                scale_fn = NULL,
+                                target_snr = NULL,
+                                var_cube = NULL,
+                                k_values = NULL,
+                                wavelength_range = NULL,
+                                snr_stat = c("integrated", "median_per_wavelength"),
+                                variance_inflation = 1,
+                                use_starlet_mask = FALSE,
+                                collapse_fn = collapse_white_light,
+                                starlet_J = 5,
+                                starlet_scales = 2:5,
+                                include_coarse = FALSE,
+                                denoise_k = 0,
+                                starlet_mode = c("soft", "hard"),
+                                positive_only = TRUE,
+                                mask_mode = c("na", "zero"),
+                                knn_k = 40,
+                                auto_k = TRUE,
+                                max_k = NULL,
+                                feature_scale = c("none", "robust_col"),
+                                spatial_weight = 0,
+                                mask = NULL,
+                                valid_mode = c("signal", "finite"),
+                                return_details = FALSE,
+                                verbose = TRUE) {
   feature_scale <- match.arg(feature_scale)
   valid_mode <- match.arg(valid_mode)
   snr_stat <- match.arg(snr_stat)
@@ -256,8 +271,8 @@ segment_snn <- function(input,
     stop("`input$imDat` must be a 3D array with dimensions (n_row, n_col, n_wave).")
   }
 
-  if (!is.function(scale_fn)) {
-    stop("`scale_fn` must be a function.")
+  if (!is.null(scale_fn) && !is.function(scale_fn)) {
+    stop("`scale_fn` must be NULL or a function.")
   }
 
   if (!is.finite(spatial_weight) || spatial_weight < 0) {
@@ -296,21 +311,17 @@ segment_snn <- function(input,
   }
 
   if (verbose) {
-    message(sprintf("Valid pixels for HGC-SNN: %d", length(valid_indices)))
+    message(sprintf("Valid pixels for sparse Ward: %d", length(valid_indices)))
   }
 
   IFU2D_valid <- IFU2D[valid_indices, , drop = FALSE]
   signal_valid <- sn$signal[valid_indices]
   noise_valid <- sn$noise[valid_indices]
 
-  features <- .scale_rows(
-    IFU2D_valid,
-    scale_fn = scale_fn,
-    na_to_zero = TRUE
-  )
+  features <- .sparse_ward_scale_features(IFU2D_valid, scale_fn = scale_fn)
 
   if (feature_scale == "robust_col") {
-    features <- .hgc_robust_col_scale(features)
+    features <- .sparse_ward_robust_col_scale(features)
   }
 
   if (spatial_weight > 0) {
@@ -333,7 +344,7 @@ segment_snn <- function(input,
   snr_grid <- NULL
 
   if (is.null(target_snr)) {
-    fit <- .hgc_snn_cluster_matrix(
+    fit <- .sparse_ward_cluster_matrix(
       features = features,
       Ncomp = Ncomp,
       knn_k = knn_k,
@@ -361,7 +372,7 @@ segment_snn <- function(input,
     }
     var_mat_valid[!is.finite(var_mat_valid) | var_mat_valid < 0] <- NA_real_
 
-    wave_idx <- .hgc_snn_wavelength_index(
+    wave_idx <- .sparse_ward_wavelength_index(
       cubedat = cubedat,
       flux_mat = flux_mat_valid,
       wavelength_range = wavelength_range
@@ -382,7 +393,7 @@ segment_snn <- function(input,
     snr_rows <- vector("list", length(k_values))
     for (i in seq_along(k_values)) {
       k <- k_values[i]
-      fit_k <- .hgc_snn_cluster_matrix(
+      fit_k <- .sparse_ward_cluster_matrix(
         features = features,
         Ncomp = k,
         knn_k = knn_k,
@@ -440,9 +451,9 @@ segment_snn <- function(input,
     snr_grid = snr_grid,
     requested_Ncomp = fit$requested_Ncomp,
     original_cube = cubedat,
-    backend = "snn",
+    backend = "sparse_ward",
     backend_info = list(
-      algorithm = "hgc_snn",
+      algorithm = "sparse_ward",
       knn_k = fit$knn_k,
       requested_Ncomp = fit$requested_Ncomp,
       actual_Ncomp = fit$actual_Ncomp,
@@ -471,6 +482,10 @@ segment_snn <- function(input,
   out
 }
 
-#' @rdname segment_snn
+#' @rdname segment_sparse_ward
 #' @export
-segment_hgc_snn <- segment_snn
+segment_snn <- segment_sparse_ward
+
+#' @rdname segment_sparse_ward
+#' @export
+segment_hgc_snn <- segment_sparse_ward

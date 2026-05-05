@@ -13,7 +13,7 @@ Commit](https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png)](
 
 Capivara provides spectral segmentation tools for Integral Field Unit
 (IFU) data cubes. Version `0.2.0` adds built-in missing-data support in
-the exact workflow, an SNN graph backend for large cubes, a medoid-based
+the exact workflow, a sparse-Ward backend for large cubes, a medoid-based
 large-cube engine, Sagui-style white-light starlet masking,
 variance-aware spectral summaries, and SNR-guided component selection.
 
@@ -21,7 +21,7 @@ The core segmentation API is intentionally small:
 
 - `segment()` for the standard exact workflow, including missing
   spectral channels.
-- `segment_snn()` for large cubes where the exact all-pairs Ward
+- `segment_sparse_ward()` for large cubes where the exact all-pairs Ward
   distance matrix is too expensive in RAM.
 - `segment_big_cube()` is retained as a block-medoid approximation for
   workflows that explicitly want spatial blocking.
@@ -40,8 +40,8 @@ comparison easier.
 ## What’s New In 0.2.0
 
 - `segment()` now handles missing spectral channels by default.
-- `segment_snn()` adds a scalable shared-nearest-neighbor backend for
-  large cubes.
+- `segment_sparse_ward()` adds the calibrated kNN-restricted sparse-Ward
+  backend for large cubes.
 - `estimate_segment_memory()` reports the exact Ward distance-vector RAM
   lower bound before you allocate it.
 - `segment_big_cube()` now uses block medoids rather than block
@@ -99,10 +99,11 @@ square of the number of valid pixels.
 estimate_segment_memory(cube, knn_k = 30)
 ```
 
-Use `segment_snn()` when that estimate is too large for available RAM.
+Use `segment_sparse_ward()` when that estimate is too large for available
+RAM.
 
 ``` r
-res_large <- segment_snn(cube, Ncomp = 20, knn_k = 30)
+res_large <- segment_sparse_ward(cube, Ncomp = 20, knn_k = 40)
 ```
 
 ### Sagui-style Starlet Masking
@@ -130,11 +131,11 @@ For large cubes, the same white-light mask can be combined with the
 scalable backend:
 
 ``` r
-res_star_large <- segment_snn(
+res_star_large <- segment_sparse_ward(
   cube,
   Ncomp = 20,
   use_starlet_mask = TRUE,
-  knn_k = 30
+  knn_k = 40
 )
 ```
 

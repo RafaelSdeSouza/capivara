@@ -19,7 +19,7 @@ an integer giving the number of valid pixels.}
 \code{"signal"} matches \code{\link{segment}}, while \code{"finite"}
 requires every spectral channel to be finite.}
 
-\item{knn_k}{Number of nearest neighbours used for the SNN estimate.}
+\item{knn_k}{Number of nearest neighbours used for the sparse graph estimate.}
 
 \item{overhead_factor}{Multiplicative factor used for a conservative exact
 Ward RAM estimate beyond the condensed distance vector alone.}

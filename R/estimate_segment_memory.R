@@ -9,7 +9,7 @@
 #' @param valid_mode Valid-pixel rule used when \code{input} is a cube:
 #'   \code{"signal"} matches \code{\link{segment}}, while \code{"finite"}
 #'   requires every spectral channel to be finite.
-#' @param knn_k Number of nearest neighbours used for the SNN estimate.
+#' @param knn_k Number of nearest neighbours used for the sparse graph estimate.
 #' @param overhead_factor Multiplicative factor used for a conservative exact
 #'   Ward RAM estimate beyond the condensed distance vector alone.
 #'
@@ -48,13 +48,13 @@ estimate_segment_memory <- function(input,
 
   knn_k <- max(0L, min(as.integer(knn_k), max(0L, n_valid - 1L)))
   exact_distance_gb <- n_valid * (n_valid - 1) / 2 * 8 / 1024^3
-  snn_graph_gb <- n_valid * knn_k * (4 + 8) / 1024^3
+  sparse_graph_gb <- n_valid * knn_k * (4 + 8) / 1024^3
 
   data.frame(
     valid_pixels = n_valid,
     exact_distance_gb = exact_distance_gb,
     exact_conservative_gb = exact_distance_gb * overhead_factor,
-    snn_knn_graph_gb = snn_graph_gb,
+    sparse_knn_graph_gb = sparse_graph_gb,
     knn_k = knn_k,
     row.names = NULL
   )

@@ -120,22 +120,22 @@ memory <- estimate_segment_memory(input, knn_k = knn_k)
 cat(sprintf("Valid pixels: %d\n", memory$valid_pixels))
 cat(sprintf("Exact Ward distance vector: %.2f GB\n", memory$exact_distance_gb))
 cat(sprintf("Exact Ward conservative estimate: %.2f GB\n", memory$exact_conservative_gb))
-cat(sprintf("SNN kNN graph estimate: %.2f GB\n", memory$snn_knn_graph_gb))
+cat(sprintf("Sparse kNN graph estimate: %.2f GB\n", memory$sparse_knn_graph_gb))
 
-snn <- time_call(segment_snn(input, Ncomp = Ncomp, knn_k = knn_k, verbose = FALSE))
+sparse <- time_call(segment_sparse_ward(input, Ncomp = Ncomp, knn_k = knn_k, verbose = FALSE))
 
 required_fields <- c("cluster_map", "header", "axDat", "cluster_snr", "original_cube")
 coherence_checks <- list(
-  required_fields = all(required_fields %in% names(snn$value)),
-  cluster_map_dim = identical(dim(snn$value$cluster_map), dims[1:2]),
-  snn_cluster_count = length(unique(stats::na.omit(as.vector(snn$value$cluster_map)))) == snn$value$Ncomp
+  required_fields = all(required_fields %in% names(sparse$value)),
+  cluster_map_dim = identical(dim(sparse$value$cluster_map), dims[1:2]),
+  sparse_cluster_count = length(unique(stats::na.omit(as.vector(sparse$value$cluster_map)))) == sparse$value$Ncomp
 )
 
 timing <- data.frame(
-  backend = "segment_snn",
-  elapsed_sec = snn$elapsed,
-  clusters = length(unique(stats::na.omit(as.vector(snn$value$cluster_map)))),
-  valid_pixels = sum(!is.na(snn$value$cluster_map))
+  backend = "segment_sparse_ward",
+  elapsed_sec = sparse$elapsed,
+  clusters = length(unique(stats::na.omit(as.vector(sparse$value$cluster_map)))),
+  valid_pixels = sum(!is.na(sparse$value$cluster_map))
 )
 
 agreement <- NA_real_
@@ -154,11 +154,11 @@ if (isTRUE(run_exact) && distance_gb <= max_exact_gb) {
   )
   coherence_checks$valid_pixel_mask <- identical(
     is.na(exact$value$cluster_map),
-    is.na(snn$value$cluster_map)
+    is.na(sparse$value$cluster_map)
   )
   agreement <- sampled_pair_agreement(
     labels_a = as.vector(exact$value$cluster_map),
-    labels_b = as.vector(snn$value$cluster_map),
+    labels_b = as.vector(sparse$value$cluster_map),
     seed = seed
   )
 } else {
