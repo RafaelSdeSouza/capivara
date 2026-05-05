@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.36">
+<meta name="generator" content="quarto-1.9.37">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -39,10 +39,10 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-38d6445c7f8c58527cb1cbff94937b4c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-fc38f43e723e34b819285f12d1777b0d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -133,11 +133,29 @@ ul.task-list li input[type="checkbox"] {
 <section id="release-notes" class="level1">
 <h1>Release Notes</h1>
 </section>
+<section id="capivara-development-version" class="level1">
+<h1>capivara (development version)</h1>
+<section id="added" class="level2">
+<h2 class="anchored" data-anchor-id="added">Added</h2>
+<ul>
+<li><code>segment_snn()</code> as the primary scalable graph-segmentation backend for large cubes where exact Ward is RAM-limited.</li>
+<li><code>segment_hgc_snn()</code> remains available as a compatibility alias for the HGC-SNN backend name.</li>
+<li><code>estimate_segment_memory()</code> to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.</li>
+<li><code>scripts/benchmark_segment_snn.R</code> for RAM-aware SNN benchmarking. It skips <code>segment()</code> automatically when the exact distance vector would exceed the configured threshold.</li>
+</ul>
+</section>
+<section id="changed" class="level2">
+<h2 class="anchored" data-anchor-id="changed">Changed</h2>
+<ul>
+<li>Documentation now presents <code>segment()</code> as the exact backend, <code>segment_snn()</code> as the scalable large-cube backend, and <code>segment_big_cube()</code> as a retained block-medoid approximation rather than the main large-cube path.</li>
+</ul>
+</section>
+</section>
 <section id="capivara-0.2.0" class="level1">
 <h1>capivara 0.2.0</h1>
 <p>Released: 2026-03-18</p>
-<section id="added" class="level2">
-<h2 class="anchored" data-anchor-id="added">Added</h2>
+<section id="added-1" class="level2">
+<h2 class="anchored" data-anchor-id="added-1">Added</h2>
 <ul>
 <li><code>segment_big_cube()</code> as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.</li>
 <li><code>build_starlet_mask()</code> for Sagui-style white-light starlet masking before clustering.</li>
@@ -147,8 +165,8 @@ ul.task-list li input[type="checkbox"] {
 <li><code>scripts/run_manga_starlet_comparison.R</code> for a full-frame MaNGA comparison workflow.</li>
 </ul>
 </section>
-<section id="changed" class="level2">
-<h2 class="anchored" data-anchor-id="changed">Changed</h2>
+<section id="changed-1" class="level2">
+<h2 class="anchored" data-anchor-id="changed-1">Changed</h2>
 <ul>
 <li><code>segment()</code> now handles missing spectral channels directly in the exact workflow.</li>
 <li><code>segment_big_cube()</code> now uses block medoids rather than block averages, improving compact structures in large cubes.</li>

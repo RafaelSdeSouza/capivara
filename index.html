@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.36">
+<meta name="generator" content="quarto-1.9.37">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -74,10 +74,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-38d6445c7f8c58527cb1cbff94937b4c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-fc38f43e723e34b819285f12d1777b0d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -170,11 +170,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><a href="https://arxiv.org/abs/2410.21962"><img src="https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&amp;color=%2321609D" class="img-fluid" alt="arXiv"></a> <a href="https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE"><img src="https://img.shields.io/github/license/RafaelSdeSouza/capivara.png" class="img-fluid" alt="GitHub"></a> <a href="https://codecov.io/gh/RafaelSdeSouza/capivara"><img src="https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Coverage Status"></a> <a href="https://github.com/RafaelSdeSouza/capivara/commits"><img src="https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Last Commit"></a></p>
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.2.0</code> adds built-in missing-data support in the exact workflow, a medoid-based large-cube engine, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection.</p>
+<p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.2.0</code> adds built-in missing-data support in the exact workflow, an SNN graph backend for large cubes, a medoid-based large-cube engine, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection.</p>
 <p>The core segmentation API is intentionally small:</p>
 <ul>
 <li><code>segment()</code> for the standard exact workflow, including missing spectral channels.</li>
-<li><code>segment_big_cube()</code> for very large cubes where exact pairwise distances are too expensive in RAM.</li>
+<li><code>segment_snn()</code> for large cubes where exact pairwise distances are too expensive in RAM.</li>
+<li><code>segment_big_cube()</code> is retained as a block-medoid approximation for workflows that explicitly want spatial blocking.</li>
 </ul>
 <section id="current-capivara-mosaic" class="level3">
 <h3 class="anchored" data-anchor-id="current-capivara-mosaic">Current Capivara Mosaic</h3>
@@ -190,6 +191,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="whats-new-in-0.2.0">What’s New In 0.2.0</h2>
 <ul>
 <li><code>segment()</code> now handles missing spectral channels by default.</li>
+<li><code>segment_snn()</code> adds a scalable shared-nearest-neighbor backend for large cubes.</li>
+<li><code>estimate_segment_memory()</code> reports the exact Ward distance-vector RAM lower bound before you allocate it.</li>
 <li><code>segment_big_cube()</code> now uses block medoids rather than block averages, improving compact structures in large cubes.</li>
 <li>both backends can optionally use a Sagui-style starlet mask from the white-light image.</li>
 <li><code>summarize_cluster_spectra()</code> supports median, summed, and weighted spectra.</li>
@@ -220,7 +223,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="large-cube-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="large-cube-segmentation">Large-cube Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>res_large <span class="ot">&lt;-</span> <span class="fu">segment_big_cube</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>, <span class="at">block_size =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">estimate_segment_memory</span>(cube, <span class="at">knn_k =</span> <span class="dv">30</span>)</span>
+<span id="cb4-2"><a href="#cb4-2"></a>res_large <span class="ot">&lt;-</span> <span class="fu">segment_snn</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>, <span class="at">knn_k =</span> <span class="dv">30</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sagui-style-starlet-segmentation" class="level3">
 <h3 class="anchored" data-anchor-id="sagui-style-starlet-segmentation">Sagui-style Starlet Segmentation</h3>
@@ -237,11 +241,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-11"><a href="#cb5-11"></a>)</span>
 <span id="cb5-12"><a href="#cb5-12"></a></span>
 <span id="cb5-13"><a href="#cb5-13"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star_large <span class="ot">&lt;-</span> <span class="fu">segment_big_cube</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star_large <span class="ot">&lt;-</span> <span class="fu">segment_snn</span>(</span>
 <span id="cb6-2"><a href="#cb6-2"></a>  cube,</span>
 <span id="cb6-3"><a href="#cb6-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
 <span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">block_size =</span> <span class="dv">6</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">knn_k =</span> <span class="dv">30</span></span>
 <span id="cb6-6"><a href="#cb6-6"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
