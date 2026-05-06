@@ -87,7 +87,7 @@ upsample_kernel <- function(k, step) {
 }
 
 .estimate_sigma <- function(w) {
-  stats::mad(w, center = 0, constant = 1, na.rm = TRUE)
+  stats::mad(w, center = 0, na.rm = TRUE)
 }
 
 #' Robust per-wavelength background and scatter
@@ -328,7 +328,7 @@ build_starlet_mask <- function(input,
                                starlet_J = 5,
                                starlet_scales = 2:5,
                                include_coarse = FALSE,
-                               denoise_k = 0,
+                               denoise_k = 2.5,
                                mode = c("soft", "hard"),
                                positive_only = TRUE) {
   mode <- match.arg(mode)
@@ -365,7 +365,7 @@ build_starlet_mask <- function(input,
                                    starlet_J = 5,
                                    starlet_scales = 2:5,
                                    include_coarse = FALSE,
-                                   denoise_k = 0,
+                                   denoise_k = 2.5,
                                    mode = c("soft", "hard"),
                                    positive_only = TRUE,
                                    mask_mode = c("na", "zero")) {
