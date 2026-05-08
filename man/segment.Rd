@@ -20,7 +20,7 @@ segment(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 2.5,
+  denoise_k = 0,
   starlet_mode = c("soft", "hard"),
   positive_only = TRUE,
   mask_mode = c("na", "zero")

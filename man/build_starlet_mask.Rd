@@ -10,7 +10,7 @@ build_starlet_mask(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 2.5,
+  denoise_k = 0,
   mode = c("soft", "hard"),
   positive_only = TRUE
 )
