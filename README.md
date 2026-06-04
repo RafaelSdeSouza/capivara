@@ -59,10 +59,10 @@ seg <- segment(
 
 plot_cluster(seg)
 
-spectra <- summarize_cluster_spectra(
-  seg,
-  statistic = c("sum", "median")
-)
+spectra <- summarize_cluster_spectra(seg)
+
+sum_spectra <- spectra$sum_spectra
+median_spectra <- spectra$median_spectra
 ```
 
 Use the summed spectra for flux-preserving science products and the
