@@ -1,6 +1,6 @@
 
 
-# Capivara <img align="right" src="images/logo_capivara.png" width="100">
+# Capivara <img align="right" src="images/logo_capivara.png" width="110" alt="Capivara logo">
 
 [![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
 [![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara.png)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE)
@@ -9,51 +9,21 @@ Status](https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara.png)](ht
 [![Last
 Commit](https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png)](https://github.com/RafaelSdeSouza/capivara/commits)
 
-## Overview
+Spectral segmentation and morphology-aware decomposition for
+astronomical data cubes.
 
-Capivara provides spectral segmentation tools for Integral Field Unit
-(IFU) data cubes. Version `0.3.0` adds built-in missing-data support in
-the exact workflow, sparse-Ward segmentation for large cubes,
-Sagui-style white-light starlet masking,
-variance-aware spectral summaries, and SNR-guided component selection.
+Capivara defines spatial regions directly from IFU spectra. It keeps the
+core workflow intentionally focused: build a scientifically meaningful
+support mask, cluster spectra into coherent regions, and export
+flux-preserving regional spectra for downstream analysis.
 
-The core segmentation API is intentionally small:
+## Website
 
-- `segment()` for the standard exact Ward workflow, including missing
-  spectral channels.
-- `segment_large()` for large cubes where the exact all-pairs Ward
-  distance matrix is too expensive in RAM.
+The package website is the main documentation entry point:
 
-### Current Capivara Mosaic
-
-<img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic">
-
-### Sagui Comparison Mosaic
-
-<img src="images/mosaic_segmented_sagui.png" width="1040" height="561" alt="Sagui comparison mosaic">
-
-Both mosaics are displayed with the same fixed size to make the visual
-comparison easier.
-
-## What’s New In 0.3.0
-
-- `segment()` now handles missing spectral channels by default.
-- `segment_large()` adds the calibrated kNN-restricted sparse-Ward
-  backend for large cubes.
-- `estimate_segment_memory()` reports the exact Ward distance-vector RAM
-  lower bound before you allocate it.
-- both segmentation backends can optionally use a Sagui-style photometric mask built
-  from the white-light image.
-- `summarize_cluster_spectra()` returns median, summed, and
-  inverse-variance-weighted spectra.
-- `choose_ncomp_by_snr()` helps select `Ncomp` from an SNR threshold
-  when a variance cube is available.
-- `torch` is now optional; Capivara falls back to base distance
-  calculations when it is not installed.
+- [Capivara website](https://rafaelsdesouza.github.io/capivara/)
 
 ## Installation
-
-Install Capivara from GitHub using the following commands:
 
 ``` r
 install.packages("remotes")
@@ -68,49 +38,72 @@ install.packages("torch")
 torch::install_torch()
 ```
 
-## Usage
+`torch` is optional. Capivara falls back to base R distance calculations
+when it is not installed.
 
-### Basic Segmentation
+## Minimal workflow
 
 ``` r
 library(capivara)
-cube <- FITSio::readFITS("manga-8140-12703-LOGCUBE.fits")
+library(FITSio)
 
-res <- segment(cube, Ncomp = 20)
-plot_cluster(res)
+x <- FITSio::readFITS("manga-8140-12703-LOGCUBE.fits")
+
+seg <- segment(
+  input = x,
+  Ncomp = 25,
+  use_starlet_mask = TRUE,
+  starlet_J = 5,
+  starlet_scales = 2:5
+)
+
+plot_cluster(seg)
+
+spectra <- summarize_cluster_spectra(
+  seg,
+  statistic = c("sum", "median")
+)
 ```
 
-### Missing Data
+Use the summed spectra for flux-preserving science products and the
+median spectra for robust visual inspection.
 
-`segment()` now handles missing spectral channels directly, so the same
-exact workflow works on masked cubes without a separate function.
+## Large cubes
 
-### Large Cubes
-
-Use `estimate_segment_memory()` before exact Ward on large cubes. The
-exact backend stores all pairwise distances, so memory grows with the
-square of the number of valid pixels.
+The standard Ward workflow is exact, but it stores all pairwise
+distances. For large cubes, memory grows quadratically with the number
+of valid pixels.
 
 ``` r
-estimate_segment_memory(cube, knn_k = 30)
+estimate_segment_memory(x)
 ```
 
-Use `segment_large()` when that estimate is too large for available
-RAM.
+When the exact backend is too expensive in RAM, use the sparse-Ward
+backend:
 
 ``` r
-res_large <- segment_large(cube, Ncomp = 20, knn_k = 40)
+seg <- segment_large(
+  input = x,
+  Ncomp = 50,
+  use_starlet_mask = TRUE,
+  knn_k = 50
+)
 ```
 
-### Sagui-style Starlet Masking
+`segment_large()` mirrors the output structure of `segment()` while
+avoiding the full all-pairs distance matrix. This is the recommended
+route for large MaNGA, MUSE, LSST, JPAS, and ALMA-style cubes.
 
-The starlet mask can be built from the white-light image, then applied
-back to the full cube before clustering.
+## Starlet support masks
+
+Capivara can build a Sagui-style white-light starlet support before
+clustering. The mask is computed on the full spatial footprint and then
+applied back to the cube.
 
 ``` r
-res_star <- segment(
-  cube,
-  Ncomp = 20,
+seg <- segment(
+  input = x,
+  Ncomp = 25,
   use_starlet_mask = TRUE,
   starlet_J = 5,
   starlet_scales = 2:5,
@@ -119,128 +112,84 @@ res_star <- segment(
   positive_only = TRUE,
   mask_mode = "na"
 )
-
-plot_cluster(res_star)
-```
-
-For large cubes, the same white-light mask can be combined with the
-scalable backend:
-
-``` r
-res_star_large <- segment_large(
-  cube,
-  Ncomp = 20,
-  use_starlet_mask = TRUE,
-  knn_k = 40
-)
 ```
 
 ![](images/manga_8140_starlet_comparison_full.png)
 
-Comparison on `manga-8140-12703-LOGCUBE.fits` using the full frame: the
-starlet mask is computed from the white-light image, not from a cropped
-cube.
+## Core API
 
-### Reproducible MaNGA Examples
+Capivara keeps the public segmentation API small:
 
-These comparison panels were generated with the current public API on
-full MaNGA cubes, using the exact and large-cube backends under the same
-package configuration.
+- `segment()` is the standard exact Ward segmentation.
+- `segment_large()` is the memory-safe sparse-Ward segmentation.
+- `estimate_segment_memory()` estimates the exact Ward memory lower
+  bound.
+- `summarize_cluster_spectra()` exports region spectra.
+- `reconstruct_cluster_cube()` builds representative reconstructed
+  cubes.
+- `reconstruct_flux_preserving_cube()` builds flux-preserving model
+  cubes for fitting workflows.
 
-#### MaNGA 8135-12701
+## Companion packages
+
+Capivara is the segmentation layer. Companion packages can consume the
+same region maps and summed spectra:
+
+- [`capivaraPPXF`](https://github.com/RafaelSdeSouza/capivaraPPXF):
+  pPXF-based stellar populations, stellar/gas kinematics, emission-line
+  measurements, and BPT-style diagnostics.
+- [`sagui`](https://github.com/RafaelSdeSouza/sagui): photometric
+  segmentation and regional SED extraction.
+- [`saguiSED`](https://github.com/RafaelSdeSouza/saguiSED): SED fitting
+  for Sagui regional photometry.
+
+This separation keeps Capivara installable and focused while still
+allowing a complete analysis workflow.
+
+## Reproducible examples
+
+The panels below were generated with the public API on full MaNGA cubes.
+
+### MaNGA 8135-12701
 
 <img src="images/examples/manga_8135_12701_compare.png" width="960" alt="MaNGA 8135-12701 comparison">
 
-#### MaNGA 8443-6102
+### MaNGA 8443-6102
 
 <img src="images/examples/manga_8443_6102_compare.png" width="960" alt="MaNGA 8443-6102 comparison">
 
-#### MaNGA 10224-6104
+### MaNGA 10224-6104
 
 <img src="images/examples/manga_10224_6104_compare.png" width="960" alt="MaNGA 10224-6104 comparison">
 
-#### MaNGA 11749-12701
+### MaNGA 11749-12701
 
 <img src="images/examples/manga_11749_12701_compare.png" width="960" alt="MaNGA 11749-12701 comparison">
 
-### Variance-aware Analysis
+## Citation
 
-When a variance cube is available, use it in the post-segmentation
-analysis layer rather than in `segment()` itself.
+If you use Capivara in your research, please cite:
 
-``` r
-var_cube <- FITSio::readFITS("manga-8140-12703-VARCUBE.fits")
-
-choice <- choose_ncomp_by_snr(
-  cube,
-  var_cube = var_cube$imDat,
-  k_values = 4:20,
-  target_snr = 20
-)
-
-res <- segment(cube, Ncomp = choice$Ncomp)
-spec_summary <- summarize_cluster_spectra(res, var_cube = var_cube$imDat)
+``` bibtex
+@article{desouza2025capivara,
+  author = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},
+  title = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},
+  journal = {Monthly Notices of the Royal Astronomical Society},
+  year = {2025},
+  volume = {539},
+  number = {4},
+  pages = {3166--3179},
+  doi = {10.1093/mnras/staf688}
+}
 ```
 
-`median_spectra` are useful as robust representative spectra for
-inspection. For flux and SNR calculations, `sum_spectra` or the
-inverse-variance-weighted summary are usually better choices.
+## Scope
 
-### Reconstructed Cubes
+Capivara focuses on:
 
-Use `reconstruct_cluster_cube()` to build a representative cube from
-cluster templates, or `reconstruct_flux_preserving_cube()` when you want
-a model cube that preserves the summed flux spectrum of the segmented
-data for later spectral fitting.
-
-``` r
-rep_cube <- reconstruct_cluster_cube(res_star, template = "median")
-fit_cube <- reconstruct_flux_preserving_cube(res_star)
-```
-
-## Release Notes
-
-See [NEWS.md](NEWS.md) for the `0.2.0` release summary.
-
-## Attribution
-
-If you use the [Capivara
-code](https://github.com/RafaelSdeSouza/capivara) in your research,
-please cite the [Capivara paper](https://doi.org/10.1093/mnras/staf688).
-A BibTeX entry is:
-
-    @article{desouza2025capivara,
-      author = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},
-      title = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},
-      journal = {Monthly Notices of the Royal Astronomical Society},
-      year = {2025},
-      volume = {539},
-      number = {4},
-      pages = {3166--3179},
-      doi = {10.1093/mnras/staf688}
-    }
-
-## Dependencies
-
-- **torch**: Optional GPU-accelerated tensor computations.
-- **ggplot2**: Visualization.
-- **FITSio**: Reading and handling FITS files.
-- **reshape2**: Data manipulation.
-
-## References
-
-1.  **MaNGA Survey**: Bundy, Kevin, et al. “Overview of the SDSS-IV
-    MaNGA Survey: Mapping Nearby Galaxies at Apache Point Observatory.”
-    The Astrophysical Journal 798.1 (2015): 7. DOI:
-    [10.1088/0004-637X/798/1/7](https://doi.org/10.1088/0004-637X/798/1/7)
-2.  **Capivara Code**:
-    [RafaelSdeSouza/capivara](https://github.com/RafaelSdeSouza/capivara)
-3.  **Capivara Methodology**: Souza, R. S. de, *et al.* (2025).
-    **CAPIVARA: A spectral-based segmentation method for IFU data
-    cubes.** *Monthly Notices of the Royal Astronomical Society*,
-    **539**(4), 3166–3179. <https://doi.org/10.1093/mnras/staf688>
-4.  **Torch in R**: Paszke, Adam, et al. “PyTorch: An Imperative Style,
-    High-Performance Deep Learning Library.” Advances in Neural
-    Information Processing Systems 2019. For more information, check the
-    [Capivara GitHub
-    webpage](https://rafaelsdesouza.github.io/capivara/).
+- IFU/hyperspectral segmentation
+- starlet-based support masks
+- exact and sparse-Ward spectral clustering
+- missing-data-safe cube handling
+- flux-preserving regional spectra
+- clean handoff to fitting packages such as `capivaraPPXF`

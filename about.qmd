@@ -5,16 +5,20 @@ title: "About"
 Capivara is an R package for segmentation and post-processing of IFU data
 cubes.
 
-This documentation site is published from the Quarto sources in this
-repository and mirrors the GitHub README and release notes. The examples shown
-in the README and homepage are generated from real Capivara runs on MaNGA data
-rather than schematic placeholders. Version `0.2.0` introduces:
+This documentation site is published from the Quarto sources in this repository
+and mirrors the GitHub README and release notes. The examples shown in the
+README and homepage are generated from real Capivara runs on MaNGA data rather
+than schematic placeholders.
+
+Current development focuses on a clean Capivara 2.0-style workflow:
 
 - missing-data-safe exact segmentation with `segment()`
-- medoid-based large-cube segmentation with `segment_big_cube()`
+- sparse-Ward large-cube segmentation with `segment_large()`
 - optional Sagui-style starlet masking inside both segmentation backends
 - variance-aware summaries with `summarize_cluster_spectra()`
 - SNR-guided component selection with `choose_ncomp_by_snr()`
+- flux-preserving handoff to companion packages such as
+  [`capivaraPPXF`](https://github.com/RafaelSdeSouza/capivaraPPXF)
 
 Repository:
 [RafaelSdeSouza/capivara](https://github.com/RafaelSdeSouza/capivara)
