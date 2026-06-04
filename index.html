@@ -217,10 +217,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-13"><a href="#cb3-13"></a></span>
 <span id="cb3-14"><a href="#cb3-14"></a><span class="fu">plot_cluster</span>(seg)</span>
 <span id="cb3-15"><a href="#cb3-15"></a></span>
-<span id="cb3-16"><a href="#cb3-16"></a>spectra <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(</span>
-<span id="cb3-17"><a href="#cb3-17"></a>  seg,</span>
-<span id="cb3-18"><a href="#cb3-18"></a>  <span class="at">statistic =</span> <span class="fu">c</span>(<span class="st">"sum"</span>, <span class="st">"median"</span>)</span>
-<span id="cb3-19"><a href="#cb3-19"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-16"><a href="#cb3-16"></a>spectra <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(seg)</span>
+<span id="cb3-17"><a href="#cb3-17"></a></span>
+<span id="cb3-18"><a href="#cb3-18"></a>sum_spectra <span class="ot">&lt;-</span> spectra<span class="sc">$</span>sum_spectra</span>
+<span id="cb3-19"><a href="#cb3-19"></a>median_spectra <span class="ot">&lt;-</span> spectra<span class="sc">$</span>median_spectra</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use the summed spectra for flux-preserving science products and the median spectra for robust visual inspection.</p>
 </section>
 <section id="large-cubes" class="level2">
