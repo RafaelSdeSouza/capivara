@@ -45,6 +45,33 @@ p {
   margin-bottom: 1.2rem;
 }
 
+.lead {
+  font-size: 1.25rem;
+  line-height: 1.55;
+  color: #17386d;
+  margin: 1.2rem 0 1.6rem 0;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.feature-card {
+  background: #ffffff;
+  border: 1px solid var(--capivara-border);
+  border-top: 4px solid var(--capivara-accent);
+  border-radius: 8px;
+  padding: 1rem 1.05rem;
+  box-shadow: 0 8px 24px rgba(23, 56, 109, 0.06);
+}
+
+.feature-card p:last-child {
+  margin-bottom: 0;
+}
+
 /* ---------- Navbar (Torch-like) ---------- */
 
 .navbar {

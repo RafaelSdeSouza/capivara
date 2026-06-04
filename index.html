@@ -166,38 +166,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <section id="capivara" class="level1">
-<h1>Capivara <img align="right" src="images/logo_capivara.png" width="100"></h1>
+<h1>Capivara <img align="right" src="images/logo_capivara.png" width="110" alt="Capivara logo"></h1>
 <p><a href="https://arxiv.org/abs/2410.21962"><img src="https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&amp;color=%2321609D" class="img-fluid" alt="arXiv"></a> <a href="https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE"><img src="https://img.shields.io/github/license/RafaelSdeSouza/capivara.png" class="img-fluid" alt="GitHub"></a> <a href="https://codecov.io/gh/RafaelSdeSouza/capivara"><img src="https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Coverage Status"></a> <a href="https://github.com/RafaelSdeSouza/capivara/commits"><img src="https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara.png" class="img-fluid" alt="Last Commit"></a></p>
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Capivara provides spectral segmentation tools for Integral Field Unit (IFU) data cubes. Version <code>0.3.0</code> adds built-in missing-data support in the exact workflow, sparse-Ward segmentation for large cubes, Sagui-style white-light starlet masking, variance-aware spectral summaries, and SNR-guided component selection.</p>
-<p>The core segmentation API is intentionally small:</p>
-<ul>
-<li><code>segment()</code> for the standard exact Ward workflow, including missing spectral channels.</li>
-<li><code>segment_large()</code> for large cubes where exact pairwise distances are too expensive in RAM.</li>
-</ul>
-<section id="current-capivara-mosaic" class="level3">
-<h3 class="anchored" data-anchor-id="current-capivara-mosaic">Current Capivara Mosaic</h3>
-<p><img src="images/mosaic_segmented.png" width="1040" height="561" alt="Current Capivara mosaic"></p>
-</section>
-<section id="sagui-comparison-mosaic" class="level3">
-<h3 class="anchored" data-anchor-id="sagui-comparison-mosaic">Sagui Comparison Mosaic</h3>
-<p><img src="images/mosaic_segmented_sagui.png" width="1040" height="561" alt="Sagui comparison mosaic"></p>
-<p>Both mosaics are displayed with the same fixed size to make the visual comparison easier.</p>
-</section>
-</section>
-<section id="whats-new-in-0.3.0" class="level2">
-<h2 class="anchored" data-anchor-id="whats-new-in-0.3.0">What’s New In 0.3.0</h2>
-<ul>
-<li><code>segment()</code> now handles missing spectral channels by default.</li>
-<li><code>segment_large()</code> adds the calibrated kNN-restricted sparse-Ward backend for large cubes.</li>
-<li><code>estimate_segment_memory()</code> reports the exact Ward distance-vector RAM lower bound before you allocate it.</li>
-<li>both segmentation backends can optionally use a Sagui-style starlet mask from the white-light image.</li>
-<li><code>summarize_cluster_spectra()</code> supports median, summed, and weighted spectra.</li>
-<li><code>choose_ncomp_by_snr()</code> selects <code>Ncomp</code> from a variance-aware SNR cut.</li>
-<li><code>torch</code> is now optional.</li>
-</ul>
-</section>
+<div class="lead">
+<p>Spectral segmentation and morphology-aware decomposition for astronomical data cubes.</p>
+</div>
+<p>Capivara defines spatial regions directly from IFU spectra. It keeps the core workflow intentionally focused: build a scientifically meaningful support mask, cluster spectra into coherent regions, and export flux-preserving regional spectra for downstream analysis.</p>
+<div class="feature-grid">
+<div class="feature-card">
+<p><strong>Exact segmentation</strong></p>
+<p><code>segment()</code> implements the standard Ward workflow and supports missing spectral channels.</p>
+</div>
+<div class="feature-card">
+<p><strong>Large cubes</strong></p>
+<p><code>segment_large()</code> uses a sparse-Ward backend to avoid the all-pairs distance matrix that makes exact Ward explode in RAM.</p>
+</div>
+<div class="feature-card">
+<p><strong>Starlet support</strong></p>
+<p>Sagui-style white-light starlet masks preserve diffuse galaxy structure while reducing background contamination.</p>
+</div>
+<div class="feature-card">
+<p><strong>Flux-preserving outputs</strong></p>
+<p>Region maps and summed spectra are designed for spectral fitting and physical property estimation.</p>
+</div>
+</div>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">install.packages</span>(<span class="st">"remotes"</span>)</span>
@@ -206,55 +198,89 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Optional GPU acceleration:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">install.packages</span>(<span class="st">"torch"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2"></a>torch<span class="sc">::</span><span class="fu">install_torch</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>torch</code> is optional. Capivara falls back to base R distance calculations when it is not installed.</p>
 </section>
-<section id="usage" class="level2">
-<h2 class="anchored" data-anchor-id="usage">Usage</h2>
-<section id="basic-segmentation" class="level3">
-<h3 class="anchored" data-anchor-id="basic-segmentation">Basic Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-LOGCUBE.fits"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>)</span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="fu">plot_cluster</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="minimal-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="minimal-workflow">Minimal workflow</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">library</span>(capivara)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="fu">library</span>(FITSio)</span>
+<span id="cb3-3"><a href="#cb3-3"></a></span>
+<span id="cb3-4"><a href="#cb3-4"></a>x <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-LOGCUBE.fits"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5"></a></span>
+<span id="cb3-6"><a href="#cb3-6"></a>seg <span class="ot">&lt;-</span> <span class="fu">segment</span>(</span>
+<span id="cb3-7"><a href="#cb3-7"></a>  <span class="at">input =</span> x,</span>
+<span id="cb3-8"><a href="#cb3-8"></a>  <span class="at">Ncomp =</span> <span class="dv">25</span>,</span>
+<span id="cb3-9"><a href="#cb3-9"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-10"><a href="#cb3-10"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
+<span id="cb3-11"><a href="#cb3-11"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a>)</span>
+<span id="cb3-13"><a href="#cb3-13"></a></span>
+<span id="cb3-14"><a href="#cb3-14"></a><span class="fu">plot_cluster</span>(seg)</span>
+<span id="cb3-15"><a href="#cb3-15"></a></span>
+<span id="cb3-16"><a href="#cb3-16"></a>spectra <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(</span>
+<span id="cb3-17"><a href="#cb3-17"></a>  seg,</span>
+<span id="cb3-18"><a href="#cb3-18"></a>  <span class="at">statistic =</span> <span class="fu">c</span>(<span class="st">"sum"</span>, <span class="st">"median"</span>)</span>
+<span id="cb3-19"><a href="#cb3-19"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Use the summed spectra for flux-preserving science products and the median spectra for robust visual inspection.</p>
 </section>
-<section id="missing-data-safe-segmentation" class="level3">
-<h3 class="anchored" data-anchor-id="missing-data-safe-segmentation">Missing-data-safe Segmentation</h3>
-<p><code>segment()</code> now handles missing spectral channels directly.</p>
-</section>
-<section id="large-cube-segmentation" class="level3">
-<h3 class="anchored" data-anchor-id="large-cube-segmentation">Large-cube Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">estimate_segment_memory</span>(cube, <span class="at">knn_k =</span> <span class="dv">30</span>)</span>
-<span id="cb4-2"><a href="#cb4-2"></a>res_large <span class="ot">&lt;-</span> <span class="fu">segment_large</span>(cube, <span class="at">Ncomp =</span> <span class="dv">20</span>, <span class="at">knn_k =</span> <span class="dv">40</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="sagui-style-starlet-segmentation" class="level3">
-<h3 class="anchored" data-anchor-id="sagui-style-starlet-segmentation">Sagui-style Starlet Segmentation</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>res_star <span class="ot">&lt;-</span> <span class="fu">segment</span>(</span>
-<span id="cb5-2"><a href="#cb5-2"></a>  cube,</span>
-<span id="cb5-3"><a href="#cb5-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
+<section id="large-cubes" class="level2">
+<h2 class="anchored" data-anchor-id="large-cubes">Large cubes</h2>
+<p>The standard Ward workflow is exact, but it stores all pairwise distances. For large cubes, memory grows quadratically with the number of valid pixels.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">estimate_segment_memory</span>(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>When the exact backend is too expensive in RAM, use the sparse-Ward backend:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>seg <span class="ot">&lt;-</span> <span class="fu">segment_large</span>(</span>
+<span id="cb5-2"><a href="#cb5-2"></a>  <span class="at">input =</span> x,</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="at">Ncomp =</span> <span class="dv">50</span>,</span>
 <span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
-<span id="cb5-6"><a href="#cb5-6"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
-<span id="cb5-7"><a href="#cb5-7"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb5-8"><a href="#cb5-8"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
-<span id="cb5-9"><a href="#cb5-9"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb5-10"><a href="#cb5-10"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
-<span id="cb5-11"><a href="#cb5-11"></a>)</span>
-<span id="cb5-12"><a href="#cb5-12"></a></span>
-<span id="cb5-13"><a href="#cb5-13"></a><span class="fu">plot_cluster</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>res_star_large <span class="ot">&lt;-</span> <span class="fu">segment_large</span>(</span>
-<span id="cb6-2"><a href="#cb6-2"></a>  cube,</span>
-<span id="cb6-3"><a href="#cb6-3"></a>  <span class="at">Ncomp =</span> <span class="dv">20</span>,</span>
+<span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">knn_k =</span> <span class="dv">50</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>segment_large()</code> mirrors the output structure of <code>segment()</code> while avoiding the full all-pairs distance matrix. This is the recommended route for large MaNGA, MUSE, LSST, JPAS, and ALMA-style cubes.</p>
+</section>
+<section id="starlet-support-masks" class="level2">
+<h2 class="anchored" data-anchor-id="starlet-support-masks">Starlet support masks</h2>
+<p>Capivara can build a Sagui-style white-light starlet support before clustering. The mask is computed on the full spatial footprint and then applied back to the cube.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>seg <span class="ot">&lt;-</span> <span class="fu">segment</span>(</span>
+<span id="cb6-2"><a href="#cb6-2"></a>  <span class="at">input =</span> x,</span>
+<span id="cb6-3"><a href="#cb6-3"></a>  <span class="at">Ncomp =</span> <span class="dv">25</span>,</span>
 <span id="cb6-4"><a href="#cb6-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">knn_k =</span> <span class="dv">40</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-5"><a href="#cb6-5"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
+<span id="cb6-6"><a href="#cb6-6"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb6-7"><a href="#cb6-7"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb6-8"><a href="#cb6-8"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
+<span id="cb6-9"><a href="#cb6-9"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-10"><a href="#cb6-10"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/manga_8140_starlet_comparison_full.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
 </figure>
 </div>
 </section>
+<section id="core-api" class="level2">
+<h2 class="anchored" data-anchor-id="core-api">Core API</h2>
+<p>Capivara keeps the public segmentation API small:</p>
+<ul>
+<li><code>segment()</code> is the standard exact Ward segmentation.</li>
+<li><code>segment_large()</code> is the memory-safe sparse-Ward segmentation.</li>
+<li><code>estimate_segment_memory()</code> estimates the exact Ward memory lower bound.</li>
+<li><code>summarize_cluster_spectra()</code> exports region spectra.</li>
+<li><code>reconstruct_cluster_cube()</code> builds representative reconstructed cubes.</li>
+<li><code>reconstruct_flux_preserving_cube()</code> builds flux-preserving model cubes for fitting workflows.</li>
+</ul>
 </section>
-<section id="reproducible-manga-examples" class="level2">
-<h2 class="anchored" data-anchor-id="reproducible-manga-examples">Reproducible MaNGA Examples</h2>
-<p>These panels were generated with the current public API on full MaNGA cubes, so the website examples reflect real package outputs rather than placeholder figures.</p>
+<section id="companion-packages" class="level2">
+<h2 class="anchored" data-anchor-id="companion-packages">Companion packages</h2>
+<p>Capivara is the segmentation layer. Companion packages can consume the same region maps and summed spectra:</p>
+<ul>
+<li><a href="https://github.com/RafaelSdeSouza/capivaraPPXF"><code>capivaraPPXF</code></a>: pPXF-based stellar populations, stellar/gas kinematics, emission-line measurements, and BPT-style diagnostics.</li>
+<li><a href="https://github.com/RafaelSdeSouza/sagui"><code>sagui</code></a>: photometric segmentation and regional SED extraction.</li>
+<li><a href="https://github.com/RafaelSdeSouza/saguiSED"><code>saguiSED</code></a>: SED fitting for Sagui regional photometry.</li>
+</ul>
+<p>This separation keeps Capivara installable and focused while still allowing a complete analysis workflow.</p>
+</section>
+<section id="reproducible-examples" class="level2">
+<h2 class="anchored" data-anchor-id="reproducible-examples">Reproducible examples</h2>
+<p>The panels below were generated with the public API on full MaNGA cubes.</p>
 <section id="manga-8135-12701" class="level3">
 <h3 class="anchored" data-anchor-id="manga-8135-12701">MaNGA 8135-12701</h3>
 <div class="quarto-figure quarto-figure-center">
@@ -287,47 +313,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </figure>
 </div>
 </section>
-<section id="variance-aware-summaries" class="level3">
-<h3 class="anchored" data-anchor-id="variance-aware-summaries">Variance-aware Summaries</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>var_cube <span class="ot">&lt;-</span> FITSio<span class="sc">::</span><span class="fu">readFITS</span>(<span class="st">"manga-8140-12703-VARCUBE.fits"</span>)</span>
-<span id="cb7-2"><a href="#cb7-2"></a></span>
-<span id="cb7-3"><a href="#cb7-3"></a>choice <span class="ot">&lt;-</span> <span class="fu">choose_ncomp_by_snr</span>(</span>
-<span id="cb7-4"><a href="#cb7-4"></a>  cube,</span>
-<span id="cb7-5"><a href="#cb7-5"></a>  <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat,</span>
-<span id="cb7-6"><a href="#cb7-6"></a>  <span class="at">k_values =</span> <span class="dv">4</span><span class="sc">:</span><span class="dv">20</span>,</span>
-<span id="cb7-7"><a href="#cb7-7"></a>  <span class="at">target_snr =</span> <span class="dv">20</span></span>
-<span id="cb7-8"><a href="#cb7-8"></a>)</span>
-<span id="cb7-9"><a href="#cb7-9"></a></span>
-<span id="cb7-10"><a href="#cb7-10"></a>res <span class="ot">&lt;-</span> <span class="fu">segment</span>(cube, <span class="at">Ncomp =</span> choice<span class="sc">$</span>Ncomp)</span>
-<span id="cb7-11"><a href="#cb7-11"></a>spec_summary <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(res, <span class="at">var_cube =</span> var_cube<span class="sc">$</span>imDat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="reconstructed-cubes" class="level3">
-<h3 class="anchored" data-anchor-id="reconstructed-cubes">Reconstructed Cubes</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>rep_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_cluster_cube</span>(res_star, <span class="at">template =</span> <span class="st">"median"</span>)</span>
-<span id="cb8-2"><a href="#cb8-2"></a>fit_cube <span class="ot">&lt;-</span> <span class="fu">reconstruct_flux_preserving_cube</span>(res_star)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="citation" class="level2">
+<h2 class="anchored" data-anchor-id="citation">Citation</h2>
+<p>If you use Capivara in your research, please cite:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bibtex number-lines code-with-copy"><code class="sourceCode bibtex"><span id="cb7-1"><a href="#cb7-1"></a><span class="va">@article</span>{<span class="ot">desouza2025capivara</span>,</span>
+<span id="cb7-2"><a href="#cb7-2"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},</span>
+<span id="cb7-3"><a href="#cb7-3"></a>  <span class="dt">title</span> = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},</span>
+<span id="cb7-4"><a href="#cb7-4"></a>  <span class="dt">journal</span> = {Monthly Notices of the Royal Astronomical Society},</span>
+<span id="cb7-5"><a href="#cb7-5"></a>  <span class="dt">year</span> = {2025},</span>
+<span id="cb7-6"><a href="#cb7-6"></a>  <span class="dt">volume</span> = {539},</span>
+<span id="cb7-7"><a href="#cb7-7"></a>  <span class="dt">number</span> = {4},</span>
+<span id="cb7-8"><a href="#cb7-8"></a>  <span class="dt">pages</span> = {3166--3179},</span>
+<span id="cb7-9"><a href="#cb7-9"></a>  <span class="dt">doi</span> = {10.1093/mnras/staf688}</span>
+<span id="cb7-10"><a href="#cb7-10"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-</section>
-<section id="attribution" class="level2">
-<h2 class="anchored" data-anchor-id="attribution">Attribution</h2>
-<p>If you use the <a href="https://github.com/RafaelSdeSouza/capivara">Capivara code</a> in your research, please cite the <a href="https://doi.org/10.1093/mnras/staf688">Capivara paper</a>.</p>
-</section>
-<section id="dependencies" class="level2">
-<h2 class="anchored" data-anchor-id="dependencies">Dependencies</h2>
+<section id="scope" class="level2">
+<h2 class="anchored" data-anchor-id="scope">Scope</h2>
+<p>Capivara focuses on:</p>
 <ul>
-<li><strong>torch</strong>: Optional GPU-accelerated tensor computations.</li>
-<li><strong>ggplot2</strong>: Visualization.</li>
-<li><strong>FITSio</strong>: Reading and handling FITS files.</li>
-<li><strong>reshape2</strong>: Data manipulation.</li>
+<li>IFU/hyperspectral segmentation</li>
+<li>starlet-based support masks</li>
+<li>exact and sparse-Ward spectral clustering</li>
+<li>missing-data-safe cube handling</li>
+<li>flux-preserving regional spectra</li>
+<li>clean handoff to fitting packages such as <code>capivaraPPXF</code></li>
 </ul>
-</section>
-<section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references">References</h2>
-<ol type="1">
-<li><strong>MaNGA Survey</strong>: Bundy, Kevin, et al.&nbsp;“Overview of the SDSS-IV MaNGA Survey: Mapping Nearby Galaxies at Apache Point Observatory.” The Astrophysical Journal 798.1 (2015): 7. DOI: <a href="https://doi.org/10.1088/0004-637X/798/1/7">10.1088/0004-637X/798/1/7</a></li>
-<li><strong>Capivara Code</strong>: <a href="https://github.com/RafaelSdeSouza/capivara">RafaelSdeSouza/capivara</a></li>
-<li><strong>Capivara Methodology</strong>: Souza, R. S. de, <em>et al.</em> (2025). <strong>CAPIVARA: A spectral-based segmentation method for IFU data cubes.</strong> <em>Monthly Notices of the Royal Astronomical Society</em>, <strong>539</strong>(4), 3166–3179. <a href="https://doi.org/10.1093/mnras/staf688">https://doi.org/10.1093/mnras/staf688</a></li>
-<li><strong>Torch in R</strong>: Paszke, Adam, et al.&nbsp;“PyTorch: An Imperative Style, High-Performance Deep Learning Library.” Advances in Neural Information Processing Systems 2019.</li>
-</ol>
 
 
 </section>
