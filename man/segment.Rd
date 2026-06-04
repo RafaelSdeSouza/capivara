@@ -16,6 +16,8 @@ segment(
   snr_stat = c("integrated", "median_per_wavelength"),
   variance_inflation = 1,
   use_starlet_mask = FALSE,
+  support_method = c("starlet", "adaptive"),
+  support_args = list(),
   collapse_fn = collapse_white_light,
   starlet_J = 5,
   starlet_scales = 2:5,
@@ -56,10 +58,18 @@ when \code{target_snr} is supplied.}
 variances when \code{target_snr} is supplied.}
 
 \item{use_starlet_mask}{Logical; if \code{TRUE}, build a Sagui-style
-white-light starlet mask before clustering.}
+support mask before clustering.}
+
+\item{support_method}{Foreground support builder used when
+\code{use_starlet_mask = TRUE}. Options are \code{"starlet"} and
+\code{"adaptive"}.}
+
+\item{support_args}{Optional named list passed to the selected support
+builder. For \code{"adaptive"}, arguments are passed to
+\code{\link{build_adaptive_support}}.}
 
 \item{collapse_fn}{Function used to collapse the cube to white light when
-\code{use_starlet_mask = TRUE}.}
+\code{use_starlet_mask = TRUE} and \code{support_method = "starlet"}.}
 
 \item{starlet_J}{Number of starlet scales when \code{use_starlet_mask = TRUE}.}
 
@@ -91,6 +101,9 @@ A list containing:
 \item{starlet_info}{When \code{use_starlet_mask = TRUE}, a list containing
 the spatial mask, white-light image, starlet decomposition,
 reconstruction, and masked cube used before clustering.}
+\item{support_info}{When \code{use_starlet_mask = TRUE}, a general support
+metadata list. For adaptive support this contains the evidence and persistence
+maps used to build the mask.}
 
 This process is often used in IFU data analysis, where clustering is applied to grouped
 spectral profiles of spatial pixels to identify regions with similar characteristics.

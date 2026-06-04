@@ -31,9 +31,15 @@
 #' @param variance_inflation Multiplicative factor applied to propagated
 #'   variances when \code{target_snr} is supplied.
 #' @param use_starlet_mask Logical; if \code{TRUE}, build a Sagui-style
-#'   white-light starlet mask before clustering.
+#'   support mask before clustering.
+#' @param support_method Foreground support builder used when
+#'   \code{use_starlet_mask = TRUE}. Options are \code{"starlet"} and
+#'   \code{"adaptive"}.
+#' @param support_args Optional named list passed to the selected support
+#'   builder. For \code{"adaptive"}, arguments are passed to
+#'   \code{\link{build_adaptive_support}}.
 #' @param collapse_fn Function used to collapse the cube to white light when
-#'   \code{use_starlet_mask = TRUE}.
+#'   \code{use_starlet_mask = TRUE} and \code{support_method = "starlet"}.
 #' @param starlet_J Number of starlet scales when \code{use_starlet_mask = TRUE}.
 #' @param starlet_scales Integer vector of scales kept in the reconstruction
 #'   when \code{use_starlet_mask = TRUE}.
@@ -97,6 +103,8 @@ segment <- function(input,
                     snr_stat = c("integrated", "median_per_wavelength"),
                     variance_inflation = 1,
                     use_starlet_mask = FALSE,
+                    support_method = c("starlet", "adaptive"),
+                    support_args = list(),
                     collapse_fn = collapse_white_light,
                     starlet_J = 5,
                     starlet_scales = 2:5,
@@ -107,10 +115,13 @@ segment <- function(input,
                     mask_mode = c("na", "zero")) {
   starlet_mode <- match.arg(starlet_mode)
   mask_mode <- match.arg(mask_mode)
+  support_method <- match.arg(support_method)
 
   starlet_prep <- .apply_starlet_support(
     input = input,
     use_starlet_mask = use_starlet_mask,
+    support_method = support_method,
+    support_args = support_args,
     collapse_fn = collapse_fn,
     starlet_J = starlet_J,
     starlet_scales = starlet_scales,
@@ -151,6 +162,9 @@ segment <- function(input,
 
   if (!is.null(starlet_prep$starlet_info)) {
     out$starlet_info <- starlet_prep$starlet_info
+  }
+  if (!is.null(starlet_prep$support_info)) {
+    out$support_info <- starlet_prep$support_info
   }
 
   out
