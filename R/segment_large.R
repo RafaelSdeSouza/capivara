@@ -13,7 +13,16 @@
   X <- as.matrix(X)
 
   center <- apply(X, 2, stats::median, na.rm = TRUE)
-  scale <- apply(X, 2, stats::mad, center = center, constant = 1.4826, na.rm = TRUE)
+  scale <- vapply(
+    seq_len(ncol(X)),
+    function(j) stats::mad(
+      X[, j],
+      center = center[j],
+      constant = 1.4826,
+      na.rm = TRUE
+    ),
+    numeric(1)
+  )
 
   fallback <- stats::median(scale[is.finite(scale) & scale > 0], na.rm = TRUE)
   if (!is.finite(fallback) || fallback <= 0) {
