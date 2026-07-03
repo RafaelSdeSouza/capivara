@@ -23,7 +23,7 @@ segment_large(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 0,
+  denoise_k = 2.5,
   starlet_mode = c("soft", "hard"),
   positive_only = TRUE,
   mask_mode = c("na", "zero"),
@@ -33,7 +33,7 @@ segment_large(
   feature_scale = c("none", "robust_col"),
   spatial_weight = 0,
   mask = NULL,
-  valid_mode = c("signal", "finite"),
+  valid_mode = c("sagui", "signal", "finite"),
   return_details = FALSE,
   verbose = FALSE
 )
@@ -119,7 +119,10 @@ when \code{use_starlet_mask = TRUE}.}
 
 \item{mask}{Optional logical spatial mask with dimensions n_row x n_col.}
 
-\item{valid_mode}{Valid-pixel rule: `"signal"` or `"finite"`.}
+\item{valid_mode}{Valid-pixel rule. \code{"sagui"} applies the stricter
+finite-fraction, energy, and row-MAD screen used by Sagui's sparse-Ward
+backend; \code{"signal"} matches the exact \code{\link{segment}} support;
+\code{"finite"} requires all channels to be finite.}
 
 \item{return_details}{Return features, labels, and diagnostics.}
 

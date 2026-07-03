@@ -55,7 +55,7 @@ seg <- segment_large(
   use_starlet_mask = TRUE,
   starlet_J = 5,
   starlet_scales = 2:5,
-  knn_k = 50
+  knn_k = 100
 )
 
 print(seg$backend_info)
@@ -88,7 +88,7 @@ seg_ha <- segment_large(
   input = x,
   Ncomp = 25,
   use_starlet_mask = TRUE,
-  knn_k = 50,
+  knn_k = 100,
   feature_wavelength_range = c(6500, 6625)
 )
 
@@ -168,15 +168,17 @@ seg <- segment_large(
   input = x,
   Ncomp = 50,
   use_starlet_mask = TRUE,
-  knn_k = 50,
+  knn_k = 100,
   feature_wavelength_range = c(6500, 6625)
 )
 ```
 
 `segment_large()` mirrors the output structure of `segment()` while
-avoiding the full all-pairs distance matrix. It uses the same default
-row scaling as `segment()` and is the recommended route for large MaNGA,
-MUSE, LSST, JPAS, and ALMA-style cubes.
+avoiding the full all-pairs distance matrix. Its default validity screen
+follows Sagui's sparse-Ward backend for coherent kNN graphs. Increasing
+`knn_k` makes the graph denser and usually closer to exact Ward;
+`knn_k = 100` is a good visual/science starting point for MaNGA- or
+JPAS-style examples.
 
 ## Starlet support masks
 
@@ -192,10 +194,10 @@ seg <- segment_large(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 0,
+  denoise_k = 2.5,
   positive_only = TRUE,
   mask_mode = "na",
-  knn_k = 50
+  knn_k = 100
 )
 ```
 
@@ -285,17 +287,12 @@ same region maps and summed spectra:
 This separation keeps Capivara installable and focused while still
 allowing a complete analysis workflow.
 
-## Reproducible examples
+## Visual example
 
-The panels below were generated with the public API on full MaNGA cubes.
+This panel shows the exact and scalable segmentation APIs with and without
+the starlet support mask.
 
-### MaNGA 8135-12701
-
-<img src="images/examples/manga_8135_12701_compare.png" width="960" alt="MaNGA 8135-12701 comparison">
-
-### MaNGA 10224-6104
-
-<img src="images/examples/manga_10224_6104_compare.png" width="960" alt="MaNGA 10224-6104 comparison">
+<img src="images/examples/manga_8443_6102_compare.png" width="960" alt="MaNGA 8443-6102 comparison of segment and segment_large with and without starlet masking">
 
 ## Citation
 

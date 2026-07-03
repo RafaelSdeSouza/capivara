@@ -1,12 +1,29 @@
 .sparse_ward_scale_features <- function(X, scale_fn = NULL) {
   X <- as.matrix(X)
 
-  if (is.null(scale_fn)) {
-    X[!is.finite(X)] <- 0
-    return(X)
+  scaler <- if (is.null(scale_fn)) .sparse_ward_safe_scale_spectrum else scale_fn
+
+  .scale_rows(X, scale_fn = scaler, na_to_zero = TRUE)
+}
+
+.sparse_ward_safe_scale_spectrum <- function(x) {
+  xf <- x[is.finite(x)]
+  if (!length(xf)) {
+    return(rep(0, length(x)))
   }
 
-  .scale_rows(X, scale_fn = scale_fn, na_to_zero = TRUE)
+  center <- stats::median(xf)
+  scale <- stats::mad(xf, center = center, constant = 1.4826, na.rm = TRUE)
+  if (!is.finite(scale) || scale <= 0) {
+    scale <- stats::sd(xf, na.rm = TRUE)
+  }
+  if (!is.finite(scale) || scale <= 0) {
+    scale <- 1
+  }
+
+  out <- (x - center) / scale
+  out[!is.finite(out)] <- 0
+  out
 }
 
 .sparse_ward_robust_col_scale <- function(X) {
@@ -207,7 +224,10 @@
 #' @param feature_scale Optional column-wise feature scaling after row scaling.
 #' @param spatial_weight Optional weight for appending normalized x/y coordinates.
 #' @param mask Optional logical spatial mask with dimensions n_row x n_col.
-#' @param valid_mode Valid-pixel rule: `"signal"` or `"finite"`.
+#' @param valid_mode Valid-pixel rule. \code{"sagui"} applies the stricter
+#'   finite-fraction, energy, and row-MAD screen used by Sagui's sparse-Ward
+#'   backend; \code{"signal"} matches the exact \code{\link{segment}} support;
+#'   \code{"finite"} requires all channels to be finite.
 #' @param return_details Return features, labels, and diagnostics.
 #' @param verbose Print progress messages.
 #'
@@ -234,7 +254,7 @@ segment_large <- function(input,
                           starlet_J = 5,
                           starlet_scales = 2:5,
                           include_coarse = FALSE,
-                          denoise_k = 0,
+                          denoise_k = 2.5,
                           starlet_mode = c("soft", "hard"),
                           positive_only = TRUE,
                           mask_mode = c("na", "zero"),
@@ -244,7 +264,7 @@ segment_large <- function(input,
                           feature_scale = c("none", "robust_col"),
                           spatial_weight = 0,
                           mask = NULL,
-                          valid_mode = c("signal", "finite"),
+                          valid_mode = c("sagui", "signal", "finite"),
                           return_details = FALSE,
                           verbose = FALSE) {
   feature_scale <- match.arg(feature_scale)
@@ -300,10 +320,25 @@ segment_large <- function(input,
   IFU2D <- cube_to_matrix(cubedat)
   sn <- .compute_signal_noise(IFU2D)
 
-  if (valid_mode == "signal") {
+  finite_counts <- rowSums(is.finite(IFU2D))
+  finite_frac <- finite_counts / n_wave
+
+  if (valid_mode == "sagui") {
+    row_energy <- rowSums(IFU2D^2, na.rm = TRUE)
+    row_mad <- apply(IFU2D, 1, function(v) {
+      vv <- v[is.finite(v)]
+      if (!length(vv)) return(NA_real_)
+      stats::mad(vv, na.rm = TRUE)
+    })
+    valid <- sn$signal > 0 &
+      finite_counts >= pmin(10L, n_wave) &
+      finite_frac >= 0.8 &
+      is.finite(row_energy) & row_energy > 0 &
+      is.finite(row_mad) & row_mad > 0
+  } else if (valid_mode == "signal") {
     valid <- sn$signal > 0
   } else {
-    valid <- rowSums(is.finite(IFU2D)) == n_wave
+    valid <- finite_counts == n_wave
   }
 
   if (!is.null(mask)) {

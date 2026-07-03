@@ -7,9 +7,11 @@ repo_root <- normalizePath(file.path(dirname(script_path), ".."), mustWork = TRU
 fits_path <- if (length(args) >= 1) args[[1]] else file.path(repo_root, "..", "sagui_capivara_MaNGA", "manga-7443-12703-LOGCUBE.fits")
 png_path <- if (length(args) >= 2) args[[2]] else "/tmp/capivara_manga_starlet_comparison.png"
 rds_path <- if (length(args) >= 3) args[[3]] else "/tmp/capivara_manga_starlet_comparison.rds"
-files <- list.files(file.path(repo_root, "R"), full.names = TRUE)
-for (f in files) {
-  sys.source(f, envir = .GlobalEnv)
+
+if (requireNamespace("pkgload", quietly = TRUE)) {
+  pkgload::load_all(repo_root, quiet = TRUE)
+} else {
+  library(capivara)
 }
 
 palette_van_gogh_div <- function(n = 256) {
@@ -53,7 +55,7 @@ starlet_cfg <- list(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 0,
+  denoise_k = 2.5,
   positive_only = TRUE
 )
 
@@ -61,10 +63,10 @@ collapse_sagui <- function(cube) {
   collapse_white_light(cube, kclip = 1)
 }
 
-base_res <- segment_large(x, Ncomp = 8, knn_k = 50, verbose = FALSE)
+base_res <- segment_large(x, Ncomp = 8, knn_k = 100, max_k = 200, verbose = FALSE)
 star_res <- do.call(
   segment_large,
-  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na", knn_k = 50, verbose = FALSE), starlet_cfg)
+  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na", knn_k = 100, max_k = 200, verbose = FALSE), starlet_cfg)
 )
 
 collapsed <- collapse_sagui(cube)
