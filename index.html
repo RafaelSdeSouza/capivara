@@ -225,7 +225,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-9"><a href="#cb3-9"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb3-10"><a href="#cb3-10"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
 <span id="cb3-11"><a href="#cb3-11"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
-<span id="cb3-12"><a href="#cb3-12"></a>  <span class="at">knn_k =</span> <span class="dv">50</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a>  <span class="at">knn_k =</span> <span class="dv">100</span></span>
 <span id="cb3-13"><a href="#cb3-13"></a>)</span>
 <span id="cb3-14"><a href="#cb3-14"></a></span>
 <span id="cb3-15"><a href="#cb3-15"></a><span class="fu">print</span>(seg<span class="sc">$</span>backend_info)</span>
@@ -247,7 +247,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-2"><a href="#cb4-2"></a>  <span class="at">input =</span> x,</span>
 <span id="cb4-3"><a href="#cb4-3"></a>  <span class="at">Ncomp =</span> <span class="dv">25</span>,</span>
 <span id="cb4-4"><a href="#cb4-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb4-5"><a href="#cb4-5"></a>  <span class="at">knn_k =</span> <span class="dv">50</span>,</span>
+<span id="cb4-5"><a href="#cb4-5"></a>  <span class="at">knn_k =</span> <span class="dv">100</span>,</span>
 <span id="cb4-6"><a href="#cb4-6"></a>  <span class="at">feature_wavelength_range =</span> <span class="fu">c</span>(<span class="dv">6500</span>, <span class="dv">6625</span>)</span>
 <span id="cb4-7"><a href="#cb4-7"></a>)</span>
 <span id="cb4-8"><a href="#cb4-8"></a></span>
@@ -297,10 +297,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-2"><a href="#cb8-2"></a>  <span class="at">input =</span> x,</span>
 <span id="cb8-3"><a href="#cb8-3"></a>  <span class="at">Ncomp =</span> <span class="dv">50</span>,</span>
 <span id="cb8-4"><a href="#cb8-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb8-5"><a href="#cb8-5"></a>  <span class="at">knn_k =</span> <span class="dv">50</span>,</span>
+<span id="cb8-5"><a href="#cb8-5"></a>  <span class="at">knn_k =</span> <span class="dv">100</span>,</span>
 <span id="cb8-6"><a href="#cb8-6"></a>  <span class="at">feature_wavelength_range =</span> <span class="fu">c</span>(<span class="dv">6500</span>, <span class="dv">6625</span>)</span>
 <span id="cb8-7"><a href="#cb8-7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>segment_large()</code> mirrors the output structure of <code>segment()</code> while avoiding the full all-pairs distance matrix. It uses the same default row scaling as <code>segment()</code> and is the recommended route for large MaNGA, MUSE, LSST, JPAS, and ALMA-style cubes.</p>
+<p><code>segment_large()</code> mirrors the output structure of <code>segment()</code> while avoiding the full all-pairs distance matrix. Its default validity screen follows Sagui’s sparse-Ward backend for coherent kNN graphs. Increasing <code>knn_k</code> makes the graph denser and usually closer to exact Ward; <code>knn_k = 100</code> is a good visual/science starting point for MaNGA- or JPAS-style examples.</p>
 </section>
 <section id="starlet-support-masks" class="level2">
 <h2 class="anchored" data-anchor-id="starlet-support-masks">Starlet support masks</h2>
@@ -312,10 +312,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-5"><a href="#cb9-5"></a>  <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
 <span id="cb9-6"><a href="#cb9-6"></a>  <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
 <span id="cb9-7"><a href="#cb9-7"></a>  <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb9-8"><a href="#cb9-8"></a>  <span class="at">denoise_k =</span> <span class="dv">0</span>,</span>
+<span id="cb9-8"><a href="#cb9-8"></a>  <span class="at">denoise_k =</span> <span class="fl">2.5</span>,</span>
 <span id="cb9-9"><a href="#cb9-9"></a>  <span class="at">positive_only =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb9-10"><a href="#cb9-10"></a>  <span class="at">mask_mode =</span> <span class="st">"na"</span>,</span>
-<span id="cb9-11"><a href="#cb9-11"></a>  <span class="at">knn_k =</span> <span class="dv">50</span></span>
+<span id="cb9-11"><a href="#cb9-11"></a>  <span class="at">knn_k =</span> <span class="dv">100</span></span>
 <span id="cb9-12"><a href="#cb9-12"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -368,25 +368,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <p>This separation keeps Capivara installable and focused while still allowing a complete analysis workflow.</p>
 </section>
-<section id="reproducible-examples" class="level2">
-<h2 class="anchored" data-anchor-id="reproducible-examples">Reproducible examples</h2>
-<p>The panels below were generated with the public API on full MaNGA cubes.</p>
-<section id="manga-8135-12701" class="level3">
-<h3 class="anchored" data-anchor-id="manga-8135-12701">MaNGA 8135-12701</h3>
+<section id="visual-example" class="level2">
+<h2 class="anchored" data-anchor-id="visual-example">Visual example</h2>
+<p>This panel shows the exact and scalable segmentation APIs with and without the starlet support mask.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/examples/manga_8135_12701_compare.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
+<p><img src="images/examples/manga_8443_6102_compare.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%" alt="MaNGA 8443-6102 comparison of segment and segment_large with and without starlet masking"></p>
 </figure>
 </div>
-</section>
-<section id="manga-10224-6104" class="level3">
-<h3 class="anchored" data-anchor-id="manga-10224-6104">MaNGA 10224-6104</h3>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/examples/manga_10224_6104_compare.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%"></p>
-</figure>
-</div>
-</section>
 </section>
 <section id="citation" class="level2">
 <h2 class="anchored" data-anchor-id="citation">Citation</h2>
