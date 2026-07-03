@@ -11,21 +11,21 @@
     "href": "news.html#changed",
     "title": "Release Notes",
     "section": "Changed",
-    "text": "Changed\n\nThe public segmentation API is now limited to segment() for exact Ward and segment_large() for scalable sparse Ward.\nRemoved the experimental segment_snn(), segment_hgc_snn(), and segment_big_cube() entry points from the exported API."
+    "text": "Changed\n\nThe public segmentation API is now limited to segment() for exact Ward and segment_large() for scalable sparse Ward.\nRemoved experimental duplicate segmentation entry points from the exported API."
   },
   {
     "objectID": "news.html#added-1",
     "href": "news.html#added-1",
     "title": "Release Notes",
     "section": "Added",
-    "text": "Added\n\nsegment_big_cube() as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.\nbuild_starlet_mask() for Sagui-style white-light starlet masking before clustering.\nsummarize_cluster_spectra() for median, summed, and inverse-variance-weighted cluster spectra.\nchoose_ncomp_by_snr() for variance-aware component selection from an SNR threshold.\nreconstruct_cluster_cube() and reconstruct_flux_preserving_cube() for representative and flux-preserving model cubes.\nscripts/run_manga_starlet_comparison.R for a full-frame MaNGA comparison workflow."
+    "text": "Added\n\nsegment_large() as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.\nbuild_starlet_mask() for Sagui-style white-light starlet masking before clustering.\nsummarize_cluster_spectra() for median, summed, and inverse-variance-weighted cluster spectra.\nchoose_ncomp_by_snr() for variance-aware component selection from an SNR threshold.\nreconstruct_cluster_cube() and reconstruct_flux_preserving_cube() for representative and flux-preserving model cubes.\nscripts/run_manga_starlet_comparison.R for a full-frame MaNGA comparison workflow."
   },
   {
     "objectID": "news.html#changed-1",
     "href": "news.html#changed-1",
     "title": "Release Notes",
     "section": "Changed",
-    "text": "Changed\n\nsegment() now handles missing spectral channels directly in the exact workflow.\nsegment_big_cube() now uses block medoids rather than block averages, improving compact structures in large cubes.\nsegment() and segment_big_cube() now accept the optional white-light starlet mask directly.\ntorch is now optional; Capivara falls back to base R distance calculations when torch is unavailable.\nThe public segmentation API is now limited to segment() and segment_big_cube() to avoid duplicate entry points.\nGitHub and website documentation now describe the missing-data, starlet-mask, and variance-aware workflows."
+    "text": "Changed\n\nsegment() now handles missing spectral channels directly in the exact workflow.\nThe scalable segmentation path now uses block medoids rather than block averages, improving compact structures in large cubes.\nsegment() and segment_large() now accept the optional white-light starlet mask directly via use_starlet_mask.\ntorch is now optional; Capivara falls back to base R distance calculations when torch is unavailable.\nThe public segmentation API is now limited to segment() and segment_large() to avoid duplicate entry points.\nGitHub and website documentation now describe the missing-data, starlet-mask, and variance-aware workflows."
   },
   {
     "objectID": "news.html#fixed",
