@@ -55,21 +55,17 @@ starlet_cfg <- list(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 2.5,
+  denoise_k = 0,
   positive_only = TRUE
 )
 
-collapse_sagui <- function(cube) {
-  collapse_white_light(cube, kclip = 1)
-}
-
-base_res <- segment_large(x, Ncomp = 8, knn_k = 100, max_k = 200, verbose = FALSE)
+base_res <- segment_large(x, Ncomp = 8, knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE)
 star_res <- do.call(
   segment_large,
-  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na", knn_k = 100, max_k = 200, verbose = FALSE), starlet_cfg)
+  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, mask_mode = "na", knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE), starlet_cfg)
 )
 
-collapsed <- collapse_sagui(cube)
+collapsed <- collapse_white_light(cube)
 
 white_df <- mat_to_df_sagui(collapsed, "White-light")
 white_df$value_norm <- normalize_panel(white_df$value)
@@ -98,7 +94,7 @@ mask_plot <- ggplot2::ggplot(mask_df, ggplot2::aes(x = Row, y = Col, fill = fact
   ggplot2::scale_fill_manual(values = c("0" = "black", "1" = "#FFDE38"), na.value = "black") +
   ggplot2::labs(
     title = sprintf(
-      "Starlet Mask (%d pixels, Sagui recipe)",
+      "Starlet Mask (%d pixels, path-signature recipe)",
       sum(starlet_mask, na.rm = TRUE)
     ),
     fill = NULL

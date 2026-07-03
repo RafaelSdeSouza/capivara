@@ -189,7 +189,7 @@ seg <- segment_large(
   starlet_J = 5,
   starlet_scales = 2:5,
   include_coarse = FALSE,
-  denoise_k = 2.5,
+  denoise_k = 0,
   positive_only = TRUE,
   mask_mode = "na",
   knn_k = 100

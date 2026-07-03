@@ -241,20 +241,19 @@ make_starlet_panel <- function() {
     return(invisible(NULL))
   }
   x <- FITSio::readFITS(fits_path)
-  collapse_sagui <- function(cube) collapse_white_light(cube, kclip = 1)
   starlet_cfg <- list(
     starlet_J = 5,
     starlet_scales = 2:5,
     include_coarse = FALSE,
-    denoise_k = 2.5,
+    denoise_k = 0,
     positive_only = TRUE
   )
-  base_res <- segment_large(x, Ncomp = 8, knn_k = 100, max_k = 200, verbose = FALSE)
+  base_res <- segment_large(x, Ncomp = 8, knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE)
   star_res <- do.call(
     segment_large,
-    c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na", knn_k = 100, max_k = 200, verbose = FALSE), starlet_cfg)
+    c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, mask_mode = "na", knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE), starlet_cfg)
   )
-  white <- collapse_sagui(x$imDat)
+  white <- collapse_white_light(x$imDat)
   white[white <= 0] <- NA_real_
   white_norm <- asinh(white)
   rng <- range(white_norm, finite = TRUE)
