@@ -13,6 +13,7 @@ segment(
   var_cube = NULL,
   k_values = NULL,
   wavelength_range = NULL,
+  feature_wavelength_range = NULL,
   snr_stat = c("integrated", "median_per_wavelength"),
   variance_inflation = 1,
   use_starlet_mask = FALSE,
@@ -33,7 +34,7 @@ segment(
 
 \item{Ncomp}{Integer, the number of clusters to form. Defaults to `15`.}
 
-\item{redshift}{Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).}
+\item{redshift}{Numeric redshift placeholder kept for API compatibility.}
 
 \item{scale_fn}{A function used to scale each row of the 2D representation of the data cube.
 Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.}
@@ -50,6 +51,11 @@ when \code{target_snr} is supplied.}
 
 \item{wavelength_range}{Optional wavelength interval used to compute SNR when
 \code{target_snr} is supplied.}
+
+\item{feature_wavelength_range}{Optional wavelength interval used to select
+the spectral channels used for clustering. The returned
+\code{original_cube} remains the full input cube so downstream summed
+spectra are still flux-preserving across the full spectral axis.}
 
 \item{snr_stat}{Either integrated SNR or median per-wavelength SNR when
 \code{target_snr} is supplied.}

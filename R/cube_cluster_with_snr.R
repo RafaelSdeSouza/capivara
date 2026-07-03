@@ -8,7 +8,7 @@
 #' @param input A 3D array representing the IFU data cube (dimensions: rows, columns, wavelengths).
 #'   Alternatively, this can be a `readFITS` object containing the data cube and its metadata.
 #' @param target_snr Numeric. The desired signal-to-noise ratio (SNR) for the final bins.
-#' @param redshift Numeric. The redshift value used for any wavelength corrections. Default is 0.
+#' @param redshift Numeric redshift placeholder kept for API compatibility.
 #' @param scale_fn A function to scale each spaxel spectrum. Defaults to `median_scale`,
 #'   which centers each spectrum by subtracting its median value.
 #' @return A list containing:

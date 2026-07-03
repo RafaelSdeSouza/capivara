@@ -140,26 +140,12 @@
 }
 
 .sparse_ward_wavelength_index <- function(cubedat, flux_mat, wavelength_range = NULL) {
-  wavelengths <- if (!is.null(cubedat$axDat)) {
-    FITSio::axVec(3, cubedat$axDat)
-  } else {
-    seq_len(ncol(flux_mat))
-  }
-
-  if (is.null(wavelength_range)) {
-    return(seq_len(ncol(flux_mat)))
-  }
-
-  if (length(wavelength_range) != 2) {
-    stop("`wavelength_range` must have length 2.")
-  }
-
-  wave_idx <- which(wavelengths >= min(wavelength_range) & wavelengths <= max(wavelength_range))
-  if (!length(wave_idx)) {
-    stop("No wavelengths fall inside `wavelength_range`.")
-  }
-
-  wave_idx
+  .wavelength_range_index(
+    cubedat = cubedat,
+    n_wave = ncol(flux_mat),
+    wavelength_range = wavelength_range,
+    arg_name = "wavelength_range"
+  )
 }
 
 #' Large-cube Capivara segmentation
@@ -186,6 +172,10 @@
 #'   is capped at 50 clusters.
 #' @param wavelength_range Optional wavelength interval used to compute SNR when
 #'   \code{target_snr} is supplied.
+#' @param feature_wavelength_range Optional wavelength interval used to select
+#'   the spectral channels used for clustering. The returned
+#'   \code{original_cube} remains the full input cube so downstream summed
+#'   spectra are still flux-preserving across the full spectral axis.
 #' @param snr_stat Either integrated SNR or median per-wavelength SNR when
 #'   \code{target_snr} is supplied.
 #' @param variance_inflation Multiplicative factor applied to propagated
@@ -236,6 +226,7 @@ segment_large <- function(input,
                           var_cube = NULL,
                           k_values = NULL,
                           wavelength_range = NULL,
+                          feature_wavelength_range = NULL,
                           snr_stat = c("integrated", "median_per_wavelength"),
                           variance_inflation = 1,
                           use_starlet_mask = FALSE,
@@ -284,7 +275,12 @@ segment_large <- function(input,
     mask_mode = mask_mode
   )
 
-  cubedat <- .as_cubedat(starlet_prep$input)
+  full_cubedat <- .as_cubedat(starlet_prep$input)
+  feature_subset <- .subset_cubedat_wavelength_range(
+    full_cubedat,
+    feature_wavelength_range = feature_wavelength_range
+  )
+  cubedat <- feature_subset$cubedat
   cube <- cubedat$imDat
 
   if (!is.array(cube) || length(dim(cube)) != 3L) {
@@ -384,7 +380,14 @@ segment_large <- function(input,
     if (is.null(var_cube)) {
       var_mat_valid <- pmax(flux_mat_valid, 0)
     } else {
-      var_input <- .as_cubedat(var_cube)
+      var_input <- if (is.null(feature_wavelength_range)) {
+        .as_cubedat(var_cube)
+      } else {
+        .subset_cubedat_wavelength_range(
+          var_cube,
+          feature_wavelength_range = feature_wavelength_range
+        )$cubedat
+      }
       if (!identical(dim(var_input$imDat), dim(cubedat$imDat))) {
         stop("`var_cube` must have the same dimensions as the input cube.")
       }
@@ -464,13 +467,13 @@ segment_large <- function(input,
 
   out <- list(
     cluster_map = cluster_map,
-    header = cubedat$hdr,
-    axDat = cubedat$axDat,
+    header = full_cubedat$hdr,
+    axDat = full_cubedat$axDat,
     cluster_snr = cluster_snr,
     Ncomp = chosen_k,
     snr_grid = snr_grid,
     requested_Ncomp = fit$requested_Ncomp,
-    original_cube = cubedat,
+    original_cube = full_cubedat,
     backend = "sparse_ward",
     backend_info = list(
       algorithm = "sparse_ward",
@@ -484,6 +487,15 @@ segment_large <- function(input,
       valid_pixels = length(valid_indices)
     )
   )
+
+  if (!is.null(feature_wavelength_range)) {
+    out$feature_wavelength_range <- feature_wavelength_range
+    out$feature_wavelength_index <- feature_subset$wave_idx
+    out$feature_wavelengths <- feature_subset$selected_wavelengths
+    out$backend_info$feature_wavelength_range <- feature_wavelength_range
+    out$backend_info$feature_wavelength_index <- feature_subset$wave_idx
+    out$backend_info$feature_wavelengths <- feature_subset$selected_wavelengths
+  }
 
   if (!is.null(starlet_prep$starlet_info)) {
     out$starlet_info <- starlet_prep$starlet_info

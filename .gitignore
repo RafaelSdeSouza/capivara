@@ -9,6 +9,7 @@
 /outputs/
 **/*.quarto_ipynb
 *.tar.gz
+*.Rcheck/
 src/*.o
 src/*.so
 src/symbols.rds

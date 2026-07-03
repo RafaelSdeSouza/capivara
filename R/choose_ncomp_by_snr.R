@@ -102,23 +102,12 @@ choose_ncomp_by_snr <- function(input,
   }
   var_mat[!is.finite(var_mat) | var_mat < 0] <- NA_real_
 
-  wavelengths <- if (!is.null(cubedat$axDat)) {
-    FITSio::axVec(3, cubedat$axDat)
-  } else {
-    seq_len(ncol(flux_mat))
-  }
-
-  if (is.null(wavelength_range)) {
-    wave_idx <- seq_len(ncol(flux_mat))
-  } else {
-    if (length(wavelength_range) != 2) {
-      stop("`wavelength_range` must have length 2.")
-    }
-    wave_idx <- which(wavelengths >= min(wavelength_range) & wavelengths <= max(wavelength_range))
-    if (!length(wave_idx)) {
-      stop("No wavelengths fall inside `wavelength_range`.")
-    }
-  }
+  wave_idx <- .wavelength_range_index(
+    cubedat = cubedat,
+    n_wave = ncol(flux_mat),
+    wavelength_range = wavelength_range,
+    arg_name = "wavelength_range"
+  )
 
   n_valid <- length(details$valid_indices)
   if (is.null(k_values)) {

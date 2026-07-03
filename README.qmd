@@ -68,6 +68,73 @@ median_spectra <- spectra$median_spectra
 Use the summed spectra for flux-preserving science products and the median
 spectra for robust visual inspection.
 
+To segment only on a spectral window, for example around an emission-line
+complex, use `feature_wavelength_range`. The binning is learned from that
+window, but the returned `original_cube` remains the full cube, so
+`summarize_cluster_spectra()` still exports full flux-preserving spectra.
+
+```r
+seg_ha <- segment(
+  input = x,
+  Ncomp = 25,
+  use_starlet_mask = TRUE,
+  feature_wavelength_range = c(6500, 6625)
+)
+
+ha_spectra <- summarize_cluster_spectra(seg_ha)$sum_spectra
+```
+
+When using `target_snr`, `wavelength_range` has a different role: it selects
+the spectral interval used to evaluate the SNR screen. This keeps line-focused
+segmentation and SNR quality control independent.
+
+## Saving the segmentation map as FITS
+
+Both `segment()` and `segment_large()` return the spatial binning scheme in
+`seg$cluster_map`. This is a 2-D matrix with the same spatial footprint as the
+input cube. Pixels outside the support mask are stored as `NA`; for DS9 and most
+FITS-based workflows it is usually clearer to write those pixels as `0` and keep
+the Capivara regions as positive integer labels.
+
+```r
+cluster_map <- seg$cluster_map
+
+# DS9-friendly convention:
+#   0  = outside the Capivara support / unassigned background
+#   >0 = Capivara region id
+cluster_map_fits <- cluster_map
+cluster_map_fits[is.na(cluster_map_fits)] <- 0L
+storage.mode(cluster_map_fits) <- "integer"
+
+FITSio::writeFITSim(
+  cluster_map_fits,
+  file = "capivara_segmentation_map.fits",
+  c1 = "Capivara segmentation map: 0=background, positive integers=regions"
+)
+```
+
+If you want to preserve the spatial WCS from the original cube, reuse the first
+two axes from the input FITS object when they are available:
+
+```r
+spatial_ax <- NA
+if (!is.null(seg$axDat) && is.data.frame(seg$axDat) && nrow(seg$axDat) >= 2) {
+  spatial_ax <- seg$axDat[1:2, , drop = FALSE]
+}
+
+FITSio::writeFITSim(
+  cluster_map_fits,
+  file = "capivara_segmentation_map_wcs.fits",
+  axDat = spatial_ax,
+  header = seg$header,
+  c1 = "Capivara segmentation map: 0=background, positive integers=regions"
+)
+```
+
+The saved FITS image contains the bin number at each spatial pixel. It is the
+same binning scheme used by `summarize_cluster_spectra()`, so region `k` in the
+FITS map corresponds to row/bin `k` in the exported summed or median spectra.
+
 ## Large cubes
 
 The standard Ward workflow is exact, but it stores all pairwise distances. For
@@ -84,7 +151,8 @@ seg <- segment_large(
   input = x,
   Ncomp = 50,
   use_starlet_mask = TRUE,
-  knn_k = 50
+  knn_k = 50,
+  feature_wavelength_range = c(6500, 6625)
 )
 ```
 
@@ -113,6 +181,56 @@ seg <- segment(
 ```
 
 ![](images/manga_8140_starlet_comparison_full.png)
+
+## Experimental structural diagnostics
+
+Capivara also includes experimental structural diagnostics that can be used
+before structure-aware segmentation. These tools are intentionally conservative:
+they return continuous score maps, profile-model supports, and diagnostic
+masks, rather than claiming a fully validated morphological classification.
+
+For example, `detect_bar()` follows the standard GALFIT-style idea that bars
+are well represented by a modified Ferrer profile: a relatively flat inner
+component with a truncated outer radius. Capivara does not run GALFIT, but it
+fits a small modified-Ferrer envelope to the starlet/ridge structural evidence
+profile along the candidate bar axis. The returned diagnostics include
+ellipticity, position-angle scatter, Ferrer outer radius, Ferrer shape
+parameters, model support, and confidence. The returned `candidate_mask` is the
+thresholded evidence map, while `bar_mask` is a filled Ferrer-supported
+elongated support by default; this avoids introducing artificial holes through
+barred structures.
+
+```r
+bar <- detect_bar(
+  input = x,
+  structure_scales = 3:4,
+  starlet_args = list(
+    starlet_J = 5,
+    starlet_scales = 2:5,
+    include_coarse = FALSE,
+    positive_only = TRUE
+  )
+)
+
+bar$diagnostics
+bar_mask <- bar$bar_mask
+bar_score <- bar$bar_score
+```
+
+The hard flag `bar$bar_like` is deliberately strict. For science use, inspect
+`bar$bar_score`, `bar$bar_mask`, `bar$radial_profile`, and
+`bar$diagnostics$ferrer_supported` rather than relying only on the logical
+flag.
+
+Annular supports should be treated separately. `detect_ring()` intentionally
+builds a support with the compact central component excluded, so it is useful
+for ring or partial-ring hypotheses but should not be used as an alternative
+label for a barred galaxy.
+
+The current structural layer is model-led by design: modified Ferrer profiles
+for bars, annular/truncated profiles for rings, and future log-spiral or
+power-tanh supports for spiral arms. The segmentation step then runs inside the
+selected support via `segment_structures()`.
 
 ## Core API
 

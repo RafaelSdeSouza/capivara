@@ -12,7 +12,7 @@ Alternatively, this can be a `readFITS` object containing the data cube and its 
 
 \item{target_snr}{Numeric. The desired signal-to-noise ratio (SNR) for the final bins.}
 
-\item{redshift}{Numeric. The redshift value used for any wavelength corrections. Default is 0.}
+\item{redshift}{Numeric redshift placeholder kept for API compatibility.}
 
 \item{scale_fn}{A function to scale each spaxel spectrum. Defaults to `median_scale`,
 which centers each spectrum by subtracting its median value.}

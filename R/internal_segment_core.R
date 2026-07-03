@@ -15,6 +15,93 @@
   list(signal = signal, noise = noise)
 }
 
+.wavelength_axis <- function(cubedat, n_wave) {
+  if (!is.null(cubedat$axDat)) {
+    wavelengths <- tryCatch(
+      FITSio::axVec(3, cubedat$axDat),
+      error = function(e) NULL
+    )
+    if (!is.null(wavelengths) && length(wavelengths) == n_wave) {
+      return(wavelengths)
+    }
+  }
+
+  seq_len(n_wave)
+}
+
+.wavelength_range_index <- function(cubedat,
+                                    n_wave,
+                                    wavelength_range = NULL,
+                                    arg_name = "wavelength_range") {
+  if (is.null(wavelength_range)) {
+    return(seq_len(n_wave))
+  }
+
+  if (length(wavelength_range) != 2) {
+    stop("`", arg_name, "` must have length 2.")
+  }
+
+  wavelengths <- .wavelength_axis(cubedat, n_wave)
+  wave_idx <- which(wavelengths >= min(wavelength_range) & wavelengths <= max(wavelength_range))
+
+  if (!length(wave_idx)) {
+    stop("No wavelengths fall inside `", arg_name, "`.")
+  }
+
+  wave_idx
+}
+
+.subset_cubedat_wavelength_range <- function(cubedat, feature_wavelength_range = NULL) {
+  cubedat <- .as_cubedat(cubedat)
+  cube <- cubedat$imDat
+
+  if (!is.array(cube) || length(dim(cube)) != 3L) {
+    stop("`input$imDat` must be a 3D array with dimensions (n_row, n_col, n_wave).")
+  }
+
+  n_wave <- dim(cube)[3]
+  wave_idx <- .wavelength_range_index(
+    cubedat = cubedat,
+    n_wave = n_wave,
+    wavelength_range = feature_wavelength_range,
+    arg_name = "feature_wavelength_range"
+  )
+
+  wavelengths <- .wavelength_axis(cubedat, n_wave)
+
+  if (is.null(feature_wavelength_range)) {
+    return(list(
+      cubedat = cubedat,
+      wave_idx = wave_idx,
+      selected_wavelengths = wavelengths
+    ))
+  }
+
+  out <- cubedat
+  out$imDat <- cube[, , wave_idx, drop = FALSE]
+
+  if (!is.null(out$axDat) && is.data.frame(out$axDat) && nrow(out$axDat) >= 3L) {
+    if ("crval" %in% names(out$axDat)) {
+      out$axDat[3, "crval"] <- wavelengths[wave_idx[1]]
+    }
+    if ("crpix" %in% names(out$axDat)) {
+      out$axDat[3, "crpix"] <- 1
+    }
+    if ("cdelt" %in% names(out$axDat) && length(wave_idx) > 1L) {
+      out$axDat[3, "cdelt"] <- stats::median(diff(wavelengths[wave_idx]), na.rm = TRUE)
+    }
+    if ("len" %in% names(out$axDat)) {
+      out$axDat[3, "len"] <- length(wave_idx)
+    }
+  }
+
+  list(
+    cubedat = out,
+    wave_idx = wave_idx,
+    selected_wavelengths = wavelengths[wave_idx]
+  )
+}
+
 .scale_rows <- function(X, scale_fn, na_to_zero = FALSE) {
   X <- as.matrix(X)
 

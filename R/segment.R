@@ -14,7 +14,7 @@
 #'
 #' @param input A FITS object representing the input data cube. Typically, this is an IFU data cube.
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
-#' @param redshift Numeric, the redshift to apply for wavelength correction. Defaults to 0 (no correction).
+#' @param redshift Numeric redshift placeholder kept for API compatibility.
 #' @param scale_fn A function used to scale each row of the 2D representation of the data cube.
 #'   Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
@@ -26,6 +26,10 @@
 #'   \code{target_snr} is supplied.
 #' @param wavelength_range Optional wavelength interval used to compute SNR when
 #'   \code{target_snr} is supplied.
+#' @param feature_wavelength_range Optional wavelength interval used to select
+#'   the spectral channels used for clustering. The returned
+#'   \code{original_cube} remains the full input cube so downstream summed
+#'   spectra are still flux-preserving across the full spectral axis.
 #' @param snr_stat Either integrated SNR or median per-wavelength SNR when
 #'   \code{target_snr} is supplied.
 #' @param variance_inflation Multiplicative factor applied to propagated
@@ -100,6 +104,7 @@ segment <- function(input,
                     var_cube = NULL,
                     k_values = NULL,
                     wavelength_range = NULL,
+                    feature_wavelength_range = NULL,
                     snr_stat = c("integrated", "median_per_wavelength"),
                     variance_inflation = 1,
                     use_starlet_mask = FALSE,
@@ -131,7 +136,19 @@ segment <- function(input,
     positive_only = positive_only,
     mask_mode = mask_mode
   )
-  input <- starlet_prep$input
+  full_input <- .as_cubedat(starlet_prep$input)
+  feature_subset <- .subset_cubedat_wavelength_range(
+    full_input,
+    feature_wavelength_range = feature_wavelength_range
+  )
+  input <- feature_subset$cubedat
+
+  if (!is.null(var_cube) && !is.null(feature_wavelength_range)) {
+    var_cube <- .subset_cubedat_wavelength_range(
+      var_cube,
+      feature_wavelength_range = feature_wavelength_range
+    )$cubedat
+  }
 
   if (!is.null(target_snr)) {
     if (!missing(Ncomp)) {
@@ -165,6 +182,16 @@ segment <- function(input,
   }
   if (!is.null(starlet_prep$support_info)) {
     out$support_info <- starlet_prep$support_info
+  }
+
+  out$original_cube <- full_input
+  out$header <- full_input$hdr
+  out$axDat <- full_input$axDat
+
+  if (!is.null(feature_wavelength_range)) {
+    out$feature_wavelength_range <- feature_wavelength_range
+    out$feature_wavelength_index <- feature_subset$wave_idx
+    out$feature_wavelengths <- feature_subset$selected_wavelengths
   }
 
   out
