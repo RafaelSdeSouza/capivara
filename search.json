@@ -74,7 +74,7 @@
     "href": "index.html#starlet-support-masks",
     "title": "Capivara",
     "section": "Starlet support masks",
-    "text": "Starlet support masks\nCapivara can build a Sagui-style white-light starlet support before clustering. The mask is computed on the full spatial footprint and then applied back to the cube.\nseg &lt;- segment_large(\n  input = x,\n  Ncomp = 25,\n  use_starlet_mask = TRUE,\n  starlet_J = 5,\n  starlet_scales = 2:5,\n  include_coarse = FALSE,\n  denoise_k = 2.5,\n  positive_only = TRUE,\n  mask_mode = \"na\",\n  knn_k = 100\n)"
+    "text": "Starlet support masks\nCapivara can build a Sagui-style white-light starlet support before clustering. The mask is computed on the full spatial footprint and then applied back to the cube.\nseg &lt;- segment_large(\n  input = x,\n  Ncomp = 25,\n  use_starlet_mask = TRUE,\n  starlet_J = 5,\n  starlet_scales = 2:5,\n  include_coarse = FALSE,\n  denoise_k = 0,\n  positive_only = TRUE,\n  mask_mode = \"na\",\n  knn_k = 100\n)"
   },
   {
     "objectID": "index.html#experimental-structural-diagnostics",
