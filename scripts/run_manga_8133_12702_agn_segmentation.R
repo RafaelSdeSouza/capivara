@@ -232,7 +232,6 @@ run_segment_large <- function(cube, ncomp, mask, spatial_weight = 0.35) {
   capivara::segment_large(
     input = list(imDat = cube, hdr = NULL, axDat = NULL),
     Ncomp = ncomp,
-    scale_fn = NULL,
     feature_scale = "robust_col",
     spatial_weight = spatial_weight,
     mask = mask,

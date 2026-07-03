@@ -429,7 +429,6 @@ run_path_feature_seg <- function(feature_cube, mask, ncomp, label = "") {
   capivara::segment_large(
     input = list(imDat = feature_cube, hdr = NULL, axDat = NULL),
     Ncomp = ncomp,
-    scale_fn = NULL,
     feature_scale = "robust_col",
     spatial_weight = as.numeric(Sys.getenv("CAPIVARA_MANGA8133_PATH_SPATIAL_WEIGHT", unset = "0.10")),
     mask = mask,

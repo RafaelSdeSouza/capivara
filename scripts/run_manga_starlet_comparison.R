@@ -61,10 +61,10 @@ collapse_sagui <- function(cube) {
   collapse_white_light(cube, kclip = 1)
 }
 
-base_res <- segment(x, Ncomp = 8)
+base_res <- segment_large(x, Ncomp = 8, knn_k = 50, verbose = FALSE)
 star_res <- do.call(
-  segment,
-  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na"), starlet_cfg)
+  segment_large,
+  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na", knn_k = 50, verbose = FALSE), starlet_cfg)
 )
 
 collapsed <- collapse_sagui(cube)
@@ -72,7 +72,8 @@ collapsed <- collapse_sagui(cube)
 white_df <- mat_to_df_sagui(collapsed, "White-light")
 white_df$value_norm <- normalize_panel(white_df$value)
 
-mask_df <- matrix_to_df(star_res$mask * 1, "Starlet Mask")
+starlet_mask <- star_res$support_info$mask
+mask_df <- matrix_to_df(starlet_mask * 1, "Starlet Mask")
 
 white_plot <- ggplot2::ggplot(white_df, ggplot2::aes(x = Row, y = Col, fill = value_norm)) +
   ggplot2::geom_raster() +
@@ -96,7 +97,7 @@ mask_plot <- ggplot2::ggplot(mask_df, ggplot2::aes(x = Row, y = Col, fill = fact
   ggplot2::labs(
     title = sprintf(
       "Starlet Mask (%d pixels, Sagui recipe)",
-      sum(star_res$mask, na.rm = TRUE)
+      sum(starlet_mask, na.rm = TRUE)
     ),
     fill = NULL
   ) +
@@ -108,11 +109,11 @@ mask_plot <- ggplot2::ggplot(mask_df, ggplot2::aes(x = Row, y = Col, fill = fact
 
 cluster_palette <- palette_van_gogh_div(8)
 base_plot <- plot_cluster(base_res, palette = cluster_palette) +
-  ggplot2::ggtitle(sprintf("segment(): %d valid spaxels", sum(!is.na(base_res$cluster_map)))) +
+  ggplot2::ggtitle(sprintf("segment_large(): %d valid spaxels", sum(!is.na(base_res$cluster_map)))) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
 
 star_plot <- plot_cluster(star_res, palette = cluster_palette) +
-  ggplot2::ggtitle(sprintf("segment(use_starlet_mask=TRUE): %d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
+  ggplot2::ggtitle(sprintf("segment_large(use_starlet_mask=TRUE): %d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
 
 grDevices::png(png_path, width = 1600, height = 1400, res = 170)

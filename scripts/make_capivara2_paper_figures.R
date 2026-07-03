@@ -249,10 +249,10 @@ make_starlet_panel <- function() {
     denoise_k = 0,
     positive_only = TRUE
   )
-  base_res <- segment(x, Ncomp = 8)
+  base_res <- segment_large(x, Ncomp = 8, knn_k = 50, verbose = FALSE)
   star_res <- do.call(
-    segment,
-    c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na"), starlet_cfg)
+    segment_large,
+    c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, collapse_fn = collapse_sagui, mask_mode = "na", knn_k = 50, verbose = FALSE), starlet_cfg)
   )
   white <- collapse_sagui(x$imDat)
   white[white <= 0] <- NA_real_
@@ -260,7 +260,7 @@ make_starlet_panel <- function() {
   rng <- range(white_norm, finite = TRUE)
   white_norm <- (white_norm - rng[1]) / diff(rng)
 
-  mask <- star_res$mask
+  mask <- star_res$support_info$mask
   storage.mode(mask) <- "numeric"
   mask[mask == 0] <- NA_real_
 
@@ -269,8 +269,8 @@ make_starlet_panel <- function() {
       theme(legend.position = "none"),
     "starlet_support" = plot_continuous_map(mask, palette = c("#F2D06B", "#F2D06B"), limits = c(0, 1), legend_title = NULL) +
       theme(legend.position = "none"),
-    "exact_ward_bins" = plot_discrete_map(base_res$cluster_map),
-    "starlet_exact_ward_bins" = plot_discrete_map(star_res$cluster_map)
+    "segment_large_bins" = plot_discrete_map(base_res$cluster_map),
+    "starlet_segment_large_bins" = plot_discrete_map(star_res$cluster_map)
   )
   for (nm in names(plots)) {
     save_clean_plot(plots[[nm]], paste0("capivara2_starlet_", nm))

@@ -49,13 +49,17 @@ library(FITSio)
 
 x <- FITSio::readFITS("manga-8140-12703-LOGCUBE.fits")
 
-seg <- segment(
+seg <- segment_large(
   input = x,
   Ncomp = 25,
   use_starlet_mask = TRUE,
   starlet_J = 5,
-  starlet_scales = 2:5
+  starlet_scales = 2:5,
+  knn_k = 50
 )
+
+print(seg$backend_info)
+print(table(seg$cluster_map, useNA = "ifany"))
 
 plot_cluster(seg)
 
@@ -63,10 +67,16 @@ spectra <- summarize_cluster_spectra(seg)
 
 sum_spectra <- spectra$sum_spectra
 median_spectra <- spectra$median_spectra
+print(head(sum_spectra))
+
+write.csv(sum_spectra, "capivara_sum_spectra.csv", row.names = FALSE)
+saveRDS(seg, "capivara_segmentation.rds")
 ```
 
 Use the summed spectra for flux-preserving science products and the
-median spectra for robust visual inspection.
+median spectra for robust visual inspection. `use_starlet_mask = TRUE`
+turns on the foreground-support mask; `use_starlet_mask = FALSE` runs on
+all valid spaxels. There is no separate starlet segmentation entry point.
 
 To segment only on a spectral window, for example around an emission-line
 complex, use `feature_wavelength_range`. The binning is learned from
@@ -74,10 +84,11 @@ that window, but the returned `original_cube` remains the full cube, so
 `summarize_cluster_spectra()` still exports full flux-preserving spectra.
 
 ``` r
-seg_ha <- segment(
+seg_ha <- segment_large(
   input = x,
   Ncomp = 25,
   use_starlet_mask = TRUE,
+  knn_k = 50,
   feature_wavelength_range = c(6500, 6625)
 )
 
@@ -88,7 +99,7 @@ When using `target_snr`, `wavelength_range` has a different role: it
 selects the spectral interval used to evaluate the SNR screen. This keeps
 line-focused segmentation and SNR quality control independent.
 
-## Saving the segmentation map as FITS
+## Plotting and saving the segmentation map
 
 Both `segment()` and `segment_large()` return the spatial binning scheme
 in `seg$cluster_map`. This is a 2-D matrix with the same spatial
@@ -98,6 +109,8 @@ write those pixels as `0` and keep the Capivara regions as positive
 integer labels.
 
 ``` r
+plot_cluster(seg)
+
 cluster_map <- seg$cluster_map
 
 # DS9-friendly convention:
@@ -161,8 +174,9 @@ seg <- segment_large(
 ```
 
 `segment_large()` mirrors the output structure of `segment()` while
-avoiding the full all-pairs distance matrix. This is the recommended
-route for large MaNGA, MUSE, LSST, JPAS, and ALMA-style cubes.
+avoiding the full all-pairs distance matrix. It uses the same default
+row scaling as `segment()` and is the recommended route for large MaNGA,
+MUSE, LSST, JPAS, and ALMA-style cubes.
 
 ## Starlet support masks
 
@@ -171,7 +185,7 @@ clustering. The mask is computed on the full spatial footprint and then
 applied back to the cube.
 
 ``` r
-seg <- segment(
+seg <- segment_large(
   input = x,
   Ncomp = 25,
   use_starlet_mask = TRUE,
@@ -180,7 +194,8 @@ seg <- segment(
   include_coarse = FALSE,
   denoise_k = 0,
   positive_only = TRUE,
-  mask_mode = "na"
+  mask_mode = "na",
+  knn_k = 50
 )
 ```
 
@@ -244,6 +259,8 @@ Capivara keeps the public segmentation API small:
 
 - `segment()` is the standard exact Ward segmentation.
 - `segment_large()` is the memory-safe sparse-Ward segmentation.
+- `use_starlet_mask = TRUE/FALSE` controls whether either backend
+  applies a starlet foreground support before clustering.
 - `estimate_segment_memory()` estimates the exact Ward memory lower
   bound.
 - `summarize_cluster_spectra()` exports region spectra.
@@ -276,17 +293,9 @@ The panels below were generated with the public API on full MaNGA cubes.
 
 <img src="images/examples/manga_8135_12701_compare.png" width="960" alt="MaNGA 8135-12701 comparison">
 
-### MaNGA 8443-6102
-
-<img src="images/examples/manga_8443_6102_compare.png" width="960" alt="MaNGA 8443-6102 comparison">
-
 ### MaNGA 10224-6104
 
 <img src="images/examples/manga_10224_6104_compare.png" width="960" alt="MaNGA 10224-6104 comparison">
-
-### MaNGA 11749-12701
-
-<img src="images/examples/manga_11749_12701_compare.png" width="960" alt="MaNGA 11749-12701 comparison">
 
 ## Citation
 
