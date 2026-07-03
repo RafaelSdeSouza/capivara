@@ -8,7 +8,7 @@ segment_large(
   input,
   Ncomp = 15,
   redshift = 0,
-  scale_fn = NULL,
+  scale_fn = median_scale,
   target_snr = NULL,
   var_cube = NULL,
   k_values = NULL,
@@ -35,7 +35,7 @@ segment_large(
   mask = NULL,
   valid_mode = c("signal", "finite"),
   return_details = FALSE,
-  verbose = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
@@ -45,10 +45,8 @@ segment_large(
 
 \item{redshift}{Kept for API compatibility with `segment()`.}
 
-\item{scale_fn}{Optional row-wise spectral scaling function. The default
-\code{NULL} follows the sparse-Ward calibration scripts and clusters the
-finite-filled spectra directly. Pass \code{\link{median_scale}} to match
-the default scaling style used by \code{\link{segment}}.}
+\item{scale_fn}{Optional row-wise spectral scaling function. Defaults to
+\code{\link{median_scale}}, matching \code{\link{segment}}.}
 
 \item{target_snr}{Optional minimum accepted SNR per cluster. When supplied,
 Capivara chooses the largest number of clusters whose minimum cluster SNR

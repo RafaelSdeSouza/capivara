@@ -158,10 +158,8 @@
 #' @param input A FITS-like object with `imDat`, or a raw 3D array.
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
 #' @param redshift Kept for API compatibility with `segment()`.
-#' @param scale_fn Optional row-wise spectral scaling function. The default
-#'   \code{NULL} follows the sparse-Ward calibration scripts and clusters the
-#'   finite-filled spectra directly. Pass \code{\link{median_scale}} to match
-#'   the default scaling style used by \code{\link{segment}}.
+#' @param scale_fn Optional row-wise spectral scaling function. Defaults to
+#'   \code{\link{median_scale}}, matching \code{\link{segment}}.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
 #'   Capivara chooses the largest number of clusters whose minimum cluster SNR
 #'   remains above this threshold.
@@ -221,7 +219,7 @@
 segment_large <- function(input,
                           Ncomp = 15,
                           redshift = 0,
-                          scale_fn = NULL,
+                          scale_fn = median_scale,
                           target_snr = NULL,
                           var_cube = NULL,
                           k_values = NULL,
@@ -248,7 +246,7 @@ segment_large <- function(input,
                           mask = NULL,
                           valid_mode = c("signal", "finite"),
                           return_details = FALSE,
-                          verbose = TRUE) {
+                          verbose = FALSE) {
   feature_scale <- match.arg(feature_scale)
   valid_mode <- match.arg(valid_mode)
   snr_stat <- match.arg(snr_stat)
