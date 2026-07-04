@@ -239,56 +239,6 @@ seg <- segment_large(
 
 ![](images/manga_8140_starlet_comparison_full.png){fig-align="center" width="100%"}
 
-## Experimental structural diagnostics
-
-Capivara also includes experimental structural diagnostics that can be used
-before structure-aware segmentation. These tools are intentionally conservative:
-they return continuous score maps, profile-model supports, and diagnostic
-masks, rather than claiming a fully validated morphological classification.
-
-For example, `detect_bar()` follows the standard GALFIT-style idea that bars
-are well represented by a modified Ferrer profile: a relatively flat inner
-component with a truncated outer radius. Capivara does not run GALFIT, but it
-fits a small modified-Ferrer envelope to the starlet/ridge structural evidence
-profile along the candidate bar axis. The returned diagnostics include
-ellipticity, position-angle scatter, Ferrer outer radius, Ferrer shape
-parameters, model support, and confidence. The returned `candidate_mask` is the
-thresholded evidence map, while `bar_mask` is a filled Ferrer-supported
-elongated support by default; this avoids introducing artificial holes through
-barred structures.
-
-```r
-bar <- detect_bar(
-  input = x,
-  structure_scales = 3:4,
-  starlet_args = list(
-    starlet_J = 5,
-    starlet_scales = 2:5,
-    include_coarse = FALSE,
-    positive_only = TRUE
-  )
-)
-
-bar$diagnostics
-bar_mask <- bar$bar_mask
-bar_score <- bar$bar_score
-```
-
-The hard flag `bar$bar_like` is deliberately strict. For science use, inspect
-`bar$bar_score`, `bar$bar_mask`, `bar$radial_profile`, and
-`bar$diagnostics$ferrer_supported` rather than relying only on the logical
-flag.
-
-Annular supports should be treated separately. `detect_ring()` intentionally
-builds a support with the compact central component excluded, so it is useful
-for ring or partial-ring hypotheses but should not be used as an alternative
-label for a barred galaxy.
-
-The current structural layer is model-led by design: modified Ferrer profiles
-for bars, annular/truncated profiles for rings, and future log-spiral or
-power-tanh supports for spiral arms. The segmentation step then runs inside the
-selected support via `segment_structures()`.
-
 ## Core API
 
 Capivara keeps the public segmentation API small:

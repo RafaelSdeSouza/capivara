@@ -76,14 +76,16 @@ saveRDS(seg, "capivara_segmentation.rds")
 Use the summed spectra for flux-preserving science products and the
 median spectra for robust visual inspection. `use_starlet_mask = TRUE`
 turns on the foreground-support mask; `use_starlet_mask = FALSE` runs on
-all valid spaxels. There is no separate starlet segmentation entry point.
+all valid spaxels. There is no separate starlet segmentation entry
+point.
 
 By default, `feature_wavelength_range = NULL`, so the segmentation uses
 all available wavelength channels. To segment only on a spectral window,
 for example around a chosen emission-line complex, pass a two-element
 wavelength interval. The binning is learned from that window, but the
 returned `original_cube` remains the full cube, so
-`summarize_cluster_spectra()` still exports full flux-preserving spectra.
+`summarize_cluster_spectra()` still exports full flux-preserving
+spectra.
 
 ``` r
 # Example only: choose the interval for your cube's wavelength frame.
@@ -101,8 +103,8 @@ ha_spectra <- summarize_cluster_spectra(seg_ha)$sum_spectra
 ```
 
 When using `target_snr`, `wavelength_range` has a different role: it
-selects the spectral interval used to evaluate the SNR screen. This keeps
-line-focused segmentation and SNR quality control independent.
+selects the spectral interval used to evaluate the SNR screen. This
+keeps line-focused segmentation and SNR quality control independent.
 
 ## Plotting and saving the segmentation map
 
@@ -179,7 +181,7 @@ seg <- segment_large(
 
 `segment_large()` mirrors the output structure of `segment()` while
 avoiding the full all-pairs distance matrix. Its default validity screen
-follows Sagui's sparse-Ward backend for coherent kNN graphs. Increasing
+follows Sagui’s sparse-Ward backend for coherent kNN graphs. Increasing
 `knn_k` makes the graph denser and usually closer to exact Ward;
 `knn_k = 100` is a good visual/science starting point for MaNGA- or
 JPAS-style examples.
@@ -206,58 +208,6 @@ seg <- segment_large(
 ```
 
 ![](images/manga_8140_starlet_comparison_full.png)
-
-## Experimental structural diagnostics
-
-Capivara also includes experimental structural diagnostics that can be
-used before structure-aware segmentation. These tools are intentionally
-conservative: they return continuous score maps, profile-model supports,
-and diagnostic masks, rather than claiming a fully validated
-morphological classification.
-
-For example, `detect_bar()` follows the standard GALFIT-style idea that
-bars are well represented by a modified Ferrer profile: a relatively flat
-inner component with a truncated outer radius. Capivara does not run
-GALFIT, but it fits a small modified-Ferrer envelope to the
-starlet/ridge structural evidence profile along the candidate bar axis.
-The returned diagnostics include ellipticity, position-angle scatter,
-Ferrer outer radius, Ferrer shape parameters, model support, and
-confidence. The returned `candidate_mask` is the thresholded evidence
-map, while `bar_mask` is a filled Ferrer-supported elongated support by
-default; this avoids introducing artificial holes through barred
-structures.
-
-``` r
-bar <- detect_bar(
-  input = x,
-  structure_scales = 3:4,
-  starlet_args = list(
-    starlet_J = 5,
-    starlet_scales = 2:5,
-    include_coarse = FALSE,
-    positive_only = TRUE
-  )
-)
-
-bar$diagnostics
-bar_mask <- bar$bar_mask
-bar_score <- bar$bar_score
-```
-
-The hard flag `bar$bar_like` is deliberately strict. For science use,
-inspect `bar$bar_score`, `bar$bar_mask`, `bar$radial_profile`, and
-`bar$diagnostics$ferrer_supported` rather than relying only on the
-logical flag.
-
-Annular supports should be treated separately. `detect_ring()`
-intentionally builds a support with the compact central component
-excluded, so it is useful for ring or partial-ring hypotheses but should
-not be used as an alternative label for a barred galaxy.
-
-The current structural layer is model-led by design: modified Ferrer
-profiles for bars, annular/truncated profiles for rings, and future
-log-spiral or power-tanh supports for spiral arms. The segmentation step
-then runs inside the selected support via `segment_structures()`.
 
 ## Core API
 
@@ -293,8 +243,8 @@ allowing a complete analysis workflow.
 
 ## Visual example
 
-This panel shows the exact and scalable segmentation APIs with and without
-the starlet support mask.
+This panel shows the exact and scalable segmentation APIs with and
+without the starlet support mask.
 
 <img src="images/examples/manga_8443_6102_compare_current.png" width="960" alt="MaNGA 8443-6102 comparison of segment and segment_large with and without starlet masking">
 
