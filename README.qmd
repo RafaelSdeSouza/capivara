@@ -283,7 +283,7 @@ complete analysis workflow.
 This panel shows the exact and scalable segmentation APIs with and without the
 starlet support mask.
 
-<img src="images/examples/manga_8443_6102_compare.png" width="960" alt="MaNGA 8443-6102 comparison of segment and segment_large with and without starlet masking">
+<img src="images/examples/manga_8443_6102_compare_current.png" width="960" alt="MaNGA 8443-6102 comparison of segment and segment_large with and without starlet masking">
 
 ## Citation
 

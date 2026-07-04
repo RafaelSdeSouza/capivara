@@ -248,10 +248,32 @@ make_starlet_panel <- function() {
     denoise_k = 0,
     positive_only = TRUE
   )
-  base_res <- segment_large(x, Ncomp = 8, knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE)
+  feature_window <- c(6500, 6625)
+  base_res <- segment_large(
+    x,
+    Ncomp = 8,
+    feature_wavelength_range = feature_window,
+    knn_k = 100,
+    auto_k = FALSE,
+    max_k = 200,
+    verbose = FALSE
+  )
   star_res <- do.call(
     segment_large,
-    c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, mask_mode = "na", knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE), starlet_cfg)
+    c(
+      list(
+        input = x,
+        Ncomp = 8,
+        use_starlet_mask = TRUE,
+        mask_mode = "na",
+        feature_wavelength_range = feature_window,
+        knn_k = 100,
+        auto_k = FALSE,
+        max_k = 200,
+        verbose = FALSE
+      ),
+      starlet_cfg
+    )
   )
   white <- collapse_white_light(x$imDat)
   white[white <= 0] <- NA_real_
@@ -265,11 +287,15 @@ make_starlet_panel <- function() {
 
   plots <- list(
     "white_light" = plot_continuous_map(white_norm, palette = ratio_palette, limits = c(0, 1), legend_title = NULL) +
+      ggtitle("White-light") +
       theme(legend.position = "none"),
     "starlet_support" = plot_continuous_map(mask, palette = c("#F2D06B", "#F2D06B"), limits = c(0, 1), legend_title = NULL) +
+      ggtitle(sprintf("Starlet support (%d)", sum(star_res$support_info$mask, na.rm = TRUE))) +
       theme(legend.position = "none"),
-    "segment_large_bins" = plot_discrete_map(base_res$cluster_map),
-    "starlet_segment_large_bins" = plot_discrete_map(star_res$cluster_map)
+    "segment_large_bins" = plot_discrete_map(base_res$cluster_map) +
+      ggtitle("segment_large()"),
+    "starlet_segment_large_bins" = plot_discrete_map(star_res$cluster_map) +
+      ggtitle("segment_large(starlet=TRUE)")
   )
   for (nm in names(plots)) {
     save_clean_plot(plots[[nm]], paste0("capivara2_starlet_", nm))

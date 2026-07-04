@@ -59,10 +59,33 @@ starlet_cfg <- list(
   positive_only = TRUE
 )
 
-base_res <- segment_large(x, Ncomp = 8, knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE)
+feature_window <- c(6500, 6625)
+
+base_res <- segment_large(
+  x,
+  Ncomp = 8,
+  feature_wavelength_range = feature_window,
+  knn_k = 100,
+  auto_k = FALSE,
+  max_k = 200,
+  verbose = FALSE
+)
 star_res <- do.call(
   segment_large,
-  c(list(input = x, Ncomp = 8, use_starlet_mask = TRUE, mask_mode = "na", knn_k = 100, auto_k = FALSE, max_k = 200, verbose = FALSE), starlet_cfg)
+  c(
+    list(
+      input = x,
+      Ncomp = 8,
+      use_starlet_mask = TRUE,
+      mask_mode = "na",
+      feature_wavelength_range = feature_window,
+      knn_k = 100,
+      auto_k = FALSE,
+      max_k = 200,
+      verbose = FALSE
+    ),
+    starlet_cfg
+  )
 )
 
 collapsed <- collapse_white_light(cube)
@@ -107,12 +130,12 @@ mask_plot <- ggplot2::ggplot(mask_df, ggplot2::aes(x = Row, y = Col, fill = fact
 
 cluster_palette <- palette_van_gogh_div(8)
 base_plot <- plot_cluster(base_res, palette = cluster_palette) +
-  ggplot2::ggtitle(sprintf("segment_large(): %d valid spaxels", sum(!is.na(base_res$cluster_map)))) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+  ggplot2::ggtitle(sprintf("segment_large()\n%d valid spaxels", sum(!is.na(base_res$cluster_map)))) +
+  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 15))
 
 star_plot <- plot_cluster(star_res, palette = cluster_palette) +
-  ggplot2::ggtitle(sprintf("segment_large(use_starlet_mask=TRUE): %d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+  ggplot2::ggtitle(sprintf("segment_large(starlet=TRUE)\n%d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
+  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 15))
 
 grDevices::png(png_path, width = 1600, height = 1400, res = 170)
 grid::grid.newpage()
