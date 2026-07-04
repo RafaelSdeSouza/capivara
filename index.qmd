@@ -26,7 +26,7 @@ spectra for downstream analysis.
 :::
 
 ::: {.capivara-hero-visual}
-![](images/mosaic_segmented.png){alt="Capivara segmentation examples across MaNGA galaxies"}
+![](images/mosaic_segmented_sagui.png){alt="Capivara starlet segmentation examples across MaNGA galaxies"}
 :::
 :::
 
