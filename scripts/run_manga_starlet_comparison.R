@@ -4,7 +4,7 @@ script_arg <- commandArgs()[grep("^--file=", commandArgs())]
 script_path <- if (length(script_arg)) sub("^--file=", "", script_arg[[1]]) else file.path(getwd(), "scripts/run_manga_starlet_comparison.R")
 repo_root <- normalizePath(file.path(dirname(script_path), ".."), mustWork = TRUE)
 
-fits_path <- if (length(args) >= 1) args[[1]] else file.path(repo_root, "..", "sagui_capivara_MaNGA", "manga-7443-12703-LOGCUBE.fits")
+fits_path <- if (length(args) >= 1) args[[1]] else file.path(repo_root, "..", "sagui_capivara_MaNGA", "manga-8140-12703-LOGCUBE.fits")
 png_path <- if (length(args) >= 2) args[[2]] else "/tmp/capivara_manga_starlet_comparison.png"
 rds_path <- if (length(args) >= 3) args[[3]] else "/tmp/capivara_manga_starlet_comparison.rds"
 
@@ -59,15 +59,22 @@ starlet_cfg <- list(
   positive_only = TRUE
 )
 
-feature_window <- c(6500, 6625)
+ncomp <- as.integer(Sys.getenv("CAPIVARA_STARLET_COMPARISON_NCOMP", unset = "25"))
+knn_k <- as.integer(Sys.getenv("CAPIVARA_STARLET_COMPARISON_KNN", unset = "100"))
+feature_window_min <- Sys.getenv("CAPIVARA_STARLET_FEATURE_MIN", unset = "")
+feature_window_max <- Sys.getenv("CAPIVARA_STARLET_FEATURE_MAX", unset = "")
+feature_window <- NULL
+if (nzchar(feature_window_min) && nzchar(feature_window_max)) {
+  feature_window <- c(as.numeric(feature_window_min), as.numeric(feature_window_max))
+}
 
 base_res <- segment_large(
   x,
-  Ncomp = 8,
+  Ncomp = ncomp,
   feature_wavelength_range = feature_window,
-  knn_k = 100,
+  knn_k = knn_k,
   auto_k = FALSE,
-  max_k = 200,
+  max_k = max(200, knn_k),
   verbose = FALSE
 )
 star_res <- do.call(
@@ -75,13 +82,13 @@ star_res <- do.call(
   c(
     list(
       input = x,
-      Ncomp = 8,
+      Ncomp = ncomp,
       use_starlet_mask = TRUE,
       mask_mode = "na",
       feature_wavelength_range = feature_window,
-      knn_k = 100,
+      knn_k = knn_k,
       auto_k = FALSE,
-      max_k = 200,
+      max_k = max(200, knn_k),
       verbose = FALSE
     ),
     starlet_cfg
@@ -117,7 +124,7 @@ mask_plot <- ggplot2::ggplot(mask_df, ggplot2::aes(x = Row, y = Col, fill = fact
   ggplot2::scale_fill_manual(values = c("0" = "black", "1" = "#FFDE38"), na.value = "black") +
   ggplot2::labs(
     title = sprintf(
-      "Starlet Mask (%d pixels, path-signature recipe)",
+      "Starlet support mask (%d spaxels)",
       sum(starlet_mask, na.rm = TRUE)
     ),
     fill = NULL
@@ -128,13 +135,13 @@ mask_plot <- ggplot2::ggplot(mask_df, ggplot2::aes(x = Row, y = Col, fill = fact
     plot.title = ggplot2::element_text(hjust = 0.5, face = "bold")
   )
 
-cluster_palette <- palette_van_gogh_div(8)
+cluster_palette <- palette_van_gogh_div(ncomp)
 base_plot <- plot_cluster(base_res, palette = cluster_palette) +
   ggplot2::ggtitle(sprintf("segment_large()\n%d valid spaxels", sum(!is.na(base_res$cluster_map)))) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 15))
 
 star_plot <- plot_cluster(star_res, palette = cluster_palette) +
-  ggplot2::ggtitle(sprintf("segment_large(starlet=TRUE)\n%d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
+  ggplot2::ggtitle(sprintf("segment_large(use_starlet_mask=TRUE)\n%d valid spaxels", sum(!is.na(star_res$cluster_map)))) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 15))
 
 grDevices::png(png_path, width = 1600, height = 1400, res = 170)
@@ -153,6 +160,9 @@ saveRDS(
     starlet = star_res,
     mask_source = "full_frame",
     starlet_cfg = starlet_cfg,
+    ncomp = ncomp,
+    knn_k = knn_k,
+    feature_wavelength_range = feature_window,
     dims = dim(cube),
     fits_path = fits_path
   ),
