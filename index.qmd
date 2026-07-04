@@ -26,7 +26,7 @@ spectra for downstream analysis.
 :::
 
 ::: {.capivara-hero-visual}
-![](images/manga_8140_starlet_comparison_full.png){alt="Capivara starlet support and segmentation example"}
+![](images/mosaic_segmented.png){alt="Capivara segmentation examples across MaNGA galaxies"}
 :::
 :::
 
@@ -236,8 +236,6 @@ seg <- segment_large(
   knn_k = 100
 )
 ```
-
-![](images/manga_8140_starlet_comparison_full.png){fig-align="center" width="100%"}
 
 ## Core API
 

@@ -207,8 +207,6 @@ seg <- segment_large(
 )
 ```
 
-![](images/manga_8140_starlet_comparison_full.png)
-
 ## Core API
 
 Capivara keeps the public segmentation API small:
@@ -268,14 +266,16 @@ If you use Capivara in your research, please cite:
 Related methods used by Capivara examples:
 
 ``` bibtex
-@misc{desouza2026sagui,
+@article{desouza2026sagui,
   author = {de Souza, Rafael S. and Wille, Andressa and Shenoy, Shravya and Patil, Aarya A. and Krone-Martins, Alberto and Chies-Santos, Ana L. and Boehm, Celine and Rosa, Reinaldo R. and Pessi, Thallis and Ishida, Emille E. O. and Dage, Kristen C. and Nakazono, Lilianne and Darc, Phelipe and Durgesh, Rupesh},
   title = {SAGUI: SED-based Segmentation of Multi-band Galaxy Images -- Application to JADES in GOODS-South},
+  journal = {Monthly Notices of the Royal Astronomical Society},
   year = {2026},
+  doi = {10.1093/mnras/stag1062},
   eprint = {2604.18812},
   archivePrefix = {arXiv},
   primaryClass = {astro-ph.GA},
-  url = {https://arxiv.org/abs/2604.18812}
+  url = {https://doi.org/10.1093/mnras/stag1062}
 }
 
 @misc{desouza2026pathsignatures,

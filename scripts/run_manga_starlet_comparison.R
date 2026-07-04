@@ -61,17 +61,11 @@ starlet_cfg <- list(
 
 ncomp <- as.integer(Sys.getenv("CAPIVARA_STARLET_COMPARISON_NCOMP", unset = "25"))
 knn_k <- as.integer(Sys.getenv("CAPIVARA_STARLET_COMPARISON_KNN", unset = "100"))
-feature_window_min <- Sys.getenv("CAPIVARA_STARLET_FEATURE_MIN", unset = "")
-feature_window_max <- Sys.getenv("CAPIVARA_STARLET_FEATURE_MAX", unset = "")
-feature_window <- NULL
-if (nzchar(feature_window_min) && nzchar(feature_window_max)) {
-  feature_window <- c(as.numeric(feature_window_min), as.numeric(feature_window_max))
-}
 
 base_res <- segment_large(
   x,
   Ncomp = ncomp,
-  feature_wavelength_range = feature_window,
+  feature_wavelength_range = NULL,
   knn_k = knn_k,
   auto_k = FALSE,
   max_k = max(200, knn_k),
@@ -85,7 +79,7 @@ star_res <- do.call(
       Ncomp = ncomp,
       use_starlet_mask = TRUE,
       mask_mode = "na",
-      feature_wavelength_range = feature_window,
+      feature_wavelength_range = NULL,
       knn_k = knn_k,
       auto_k = FALSE,
       max_k = max(200, knn_k),
@@ -162,7 +156,7 @@ saveRDS(
     starlet_cfg = starlet_cfg,
     ncomp = ncomp,
     knn_k = knn_k,
-    feature_wavelength_range = feature_window,
+    feature_wavelength_range = NULL,
     dims = dim(cube),
     fits_path = fits_path
   ),

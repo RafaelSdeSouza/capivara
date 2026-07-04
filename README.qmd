@@ -200,8 +200,6 @@ seg <- segment_large(
 )
 ```
 
-![](images/manga_8140_starlet_comparison_full.png)
-
 ## Core API
 
 Capivara keeps the public segmentation API small:
