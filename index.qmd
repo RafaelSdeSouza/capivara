@@ -115,18 +115,23 @@ spectra for robust visual inspection. `use_starlet_mask = TRUE` turns on the
 foreground-support mask; `use_starlet_mask = FALSE` runs on all valid spaxels.
 There is no separate starlet segmentation entry point.
 
-To segment only on a spectral window, for example around an emission-line
-complex, use `feature_wavelength_range`. The binning is learned from that
-window, but the returned `original_cube` remains the full cube, so
-`summarize_cluster_spectra()` still exports full flux-preserving spectra.
+By default, `feature_wavelength_range = NULL`, so the segmentation uses all
+available wavelength channels. To segment only on a spectral window, for example
+around a chosen emission-line complex, pass a two-element wavelength interval.
+The binning is learned from that window, but the returned `original_cube`
+remains the full cube, so `summarize_cluster_spectra()` still exports full
+flux-preserving spectra.
 
 ```r
+# Example only: choose the interval for your cube's wavelength frame.
+line_window <- c(lambda_min, lambda_max)
+
 seg_ha <- segment_large(
   input = x,
   Ncomp = 25,
   use_starlet_mask = TRUE,
   knn_k = 100,
-  feature_wavelength_range = c(6500, 6625)
+  feature_wavelength_range = line_window
 )
 
 ha_spectra <- summarize_cluster_spectra(seg_ha)$sum_spectra
@@ -201,8 +206,7 @@ seg <- segment_large(
   input = x,
   Ncomp = 50,
   use_starlet_mask = TRUE,
-  knn_k = 100,
-  feature_wavelength_range = c(6500, 6625)
+  knn_k = 100
 )
 ```
 
@@ -336,6 +340,30 @@ If you use Capivara in your research, please cite:
   number = {4},
   pages = {3166--3179},
   doi = {10.1093/mnras/staf688}
+}
+```
+
+Related methods used by Capivara examples:
+
+```bibtex
+@misc{desouza2026sagui,
+  author = {de Souza, Rafael S. and Wille, Andressa and Shenoy, Shravya and Patil, Aarya A. and Krone-Martins, Alberto and Chies-Santos, Ana L. and Boehm, Celine and Rosa, Reinaldo R. and Pessi, Thallis and Ishida, Emille E. O. and Dage, Kristen C. and Nakazono, Lilianne and Darc, Phelipe and Durgesh, Rupesh},
+  title = {SAGUI: SED-based Segmentation of Multi-band Galaxy Images -- Application to JADES in GOODS-South},
+  year = {2026},
+  eprint = {2604.18812},
+  archivePrefix = {arXiv},
+  primaryClass = {astro-ph.GA},
+  url = {https://arxiv.org/abs/2604.18812}
+}
+
+@misc{desouza2026pathsignatures,
+  author = {de Souza, Rafael S. and Bunk, Severin},
+  title = {The Hidden Geometry of Astrophysical Spectra: Path-Signatures of Line Profiles},
+  year = {2026},
+  eprint = {2606.27432},
+  archivePrefix = {arXiv},
+  primaryClass = {astro-ph.IM},
+  url = {https://arxiv.org/abs/2606.27432}
 }
 ```
 
