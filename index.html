@@ -323,28 +323,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </figure>
 </div>
 </section>
-<section id="experimental-structural-diagnostics" class="level2">
-<h2 class="anchored" data-anchor-id="experimental-structural-diagnostics">Experimental structural diagnostics</h2>
-<p>Capivara also includes experimental structural diagnostics that can be used before structure-aware segmentation. These tools are intentionally conservative: they return continuous score maps, profile-model supports, and diagnostic masks, rather than claiming a fully validated morphological classification.</p>
-<p>For example, <code>detect_bar()</code> follows the standard GALFIT-style idea that bars are well represented by a modified Ferrer profile: a relatively flat inner component with a truncated outer radius. Capivara does not run GALFIT, but it fits a small modified-Ferrer envelope to the starlet/ridge structural evidence profile along the candidate bar axis. The returned diagnostics include ellipticity, position-angle scatter, Ferrer outer radius, Ferrer shape parameters, model support, and confidence. The returned <code>candidate_mask</code> is the thresholded evidence map, while <code>bar_mask</code> is a filled Ferrer-supported elongated support by default; this avoids introducing artificial holes through barred structures.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>bar <span class="ot">&lt;-</span> <span class="fu">detect_bar</span>(</span>
-<span id="cb10-2"><a href="#cb10-2"></a>  <span class="at">input =</span> x,</span>
-<span id="cb10-3"><a href="#cb10-3"></a>  <span class="at">structure_scales =</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>,</span>
-<span id="cb10-4"><a href="#cb10-4"></a>  <span class="at">starlet_args =</span> <span class="fu">list</span>(</span>
-<span id="cb10-5"><a href="#cb10-5"></a>    <span class="at">starlet_J =</span> <span class="dv">5</span>,</span>
-<span id="cb10-6"><a href="#cb10-6"></a>    <span class="at">starlet_scales =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
-<span id="cb10-7"><a href="#cb10-7"></a>    <span class="at">include_coarse =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb10-8"><a href="#cb10-8"></a>    <span class="at">positive_only =</span> <span class="cn">TRUE</span></span>
-<span id="cb10-9"><a href="#cb10-9"></a>  )</span>
-<span id="cb10-10"><a href="#cb10-10"></a>)</span>
-<span id="cb10-11"><a href="#cb10-11"></a></span>
-<span id="cb10-12"><a href="#cb10-12"></a>bar<span class="sc">$</span>diagnostics</span>
-<span id="cb10-13"><a href="#cb10-13"></a>bar_mask <span class="ot">&lt;-</span> bar<span class="sc">$</span>bar_mask</span>
-<span id="cb10-14"><a href="#cb10-14"></a>bar_score <span class="ot">&lt;-</span> bar<span class="sc">$</span>bar_score</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The hard flag <code>bar$bar_like</code> is deliberately strict. For science use, inspect <code>bar$bar_score</code>, <code>bar$bar_mask</code>, <code>bar$radial_profile</code>, and <code>bar$diagnostics$ferrer_supported</code> rather than relying only on the logical flag.</p>
-<p>Annular supports should be treated separately. <code>detect_ring()</code> intentionally builds a support with the compact central component excluded, so it is useful for ring or partial-ring hypotheses but should not be used as an alternative label for a barred galaxy.</p>
-<p>The current structural layer is model-led by design: modified Ferrer profiles for bars, annular/truncated profiles for rings, and future log-spiral or power-tanh supports for spiral arms. The segmentation step then runs inside the selected support via <code>segment_structures()</code>.</p>
-</section>
 <section id="core-api" class="level2">
 <h2 class="anchored" data-anchor-id="core-api">Core API</h2>
 <p>Capivara keeps the public segmentation API small:</p>
@@ -380,36 +358,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="citation" class="level2">
 <h2 class="anchored" data-anchor-id="citation">Citation</h2>
 <p>If you use Capivara in your research, please cite:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bibtex number-lines code-with-copy"><code class="sourceCode bibtex"><span id="cb11-1"><a href="#cb11-1"></a><span class="va">@article</span>{<span class="ot">desouza2025capivara</span>,</span>
-<span id="cb11-2"><a href="#cb11-2"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},</span>
-<span id="cb11-3"><a href="#cb11-3"></a>  <span class="dt">title</span> = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},</span>
-<span id="cb11-4"><a href="#cb11-4"></a>  <span class="dt">journal</span> = {Monthly Notices of the Royal Astronomical Society},</span>
-<span id="cb11-5"><a href="#cb11-5"></a>  <span class="dt">year</span> = {2025},</span>
-<span id="cb11-6"><a href="#cb11-6"></a>  <span class="dt">volume</span> = {539},</span>
-<span id="cb11-7"><a href="#cb11-7"></a>  <span class="dt">number</span> = {4},</span>
-<span id="cb11-8"><a href="#cb11-8"></a>  <span class="dt">pages</span> = {3166--3179},</span>
-<span id="cb11-9"><a href="#cb11-9"></a>  <span class="dt">doi</span> = {10.1093/mnras/staf688}</span>
-<span id="cb11-10"><a href="#cb11-10"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bibtex number-lines code-with-copy"><code class="sourceCode bibtex"><span id="cb10-1"><a href="#cb10-1"></a><span class="va">@article</span>{<span class="ot">desouza2025capivara</span>,</span>
+<span id="cb10-2"><a href="#cb10-2"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},</span>
+<span id="cb10-3"><a href="#cb10-3"></a>  <span class="dt">title</span> = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},</span>
+<span id="cb10-4"><a href="#cb10-4"></a>  <span class="dt">journal</span> = {Monthly Notices of the Royal Astronomical Society},</span>
+<span id="cb10-5"><a href="#cb10-5"></a>  <span class="dt">year</span> = {2025},</span>
+<span id="cb10-6"><a href="#cb10-6"></a>  <span class="dt">volume</span> = {539},</span>
+<span id="cb10-7"><a href="#cb10-7"></a>  <span class="dt">number</span> = {4},</span>
+<span id="cb10-8"><a href="#cb10-8"></a>  <span class="dt">pages</span> = {3166--3179},</span>
+<span id="cb10-9"><a href="#cb10-9"></a>  <span class="dt">doi</span> = {10.1093/mnras/staf688}</span>
+<span id="cb10-10"><a href="#cb10-10"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Related methods used by Capivara examples:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bibtex number-lines code-with-copy"><code class="sourceCode bibtex"><span id="cb12-1"><a href="#cb12-1"></a><span class="va">@misc</span>{<span class="ot">desouza2026sagui</span>,</span>
-<span id="cb12-2"><a href="#cb12-2"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Wille, Andressa and Shenoy, Shravya and Patil, Aarya A. and Krone-Martins, Alberto and Chies-Santos, Ana L. and Boehm, Celine and Rosa, Reinaldo R. and Pessi, Thallis and Ishida, Emille E. O. and Dage, Kristen C. and Nakazono, Lilianne and Darc, Phelipe and Durgesh, Rupesh},</span>
-<span id="cb12-3"><a href="#cb12-3"></a>  <span class="dt">title</span> = {SAGUI: SED-based Segmentation of Multi-band Galaxy Images -- Application to JADES in GOODS-South},</span>
-<span id="cb12-4"><a href="#cb12-4"></a>  <span class="dt">year</span> = {2026},</span>
-<span id="cb12-5"><a href="#cb12-5"></a>  <span class="dt">eprint</span> = {2604.18812},</span>
-<span id="cb12-6"><a href="#cb12-6"></a>  <span class="dt">archivePrefix</span> = {arXiv},</span>
-<span id="cb12-7"><a href="#cb12-7"></a>  <span class="dt">primaryClass</span> = {astro-ph.GA},</span>
-<span id="cb12-8"><a href="#cb12-8"></a>  <span class="dt">url</span> = {https://arxiv.org/abs/2604.18812}</span>
-<span id="cb12-9"><a href="#cb12-9"></a>}</span>
-<span id="cb12-10"><a href="#cb12-10"></a></span>
-<span id="cb12-11"><a href="#cb12-11"></a><span class="va">@misc</span>{<span class="ot">desouza2026pathsignatures</span>,</span>
-<span id="cb12-12"><a href="#cb12-12"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Bunk, Severin},</span>
-<span id="cb12-13"><a href="#cb12-13"></a>  <span class="dt">title</span> = {The Hidden Geometry of Astrophysical Spectra: Path-Signatures of Line Profiles},</span>
-<span id="cb12-14"><a href="#cb12-14"></a>  <span class="dt">year</span> = {2026},</span>
-<span id="cb12-15"><a href="#cb12-15"></a>  <span class="dt">eprint</span> = {2606.27432},</span>
-<span id="cb12-16"><a href="#cb12-16"></a>  <span class="dt">archivePrefix</span> = {arXiv},</span>
-<span id="cb12-17"><a href="#cb12-17"></a>  <span class="dt">primaryClass</span> = {astro-ph.IM},</span>
-<span id="cb12-18"><a href="#cb12-18"></a>  <span class="dt">url</span> = {https://arxiv.org/abs/2606.27432}</span>
-<span id="cb12-19"><a href="#cb12-19"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bibtex number-lines code-with-copy"><code class="sourceCode bibtex"><span id="cb11-1"><a href="#cb11-1"></a><span class="va">@misc</span>{<span class="ot">desouza2026sagui</span>,</span>
+<span id="cb11-2"><a href="#cb11-2"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Wille, Andressa and Shenoy, Shravya and Patil, Aarya A. and Krone-Martins, Alberto and Chies-Santos, Ana L. and Boehm, Celine and Rosa, Reinaldo R. and Pessi, Thallis and Ishida, Emille E. O. and Dage, Kristen C. and Nakazono, Lilianne and Darc, Phelipe and Durgesh, Rupesh},</span>
+<span id="cb11-3"><a href="#cb11-3"></a>  <span class="dt">title</span> = {SAGUI: SED-based Segmentation of Multi-band Galaxy Images -- Application to JADES in GOODS-South},</span>
+<span id="cb11-4"><a href="#cb11-4"></a>  <span class="dt">year</span> = {2026},</span>
+<span id="cb11-5"><a href="#cb11-5"></a>  <span class="dt">eprint</span> = {2604.18812},</span>
+<span id="cb11-6"><a href="#cb11-6"></a>  <span class="dt">archivePrefix</span> = {arXiv},</span>
+<span id="cb11-7"><a href="#cb11-7"></a>  <span class="dt">primaryClass</span> = {astro-ph.GA},</span>
+<span id="cb11-8"><a href="#cb11-8"></a>  <span class="dt">url</span> = {https://arxiv.org/abs/2604.18812}</span>
+<span id="cb11-9"><a href="#cb11-9"></a>}</span>
+<span id="cb11-10"><a href="#cb11-10"></a></span>
+<span id="cb11-11"><a href="#cb11-11"></a><span class="va">@misc</span>{<span class="ot">desouza2026pathsignatures</span>,</span>
+<span id="cb11-12"><a href="#cb11-12"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Bunk, Severin},</span>
+<span id="cb11-13"><a href="#cb11-13"></a>  <span class="dt">title</span> = {The Hidden Geometry of Astrophysical Spectra: Path-Signatures of Line Profiles},</span>
+<span id="cb11-14"><a href="#cb11-14"></a>  <span class="dt">year</span> = {2026},</span>
+<span id="cb11-15"><a href="#cb11-15"></a>  <span class="dt">eprint</span> = {2606.27432},</span>
+<span id="cb11-16"><a href="#cb11-16"></a>  <span class="dt">archivePrefix</span> = {arXiv},</span>
+<span id="cb11-17"><a href="#cb11-17"></a>  <span class="dt">primaryClass</span> = {astro-ph.IM},</span>
+<span id="cb11-18"><a href="#cb11-18"></a>  <span class="dt">url</span> = {https://arxiv.org/abs/2606.27432}</span>
+<span id="cb11-19"><a href="#cb11-19"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="scope" class="level2">
 <h2 class="anchored" data-anchor-id="scope">Scope</h2>
