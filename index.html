@@ -242,16 +242,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-26"><a href="#cb3-26"></a><span class="fu">write.csv</span>(sum_spectra, <span class="st">"capivara_sum_spectra.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb3-27"><a href="#cb3-27"></a><span class="fu">saveRDS</span>(seg, <span class="st">"capivara_segmentation.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use the summed spectra for flux-preserving science products and the median spectra for robust visual inspection. <code>use_starlet_mask = TRUE</code> turns on the foreground-support mask; <code>use_starlet_mask = FALSE</code> runs on all valid spaxels. There is no separate starlet segmentation entry point.</p>
-<p>To segment only on a spectral window, for example around an emission-line complex, use <code>feature_wavelength_range</code>. The binning is learned from that window, but the returned <code>original_cube</code> remains the full cube, so <code>summarize_cluster_spectra()</code> still exports full flux-preserving spectra.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>seg_ha <span class="ot">&lt;-</span> <span class="fu">segment_large</span>(</span>
-<span id="cb4-2"><a href="#cb4-2"></a>  <span class="at">input =</span> x,</span>
-<span id="cb4-3"><a href="#cb4-3"></a>  <span class="at">Ncomp =</span> <span class="dv">25</span>,</span>
-<span id="cb4-4"><a href="#cb4-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb4-5"><a href="#cb4-5"></a>  <span class="at">knn_k =</span> <span class="dv">100</span>,</span>
-<span id="cb4-6"><a href="#cb4-6"></a>  <span class="at">feature_wavelength_range =</span> <span class="fu">c</span>(<span class="dv">6500</span>, <span class="dv">6625</span>)</span>
-<span id="cb4-7"><a href="#cb4-7"></a>)</span>
-<span id="cb4-8"><a href="#cb4-8"></a></span>
-<span id="cb4-9"><a href="#cb4-9"></a>ha_spectra <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(seg_ha)<span class="sc">$</span>sum_spectra</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>By default, <code>feature_wavelength_range = NULL</code>, so the segmentation uses all available wavelength channels. To segment only on a spectral window, for example around a chosen emission-line complex, pass a two-element wavelength interval. The binning is learned from that window, but the returned <code>original_cube</code> remains the full cube, so <code>summarize_cluster_spectra()</code> still exports full flux-preserving spectra.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># Example only: choose the interval for your cube's wavelength frame.</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>line_window <span class="ot">&lt;-</span> <span class="fu">c</span>(lambda_min, lambda_max)</span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a>seg_ha <span class="ot">&lt;-</span> <span class="fu">segment_large</span>(</span>
+<span id="cb4-5"><a href="#cb4-5"></a>  <span class="at">input =</span> x,</span>
+<span id="cb4-6"><a href="#cb4-6"></a>  <span class="at">Ncomp =</span> <span class="dv">25</span>,</span>
+<span id="cb4-7"><a href="#cb4-7"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-8"><a href="#cb4-8"></a>  <span class="at">knn_k =</span> <span class="dv">100</span>,</span>
+<span id="cb4-9"><a href="#cb4-9"></a>  <span class="at">feature_wavelength_range =</span> line_window</span>
+<span id="cb4-10"><a href="#cb4-10"></a>)</span>
+<span id="cb4-11"><a href="#cb4-11"></a></span>
+<span id="cb4-12"><a href="#cb4-12"></a>ha_spectra <span class="ot">&lt;-</span> <span class="fu">summarize_cluster_spectra</span>(seg_ha)<span class="sc">$</span>sum_spectra</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>When using <code>target_snr</code>, <code>wavelength_range</code> has a different role: it selects the spectral interval used to evaluate the SNR screen. This keeps line-focused segmentation and SNR quality control independent.</p>
 </section>
 <section id="plotting-and-saving-the-segmentation-map" class="level2">
@@ -297,9 +300,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-2"><a href="#cb8-2"></a>  <span class="at">input =</span> x,</span>
 <span id="cb8-3"><a href="#cb8-3"></a>  <span class="at">Ncomp =</span> <span class="dv">50</span>,</span>
 <span id="cb8-4"><a href="#cb8-4"></a>  <span class="at">use_starlet_mask =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb8-5"><a href="#cb8-5"></a>  <span class="at">knn_k =</span> <span class="dv">100</span>,</span>
-<span id="cb8-6"><a href="#cb8-6"></a>  <span class="at">feature_wavelength_range =</span> <span class="fu">c</span>(<span class="dv">6500</span>, <span class="dv">6625</span>)</span>
-<span id="cb8-7"><a href="#cb8-7"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-5"><a href="#cb8-5"></a>  <span class="at">knn_k =</span> <span class="dv">100</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>segment_large()</code> mirrors the output structure of <code>segment()</code> while avoiding the full all-pairs distance matrix. Its default validity screen follows Sagui’s sparse-Ward backend for coherent kNN graphs. Increasing <code>knn_k</code> makes the graph denser and usually closer to exact Ward; <code>knn_k = 100</code> is a good visual/science starting point for MaNGA- or JPAS-style examples.</p>
 </section>
 <section id="starlet-support-masks" class="level2">
@@ -390,6 +392,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-8"><a href="#cb11-8"></a>  <span class="dt">pages</span> = {3166--3179},</span>
 <span id="cb11-9"><a href="#cb11-9"></a>  <span class="dt">doi</span> = {10.1093/mnras/staf688}</span>
 <span id="cb11-10"><a href="#cb11-10"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Related methods used by Capivara examples:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode numberSource bibtex number-lines code-with-copy"><code class="sourceCode bibtex"><span id="cb12-1"><a href="#cb12-1"></a><span class="va">@misc</span>{<span class="ot">desouza2026sagui</span>,</span>
+<span id="cb12-2"><a href="#cb12-2"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Wille, Andressa and Shenoy, Shravya and Patil, Aarya A. and Krone-Martins, Alberto and Chies-Santos, Ana L. and Boehm, Celine and Rosa, Reinaldo R. and Pessi, Thallis and Ishida, Emille E. O. and Dage, Kristen C. and Nakazono, Lilianne and Darc, Phelipe and Durgesh, Rupesh},</span>
+<span id="cb12-3"><a href="#cb12-3"></a>  <span class="dt">title</span> = {SAGUI: SED-based Segmentation of Multi-band Galaxy Images -- Application to JADES in GOODS-South},</span>
+<span id="cb12-4"><a href="#cb12-4"></a>  <span class="dt">year</span> = {2026},</span>
+<span id="cb12-5"><a href="#cb12-5"></a>  <span class="dt">eprint</span> = {2604.18812},</span>
+<span id="cb12-6"><a href="#cb12-6"></a>  <span class="dt">archivePrefix</span> = {arXiv},</span>
+<span id="cb12-7"><a href="#cb12-7"></a>  <span class="dt">primaryClass</span> = {astro-ph.GA},</span>
+<span id="cb12-8"><a href="#cb12-8"></a>  <span class="dt">url</span> = {https://arxiv.org/abs/2604.18812}</span>
+<span id="cb12-9"><a href="#cb12-9"></a>}</span>
+<span id="cb12-10"><a href="#cb12-10"></a></span>
+<span id="cb12-11"><a href="#cb12-11"></a><span class="va">@misc</span>{<span class="ot">desouza2026pathsignatures</span>,</span>
+<span id="cb12-12"><a href="#cb12-12"></a>  <span class="dt">author</span> = {de Souza, Rafael S. and Bunk, Severin},</span>
+<span id="cb12-13"><a href="#cb12-13"></a>  <span class="dt">title</span> = {The Hidden Geometry of Astrophysical Spectra: Path-Signatures of Line Profiles},</span>
+<span id="cb12-14"><a href="#cb12-14"></a>  <span class="dt">year</span> = {2026},</span>
+<span id="cb12-15"><a href="#cb12-15"></a>  <span class="dt">eprint</span> = {2606.27432},</span>
+<span id="cb12-16"><a href="#cb12-16"></a>  <span class="dt">archivePrefix</span> = {arXiv},</span>
+<span id="cb12-17"><a href="#cb12-17"></a>  <span class="dt">primaryClass</span> = {astro-ph.IM},</span>
+<span id="cb12-18"><a href="#cb12-18"></a>  <span class="dt">url</span> = {https://arxiv.org/abs/2606.27432}</span>
+<span id="cb12-19"><a href="#cb12-19"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="scope" class="level2">
 <h2 class="anchored" data-anchor-id="scope">Scope</h2>

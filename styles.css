@@ -57,17 +57,13 @@ p {
 
 .capivara-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-  gap: 2.25rem;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(520px, 1.2fr);
+  gap: clamp(2rem, 4vw, 4rem);
   align-items: center;
-  margin: 1.2rem 0 2.4rem;
-  padding: 2rem;
-  border: 1px solid rgba(35, 79, 154, 0.16);
-  border-radius: 10px;
-  background:
-    linear-gradient(135deg, rgba(245, 248, 254, 0.98), rgba(255, 255, 255, 0.94)),
-    radial-gradient(circle at 95% 10%, rgba(242, 205, 69, 0.22), transparent 34%);
-  box-shadow: 0 16px 40px rgba(18, 33, 58, 0.08);
+  margin: 0 calc(50% - 50vw) 2.6rem;
+  padding: 3.2rem max(2rem, calc((100vw - 1180px) / 2));
+  border-bottom: 1px solid rgba(35, 79, 154, 0.14);
+  background: #eef3fb;
 }
 
 .capivara-hero h1 {
@@ -108,8 +104,11 @@ p {
 
 .capivara-hero-visual img {
   width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center;
   border-radius: 8px;
-  box-shadow: 0 18px 45px rgba(18, 33, 58, 0.16);
+  box-shadow: 0 16px 36px rgba(18, 33, 58, 0.14);
 }
 
 .feature-grid {
@@ -286,11 +285,17 @@ a > img[src*="shields.io"] {
 @media (max-width: 900px) {
   .capivara-hero {
     grid-template-columns: 1fr;
-    padding: 1.25rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 1.6rem 1rem;
   }
 
   .capivara-hero-visual {
     order: -1;
+  }
+
+  .capivara-hero-visual img {
+    aspect-ratio: 4 / 3;
   }
 }
 
