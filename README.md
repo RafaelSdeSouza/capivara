@@ -278,7 +278,7 @@ Related methods used by Capivara examples:
   url = {https://doi.org/10.1093/mnras/stag1062}
 }
 
-@misc{desouza2026pathsignatures,
+@article{desouza2026pathsignatures,
   author = {de Souza, Rafael S. and Bunk, Severin},
   title = {The Hidden Geometry of Astrophysical Spectra: Path-Signatures of Line Profiles},
   year = {2026},
