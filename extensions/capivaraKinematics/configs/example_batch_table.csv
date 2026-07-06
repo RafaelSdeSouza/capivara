@@ -1,0 +1,2 @@
+plateifu,manga_maps_file,capivara_segmentation_file,capivara_segment_table_file,x0,y0,pa_deg,inc_deg,vsys,bar_pa_deg,bar_radius_pix,output_dir
+8443-6102,data/manga-8443-6102-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz,data/8443-6102_capivara_segmentation.fits,data/8443-6102_capivara_segment_table.csv,,,,,,,,outputs/8443-6102

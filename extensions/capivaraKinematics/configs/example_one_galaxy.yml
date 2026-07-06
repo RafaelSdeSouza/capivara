@@ -1,0 +1,25 @@
+plateifu: "8443-6102"
+
+manga_maps_file: "data/manga-8443-6102-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz"
+capivara_segmentation_file: "data/8443-6102_capivara_segmentation.fits"
+capivara_segment_table_file: "data/8443-6102_capivara_segment_table.csv"
+
+velocity_component: "stellar"
+use_velocity_errors: true
+
+geometry:
+  x0:
+  y0:
+  pa_deg:
+  inc_deg:
+  vsys:
+
+allow_placeholder_inclination: false
+placeholder_inc_deg: 60
+min_disc_spaxels: 12
+
+bar:
+  bar_pa_deg:
+  bar_radius_pix:
+
+output_dir: "outputs/8443-6102"
