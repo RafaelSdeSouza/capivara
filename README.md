@@ -31,6 +31,10 @@ remotes::install_github("RafaelSdeSouza/capivara")
 library(capivara)
 ```
 
+After updating an already loaded package, restart the R session before calling
+`library(capivara)` again. For a quiet update that keeps installed dependency
+versions, use `remotes::install_github("RafaelSdeSouza/capivara", upgrade = "never")`.
+
 Optional GPU acceleration:
 
 ``` r
