@@ -1,0 +1,38 @@
+url: https://rafaelsdesouza.github.io/capivaraKinematics/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+reference:
+  - title: Friendly Workflows
+    contents:
+      - run_manga_bar_model
+      - run_one_galaxy
+      - run_batch_barred_manga
+  - title: Plotting
+    contents:
+      - plot_capivara_kinematics
+      - plot_capivara_component_decomposition
+  - title: MaNGA Metadata
+    contents:
+      - infer_manga_plateifu
+      - read_manga_redshift_table
+      - manga_metadata
+      - manga_redshift
+      - read_manga_cube_metadata
+      - resolve_manga_redshift
+  - title: Models
+    contents:
+      - estimate_disc_geometry
+      - deproject_coordinates
+      - disc_velocity_model
+      - fit_axisymmetric_piecewise_model
+      - fit_bisymmetric_model
+      - fit_disc_model
+      - estimate_bar_geometry
+      - compute_residual_diagnostics
+  - title: I/O
+    contents:
+      - read_capivara_output
+      - better_galaxy_mask

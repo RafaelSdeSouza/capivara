@@ -11,6 +11,8 @@
   invisible(TRUE)
 }
 
+utils::globalVariables(c("x", "y", "value", "R", "Vt", "V2t", "V2r", "Axy"))
+
 .capivara_dir_create <- function(path) {
   if (!dir.exists(path)) {
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
@@ -23,7 +25,7 @@
 #' @param mat Matrix to convert.
 #' @param value_name Name for the value column.
 #' @return A data frame with x, y, and value columns.
-#' @export
+#' @noRd
 matrix_to_long <- function(mat, value_name = "value") {
   if (!is.matrix(mat)) {
     mat <- as.matrix(mat)

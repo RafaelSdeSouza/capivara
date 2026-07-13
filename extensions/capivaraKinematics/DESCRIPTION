@@ -2,9 +2,11 @@ Package: capivaraKinematics
 Type: Package
 Title: Capivara-Native Kinematic Modelling Prototype
 Version: 0.0.0.9000
+Authors@R:
+    person("Rafael S.", "de Souza", email = "rd23aag@herts.ac.uk", role = c("aut", "cre"))
 Description: Experimental companion workflow for segmentation-aware kinematic
     modelling of barred MaNGA galaxies using Capivara segmentation maps.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     FITSio,
@@ -12,9 +14,9 @@ Imports:
     dplyr,
     readr,
     yaml,
-    purrr,
-    viridis,
-    patchwork,
-    spectropath
+    patchwork
 Suggests:
-    minpack.lm
+    minpack.lm,
+    spectropath,
+    viridis
+RoxygenNote: 7.3.3

@@ -48,6 +48,27 @@
 #' @param output_dir Directory for products.
 #' @param object_id Optional object identifier. Defaults to inferred plate-IFU.
 #' @param repo_root Capivara repository root for this prototype.
+#' @param knn_k Nearest-neighbour graph size used by the native Capivara
+#'   segmentation runners.
+#' @param n_segments Number of standard kinematic/spectral segments.
+#' @param n_path_segments Number of path-signature-aware segments.
+#' @param starlet_scales Starlet scales used for the support mask.
+#' @param include_coarse_starlet If `TRUE`, include the coarse starlet scale in
+#'   the support mask.
+#' @param display_orientation Plot display orientation passed to the bar plots.
+#' @param disc_pa_deg Optional fixed disc position angle in degrees.
+#' @param disc_inc_deg Optional fixed disc inclination in degrees.
+#' @param bar_phi_deg Optional fixed bar angle in degrees.
+#' @param use_bar_support_mask If `TRUE`, restrict the bar term support around
+#'   the bar angle.
+#' @param bar_support_width_deg Angular half-width for the optional bar support.
+#' @param robust_fit If `TRUE`, use robust reweighting in the model fit.
+#' @param smooth_lambda First-order smoothing penalty for velocity profiles.
+#' @param second_order_lambda Curvature penalty for second-order bar terms.
+#' @param max_v2_fraction Maximum allowed mean second-order amplitude relative
+#'   to the circular term before shrinkage.
+#' @param max_mean_v2 Absolute cap on mean second-order velocity amplitude.
+#' @param show_plots If `TRUE`, print the native, model, and component plots.
 #' @return A list with plots, paths, native result, model result, and metadata.
 #' @export
 run_manga_bar_model <- function(cube_path,

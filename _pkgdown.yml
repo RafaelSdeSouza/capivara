@@ -1,0 +1,57 @@
+url: https://rafaelsdesouza.github.io/capivara/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [github]
+
+reference:
+  - title: Core Segmentation
+    desc: Main user-facing segmentation functions.
+    contents:
+      - segment
+      - segment_large
+      - choose_ncomp_by_snr
+      - cube_cluster_with_snr
+      - estimate_segment_memory
+  - title: Support Masks
+    desc: Foreground support builders used before segmentation.
+    contents:
+      - build_starlet_mask
+      - build_adaptive_support
+      - detect_support
+      - reject_background_regions
+  - title: Spectral Summaries and Reconstruction
+    desc: Flux-preserving products for downstream spectral fitting.
+    contents:
+      - summarize_cluster_spectra
+      - reconstruct_cluster_cube
+      - reconstruct_flux_preserving_cube
+      - SpecMean
+  - title: Plotting
+    desc: Lightweight plotting helpers.
+    contents:
+      - plot_cluster
+      - plot_cluster_spectra
+      - capivara_plot_spectra_with_map
+  - title: Experimental Structure Scores
+    desc: Neutral morphology evidence maps. Semantic bar/ring modelling lives in capivaraKinematics.
+    contents:
+      - score_structures
+      - threshold_structures
+      - catalogue_structures
+      - segment_structures
+  - title: Utilities
+    contents:
+      - cube_to_matrix
+      - median_scale
+      - torch_dist
+
+articles:
+  - title: Workflows
+    navbar: Workflows
+    contents: []

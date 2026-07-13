@@ -894,7 +894,6 @@ classify_structures <- function(scores,
 #'   \code{candidate_mask}, \code{bar_score}, \code{diagnostics},
 #'   \code{radial_profile}, and \code{ferrer_fit}. The logical field
 #'   \code{bar_like} is deliberately conservative.
-#' @export
 detect_bar <- function(input = NULL,
                        scores = NULL,
                        support = NULL,
@@ -1409,7 +1408,6 @@ detect_bar <- function(input = NULL,
 #'   \code{candidate_mask}, \code{ring_score}, \code{diagnostics}, and
 #'   \code{radial_profile}. The logical field \code{ring_like} is deliberately
 #'   conservative.
-#' @export
 detect_ring <- function(input = NULL,
                         scores = NULL,
                         support = NULL,

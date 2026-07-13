@@ -6,7 +6,7 @@ repo_root <- "/Users/rd23aag/Documents/GitHub/capivara"
 cube_path <- "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/bar_merger/manga-10218-12703-LOGCUBE.fits"
 
 # Leave as NA to use the LOGCUBE header or the bundled local MaNGA DRPall table.
-redshift <- NA_real_
+redshift <- 0.0461
 
 emission_line <- "halpha"
 segmentation_mode <- "kinematic" # "kinematic", "path_signature", "spectral", or "all"

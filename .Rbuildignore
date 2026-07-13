@@ -6,9 +6,12 @@
 ^_site$
 ^outputs$
 ^scripts$
+^extensions$
 ^LICENSE\.md$
 ^.*\.DS_Store$
 ^src/.*\.(o|so|dll|dylib)$
 ^src/symbols\.rds$
 ^.*\.tar\.gz$
 ^.*\.Rcheck$
+^Rplots\.pdf$
+^extensions/capivaraKinematics/examples/.*\.(png|rds)$

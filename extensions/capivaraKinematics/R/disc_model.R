@@ -195,6 +195,23 @@ estimate_bar_geometry <- function(spaxels, phi_b_deg = NULL) {
 #'   - V2t cos(2(theta - phi_b)) cos(theta)
 #'   - V2r sin(2(theta - phi_b)) sin(theta)].
 #'
+#' @param spaxels Data frame with valid spaxel coordinates, velocities,
+#'   uncertainties, deprojected radius/theta, and segmentation class.
+#' @param geometry Disc geometry list from `estimate_disc_geometry()`.
+#' @param bar_geometry Bar geometry list from `estimate_bar_geometry()`.
+#' @param n_rings Number of radial knots for the piecewise velocity profiles.
+#' @param use_errors If `TRUE`, weight by velocity errors when available.
+#' @param smooth_lambda First-order smoothing penalty for radial profiles.
+#' @param second_order_lambda Curvature penalty for second-order bar terms.
+#' @param fixed_vsys Optional fixed systemic velocity.
+#' @param robust If `TRUE`, iteratively downweight large residuals.
+#' @param robust_k Huber tuning constant used by the robust fit.
+#' @param robust_maxit Maximum robust reweighting iterations.
+#' @param max_v2_fraction Maximum allowed mean second-order amplitude relative
+#'   to the circular term before shrinkage.
+#' @param max_mean_v2 Absolute cap on mean second-order velocity amplitude.
+#' @return A list with fitted spaxels, radial profiles, parameters, and
+#'   diagnostics.
 #' @export
 fit_bisymmetric_model <- function(spaxels,
                                   geometry,
@@ -318,6 +335,18 @@ fit_bisymmetric_model <- function(spaxels,
 
 #' Fit a matching axisymmetric piecewise comparison model
 #'
+#' @param spaxels Data frame with valid spaxel coordinates, velocities,
+#'   uncertainties, deprojected radius/theta, and segmentation class.
+#' @param geometry Disc geometry list from `estimate_disc_geometry()`.
+#' @param n_rings Number of radial knots for the piecewise velocity profile.
+#' @param use_errors If `TRUE`, weight by velocity errors when available.
+#' @param smooth_lambda First-order smoothing penalty for the radial profile.
+#' @param fixed_vsys Optional fixed systemic velocity.
+#' @param robust If `TRUE`, iteratively downweight large residuals.
+#' @param robust_k Huber tuning constant used by the robust fit.
+#' @param robust_maxit Maximum robust reweighting iterations.
+#' @return A list with fitted spaxels, radial profile, parameters, and
+#'   diagnostics.
 #' @export
 fit_axisymmetric_piecewise_model <- function(spaxels,
                                              geometry,

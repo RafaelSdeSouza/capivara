@@ -5,7 +5,7 @@
 #' @param velocity_component `stellar`, `halpha`, or `ha`.
 #' @return A list with velocity, velocity_error, mask, flux, snr, header, and
 #'   HDU metadata.
-#' @export
+#' @noRd
 read_manga_maps <- function(maps_file, velocity_component = "stellar") {
   .capivara_require("FITSio")
 
