@@ -4,7 +4,7 @@
     "href": "news.html#added",
     "title": "Release Notes",
     "section": "Added",
-    "text": "Added\n\nsegment_large() as the scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.\nestimate_segment_memory() to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.\nscripts/benchmark_segment_large.R for RAM-aware sparse-Ward benchmarking. It skips segment() automatically when the exact distance vector would exceed the configured threshold."
+    "text": "Added\n\nsegment_large() as the scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.\nestimate_segment_memory() to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.\nresearch/benchmarks_segment_large.R for RAM-aware sparse-Ward benchmarking. It skips segment() automatically when the exact distance vector would exceed the configured threshold."
   },
   {
     "objectID": "news.html#changed",
@@ -18,7 +18,7 @@
     "href": "news.html#added-1",
     "title": "Release Notes",
     "section": "Added",
-    "text": "Added\n\nsegment_large() as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.\nbuild_starlet_mask() for Sagui-style white-light starlet masking before clustering.\nsummarize_cluster_spectra() for median, summed, and inverse-variance-weighted cluster spectra.\nchoose_ncomp_by_snr() for variance-aware component selection from an SNR threshold.\nreconstruct_cluster_cube() and reconstruct_flux_preserving_cube() for representative and flux-preserving model cubes.\nscripts/run_manga_starlet_comparison.R for a full-frame MaNGA comparison workflow."
+    "text": "Added\n\nsegment_large() as the user-facing scalable segmentation path for cubes where exact all-pairs distances would exceed available RAM.\nbuild_starlet_mask() for Sagui-style white-light starlet masking before clustering.\nsummarize_cluster_spectra() for median, summed, and inverse-variance-weighted cluster spectra.\nchoose_ncomp_by_snr() for variance-aware component selection from an SNR threshold.\nreconstruct_cluster_cube() and reconstruct_flux_preserving_cube() for representative and flux-preserving model cubes.\nresearch/manga/run_manga_starlet_comparison.R for a full-frame MaNGA comparison workflow."
   },
   {
     "objectID": "news.html#changed-1",
