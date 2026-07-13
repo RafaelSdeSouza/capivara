@@ -273,6 +273,18 @@ bar_result <- run_kinematic_analysis(
 )
 ```
 
+To take full control of figure styling, extract the individual ggplot panels
+without rerunning the cube analysis:
+
+```r
+panels <- kinematic_panels(result, view = "model")
+ggplot2::ggsave("velocity.png", panels$velocity, width = 5, height = 4)
+
+# Available only for model = "bisymmetric_bar":
+bar_panels <- kinematic_panels(bar_result, view = "components")
+bar_panels$tangential_bar_component + ggplot2::theme_classic()
+```
+
 For an editable RStudio version, open the installed script with:
 
 ```r

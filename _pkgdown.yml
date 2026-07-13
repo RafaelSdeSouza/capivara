@@ -39,6 +39,7 @@ reference:
       - segment_kinematics
       - run_kinematic_analysis
       - kinematic_models
+      - kinematic_panels
   - title: Bar Modelling
     desc: Explicit bisymmetric modelling for galaxies with an imaging-based bar angle.
     contents:

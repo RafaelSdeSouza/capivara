@@ -176,7 +176,7 @@
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
 #' @param redshift Kept for API compatibility with `segment()`.
 #' @param scale_fn Optional row-wise spectral scaling function. Defaults to
-#'   \code{\link{median_scale}}, matching \code{\link{segment}}.
+#'   \code{median_scale()}, matching \code{\link{segment}}.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
 #'   Capivara chooses the largest number of clusters whose minimum cluster SNR
 #'   remains above this threshold.

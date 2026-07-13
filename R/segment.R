@@ -2,7 +2,7 @@
 #'
 #' This function processes a data cube (such as an IFU cube) by flattening it into
 #' rows (spatial pixels) and columns (spectral variables), scaling each row, computing
-#' pairwise distances using \code{\link{torch_dist}}, and performing hierarchical
+#' pairwise distances using Capivara's internal distance helper, and performing hierarchical
 #' clustering. The resulting clusters are rearranged back into a 2D grid consistent
 #' with the original spatial dimensions. The function also retains the original data cube
 #' for reference and post-processing.
@@ -64,7 +64,7 @@
 #'   \item Reads the input FITS data cube.
 #'   \item Converts the cube into a 2D matrix (spatial pixels x spectral variables).
 #'   \item Scales the data row-wise using \code{scale_fn}.
-#'   \item Computes pairwise distances between rows using \code{\link{torch_dist}}.
+#'   \item Computes pairwise distances between rows using an internal distance helper.
 #'   \item Performs hierarchical clustering using Ward's D2 method via \code{\link[fastcluster]{hclust}}.
 #'   \item Cuts the dendrogram into \code{Ncomp} clusters and reshapes the results into a 2D cluster map,
 #'   or, when \code{target_snr} is supplied, chooses the largest cut whose minimum cluster SNR
@@ -86,7 +86,7 @@
 #' spectral profiles of spatial pixels to identify regions with similar characteristics.
 #'
 #' @seealso \code{\link{segment_large}}, \code{\link{build_starlet_mask}},
-#'   \code{\link{torch_dist}}, \code{\link[fastcluster]{hclust}},
+#'   \code{\link[fastcluster]{hclust}},
 #'   \code{\link[stats]{cutree}}
 #'
 #' @examples

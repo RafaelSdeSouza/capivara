@@ -32,7 +32,7 @@
 #' @return A \code{ggplot2} object representing a faceted plot of the median
 #'   profile for each cluster.
 #'
-#' @seealso \code{\link{segment}}, \code{\link{cube_to_matrix}}, \code{\link[FITSio]{axVec}}
+#' @seealso \code{\link{segment}}, \code{cube_to_matrix()}, \code{\link[FITSio]{axVec}}
 #'
 #' @examples
 #' \dontrun{

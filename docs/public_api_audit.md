@@ -27,6 +27,7 @@ available to package developers without filling RStudio autocomplete.
 | `run_kinematic_analysis()` | Kinematic segmentation plus a neutral axisymmetric disc comparison. | `model = "axisymmetric"` |
 | `run_manga_bar_model()` | Explicit convenience wrapper for a known barred MaNGA galaxy. | Requires `bar_phi_deg` |
 | `kinematic_models()` | Lists installed modelling modules and their requirements. | Read-only registry |
+| `kinematic_panels()` | Extracts named ggplot panels for custom figures and individual export. | `view = "model"` |
 
 The path-signature segmentation is requested explicitly with
 `segmentation_mode = "path_signature"`. Ordinary full-spectrum segmentation is

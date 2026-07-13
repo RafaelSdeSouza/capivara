@@ -59,5 +59,5 @@ The function performs the following steps:
 
 }
 \seealso{
-\code{\link{segment}}, \code{\link{cube_to_matrix}}, \code{\link[FITSio]{axVec}}
+\code{\link{segment}}, \code{cube_to_matrix()}, \code{\link[FITSio]{axVec}}
 }

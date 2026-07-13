@@ -51,4 +51,27 @@ result <- run_kinematic_analysis(
 )
 
 print(result)
+
+# Each entry is a ggplot object. Edit or save individual panels without
+# rerunning the cube analysis.
+panels <- kinematic_panels(result, view = "model")
+print(panels$velocity)
+
+panel_dir <- file.path(output_dir, "individual_panels")
+dir.create(panel_dir, recursive = TRUE, showWarnings = FALSE)
+for (name in names(panels)) {
+  ggplot2::ggsave(
+    filename = file.path(panel_dir, paste0(name, ".png")),
+    plot = panels[[name]],
+    width = 5,
+    height = 4,
+    dpi = 320,
+    bg = "white"
+  )
+}
+
+# For `model = "bisymmetric_bar"`, use this instead to export the separate
+# circular and bar-flow component maps:
+# component_panels <- kinematic_panels(result, view = "components")
+
 message("Saved figures and data in: ", result$output_dir)

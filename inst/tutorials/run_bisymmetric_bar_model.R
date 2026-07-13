@@ -5,7 +5,7 @@
 # Edit only this block, then click Source in RStudio. The bar angle must come
 # from imaging. This script does not try to infer it from the disc PA.
 
-cube_path <- "/path/to/manga-8078-12703-LOGCUBE.fits"
+cube_path <- "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/normal_bar/manga-8078-12703-LOGCUBE.fits"
 redshift <- NA_real_
 emission_line <- "halpha"
 bar_phi_deg <- 41 # in-plane angle relative to the disc major axis
@@ -41,4 +41,27 @@ result <- run_manga_bar_model(
 )
 
 print(result)
+
+# The overview and components are ordinary ggplot objects, ready for your own
+# paper layout.
+model_panels <- kinematic_panels(result, view = "model")
+component_panels <- kinematic_panels(result, view = "components")
+print(component_panels$tangential_bar_component)
+
+for (view in c("model", "components")) {
+  panels <- if (identical(view, "model")) model_panels else component_panels
+  panel_dir <- file.path(output_dir, "individual_panels", view)
+  dir.create(panel_dir, recursive = TRUE, showWarnings = FALSE)
+  for (name in names(panels)) {
+    ggplot2::ggsave(
+      filename = file.path(panel_dir, paste0(name, ".png")),
+      plot = panels[[name]],
+      width = 5,
+      height = 4,
+      dpi = 320,
+      bg = "white"
+    )
+  }
+}
+
 message("Saved figures and data in: ", result$output_dir)

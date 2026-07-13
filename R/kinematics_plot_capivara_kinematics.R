@@ -178,20 +178,36 @@
     ggplot2::ylim(0, 1) +
     ggplot2::theme_void()
 
+  panels <- list(
+    footprint = .capivara_map_plot(
+      log10(pmax(flux, 0) + 1e-3), result$plateifu, NULL,
+      legend_position = "none", display_orientation = display_orientation
+    ),
+    velocity = .capivara_map_plot(
+      observed, "Emission-line velocity", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    disc_model = .capivara_map_plot(
+      model, "Axisymmetric disc model", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    disc_residual = .capivara_map_plot(
+      residual, "Data - disc model", "km/s", diverging = TRUE,
+      limits = res_lim, display_orientation = display_orientation
+    ),
+    circular_speed = curve,
+    summary = text_panel
+  )
+
   panel <- (
-    .capivara_map_plot(log10(pmax(flux, 0) + 1e-3), result$plateifu, NULL,
-                        legend_position = "none", display_orientation = display_orientation) |
-      .capivara_map_plot(observed, "Emission-line velocity", "km/s", diverging = TRUE,
-                          limits = vel_lim, display_orientation = display_orientation)
+    panels$footprint | panels$velocity
   ) / (
-    .capivara_map_plot(model, "Axisymmetric disc model", "km/s", diverging = TRUE,
-                        limits = vel_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(residual, "Data - disc model", "km/s", diverging = TRUE,
-                          limits = res_lim, display_orientation = display_orientation)
-  ) / (curve | text_panel) +
+    panels$disc_model | panels$disc_residual
+  ) / (panels$circular_speed | panels$summary) +
     patchwork::plot_layout(heights = c(1, 1, 0.72)) +
     patchwork::plot_annotation(title = paste("Axisymmetric kinematic model:", result$plateifu)) &
     ggplot2::theme(plot.margin = ggplot2::margin(6, 6, 6, 6))
+  attr(panel, "capivara_panels") <- panels
 
   .capivara_save_kinematic_plot(panel, png_file, pdf_file, width = 7.4, height = 8.8)
 }
@@ -276,19 +292,46 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
     ggplot2::ylim(0, 1) +
     ggplot2::theme_void()
 
+  panels <- list(
+    footprint = .capivara_map_plot(
+      log10(pmax(flux, 0) + 1e-3), paste(result$plateifu), NULL,
+      legend_position = "none", display_orientation = display_orientation
+    ),
+    velocity = .capivara_map_plot(
+      observed, "Halpha Velocity", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    bisymmetric_model = .capivara_map_plot(
+      bar_model, "Bisymmetric model", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    axisymmetric_model = .capivara_map_plot(
+      axisym_model, "Axisym. Model", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    bisymmetric_residual = .capivara_map_plot(
+      bar_resid, "Bisymmetric residual", "km/s", diverging = TRUE,
+      limits = res_lim, display_orientation = display_orientation
+    ),
+    axisymmetric_residual = .capivara_map_plot(
+      axisym_resid, "Axisym. Residual", "km/s", diverging = TRUE,
+      limits = res_lim, display_orientation = display_orientation
+    ),
+    velocity_profiles = curve,
+    summary = text_panel
+  )
+
   panel <- (
-    .capivara_map_plot(log10(pmax(flux, 0) + 1e-3), paste(result$plateifu), NULL, legend_position = "none", display_orientation = display_orientation) |
-      .capivara_map_plot(observed, "Halpha Velocity", "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation)
+    panels$footprint | panels$velocity
   ) / (
-    .capivara_map_plot(bar_model, "Bisymmetric model", "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(axisym_model, "Axisym. Model", "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation)
+    panels$bisymmetric_model | panels$axisymmetric_model
   ) / (
-    .capivara_map_plot(bar_resid, "Bisymmetric residual", "km/s", diverging = TRUE, limits = res_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(axisym_resid, "Axisym. Residual", "km/s", diverging = TRUE, limits = res_lim, display_orientation = display_orientation)
-  ) / (curve | text_panel) +
+    panels$bisymmetric_residual | panels$axisymmetric_residual
+  ) / (panels$velocity_profiles | panels$summary) +
     patchwork::plot_layout(heights = c(1, 1, 1, 0.78)) +
     patchwork::plot_annotation(title = paste("Bisymmetric kinematic model:", result$plateifu)) &
     ggplot2::theme(plot.margin = ggplot2::margin(6, 6, 6, 6))
+  attr(panel, "capivara_panels") <- panels
 
   if (!is.null(png_file)) {
     .capivara_dir_create(dirname(png_file))
@@ -388,24 +431,65 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
   sigma_lim <- c(0, stats::quantile(sigma, 0.995, na.rm = TRUE))
   surface_lim <- stats::quantile(surface, c(0.02, 0.995), na.rm = TRUE)
 
+  panels <- list(
+    velocity = .capivara_map_plot(
+      observed, "Halpha Velocity", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    dispersion = .capivara_map_plot(
+      sigma, "Halpha Dispersion", "km/s", limits = sigma_lim,
+      display_orientation = display_orientation
+    ),
+    surface_brightness = .capivara_map_plot(
+      log10(pmax(surface, 0) + 1e-4), "Halpha Surface Brightness", "log flux",
+      limits = log10(pmax(surface_lim, 0) + 1e-4),
+      display_orientation = display_orientation
+    ),
+    bar_support = bar_panel,
+    model = .capivara_map_plot(
+      model, "Model", "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    circular_component = .capivara_map_plot(
+      vt, expression(V[t]), "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    tangential_bar_component = .capivara_map_plot(
+      v2t, expression(V[2 * t]), "km/s", diverging = TRUE,
+      limits = comp_lim, display_orientation = display_orientation
+    ),
+    radial_bar_component = .capivara_map_plot(
+      v2r, expression(V[2 * r]), "km/s", diverging = TRUE,
+      limits = comp_lim, display_orientation = display_orientation
+    ),
+    residual = .capivara_map_plot(
+      resid, "Residual", "km/s", diverging = TRUE,
+      limits = res_lim, display_orientation = display_orientation
+    ),
+    without_bar_terms = .capivara_map_plot(
+      no_v2, expression(Data - (V[2 * t] + V[2 * r])), "km/s", diverging = TRUE,
+      limits = vel_lim, display_orientation = display_orientation
+    ),
+    without_circular_and_radial = .capivara_map_plot(
+      no_vt_v2r, expression(Data - (V[t] + V[2 * r])), "km/s", diverging = TRUE,
+      limits = res_lim, display_orientation = display_orientation
+    ),
+    without_circular_and_tangential = .capivara_map_plot(
+      no_vt_v2t, expression(Data - (V[t] + V[2 * t])), "km/s", diverging = TRUE,
+      limits = res_lim, display_orientation = display_orientation
+    )
+  )
+
   panel <- (
-    .capivara_map_plot(observed, "Halpha Velocity", "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(sigma, "Halpha Dispersion", "km/s", limits = sigma_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(log10(pmax(surface, 0) + 1e-4), "Halpha Surface Brightness", "log flux", limits = log10(pmax(surface_lim, 0) + 1e-4), display_orientation = display_orientation) |
-      bar_panel
+    panels$velocity | panels$dispersion | panels$surface_brightness | panels$bar_support
   ) / (
-    .capivara_map_plot(model, "Model", "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(vt, expression(V[t]), "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(v2t, expression(V[2 * t]), "km/s", diverging = TRUE, limits = comp_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(v2r, expression(V[2 * r]), "km/s", diverging = TRUE, limits = comp_lim, display_orientation = display_orientation)
+    panels$model | panels$circular_component | panels$tangential_bar_component | panels$radial_bar_component
   ) / (
-    .capivara_map_plot(resid, "Residual", "km/s", diverging = TRUE, limits = res_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(no_v2, expression(Data - (V[2 * t] + V[2 * r])), "km/s", diverging = TRUE, limits = vel_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(no_vt_v2r, expression(Data - (V[t] + V[2 * r])), "km/s", diverging = TRUE, limits = res_lim, display_orientation = display_orientation) |
-      .capivara_map_plot(no_vt_v2t, expression(Data - (V[t] + V[2 * t])), "km/s", diverging = TRUE, limits = res_lim, display_orientation = display_orientation)
+    panels$residual | panels$without_bar_terms | panels$without_circular_and_radial | panels$without_circular_and_tangential
   ) +
     patchwork::plot_annotation(title = paste("Bisymmetric component decomposition:", result$plateifu)) &
     ggplot2::theme(plot.margin = ggplot2::margin(5, 5, 5, 5))
+  attr(panel, "capivara_panels") <- panels
 
   if (!is.null(png_file)) {
     .capivara_dir_create(dirname(png_file))

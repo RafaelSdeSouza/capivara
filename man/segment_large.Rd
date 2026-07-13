@@ -46,7 +46,7 @@ segment_large(
 \item{redshift}{Kept for API compatibility with `segment()`.}
 
 \item{scale_fn}{Optional row-wise spectral scaling function. Defaults to
-\code{\link{median_scale}}, matching \code{\link{segment}}.}
+\code{median_scale()}, matching \code{\link{segment}}.}
 
 \item{target_snr}{Optional minimum accepted SNR per cluster. When supplied,
 Capivara chooses the largest number of clusters whose minimum cluster SNR
