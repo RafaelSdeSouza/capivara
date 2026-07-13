@@ -12,7 +12,7 @@
 #' @param preserve_input If TRUE, never remove pixels present in `valid_mask`.
 #' @param connectivity Either 4 or 8.
 #' @return Logical matrix with the same dimensions as `valid_mask`.
-#' @export
+#' @noRd
 clean_galaxy_support <- function(valid_mask,
                                close_iterations = 1L,
                                fill_holes = TRUE,

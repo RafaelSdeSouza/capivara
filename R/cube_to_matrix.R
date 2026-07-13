@@ -33,7 +33,7 @@
 #' result <- cube_to_matrix(x)
 #' dim(result)  # Should be c(100, 50)
 #'
-#' @export
+#' @noRd
 cube_to_matrix <- function(x) {
   IFS_gal <- as.array(x$imDat)
 
@@ -51,4 +51,3 @@ cube_to_matrix <- function(x) {
 
   return(IFU2D)
 }
-

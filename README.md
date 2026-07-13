@@ -225,22 +225,50 @@ Capivara keeps the public segmentation API small:
 
 ## Companion packages
 
-Capivara 2.0 includes the native kinematics module: emission-line maps,
-kinematic-aware and path-signature segmentation, disc fitting, and the local
-NIRVANA-style bisymmetric bar model. `spectropath` is installed automatically
-with Capivara and provides the path-signature features.
+Capivara 2.0 includes a native kinematics module: emission-line maps,
+kinematic-aware and path-signature segmentation, and an axisymmetric disc
+model. `spectropath` is installed automatically with Capivara and provides the
+path-signature features. The bisymmetric bar model is available, but it is an
+explicit physical hypothesis rather than a default for every galaxy.
 
-For a full native MaNGA workflow:
+For kinematic segmentation alone:
+
+```r
+kinematic_segments <- segment_kinematics(
+  cube_path = "/path/to/manga-8078-12703-LOGCUBE.fits",
+  redshift = NA_real_,
+  emission_line = "halpha",
+  segmentation_mode = "kinematic",
+  knn_k = 50,
+  n_segments = 25,
+  show_plots = TRUE
+)
+```
+
+For the default disc model:
 
 ```r
 result <- run_kinematic_analysis(
   cube_path = "/path/to/manga-8078-12703-LOGCUBE.fits",
   redshift = NA_real_,
   emission_line = "halpha",
-  segmentation_mode = "all",
-  knn_k = 100,
+  segmentation_mode = "kinematic",
+  model = "axisymmetric",
+  knn_k = 50,
   n_segments = 25,
-  n_path_segments = 45,
+  show_plots = TRUE
+)
+```
+
+For a galaxy already known to be barred, opt into the bar module and supply the
+bar angle measured from imaging:
+
+```r
+bar_result <- run_kinematic_analysis(
+  cube_path = "/path/to/manga-8078-12703-LOGCUBE.fits",
+  emission_line = "halpha",
+  model = "bisymmetric_bar",
+  model_control = list(bar_phi_deg = 41),
   show_plots = TRUE
 )
 ```
@@ -250,6 +278,9 @@ For an editable RStudio version, open the installed script with:
 ```r
 file.edit(system.file("tutorials", "run_kinematic_analysis.R", package = "capivara"))
 ```
+
+The website has separate kinematics and bar-modelling guides, so ordinary
+rotation analysis does not inherit bar-specific settings.
 
 `capivaraPPXF` remains a separate fitting companion because it wraps a distinct
 stellar-population and spectral-fitting workflow:

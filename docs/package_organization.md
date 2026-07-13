@@ -18,14 +18,20 @@ Public API:
 - `reconstruct_cluster_cube()` and `reconstruct_flux_preserving_cube()` for
   bin-level products.
 - Lightweight plotting helpers.
-- `run_kinematic_analysis()` for the full native velocity-map, segmentation,
-  disc, and bisymmetric workflow.
-- `fit_disc_model()` and `fit_bisymmetric_model()` for expert modelling.
+- `segment_kinematics()` for native line maps and kinematic/path-signature
+  segmentation without a dynamical assumption.
+- `run_kinematic_analysis()` for the default axisymmetric-disc comparison.
+- `run_manga_bar_model()` or `model = "bisymmetric_bar"` only when a galaxy is
+  known to be barred and an imaging-based bar angle is available.
+- `kinematic_models()` is the registry of installed model modules. Future
+  modules, such as spiral perturbations, join this registry without changing
+  the segmentation workflow.
 
 Experimental semantic morphology should not be the headline API. Core can keep
 neutral structure-score tools, but production bar modelling belongs in the
 kinematics module, where it uses velocity maps, disc geometry, residuals, and
-the bisymmetric model consistently.
+the bisymmetric model consistently. A bar is never assumed for an ordinary
+disc run and its angle is never substituted with the disc position angle.
 
 `spectropath` is a required dependency of the kinematics module. It remains a
 small independent implementation of the path-signature mathematics, but users

@@ -6,7 +6,7 @@
 #'   `placeholder_inc_deg` and flag this in `geometry_status`.
 #' @param placeholder_inc_deg Placeholder inclination in degrees.
 #' @return A list with geometry values and status strings.
-#' @export
+#' @noRd
 estimate_disc_geometry <- function(spaxels,
                                    geometry = list(),
                                    allow_placeholder_inclination = FALSE,
@@ -103,7 +103,7 @@ estimate_disc_geometry <- function(spaxels,
 #' @param x,y Pixel coordinates.
 #' @param geometry Geometry list from `estimate_disc_geometry()`.
 #' @return A data frame with X, Y, Yd, R, and theta.
-#' @export
+#' @noRd
 deproject_coordinates <- function(x, y, geometry) {
   dx <- x - geometry$x0
   dy <- y - geometry$y0

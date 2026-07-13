@@ -31,7 +31,6 @@
   p <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, fill = value)) +
     ggplot2::geom_raster() +
     ggplot2::coord_fixed(expand = FALSE) +
-    ggplot2::scale_y_reverse() +
     ggplot2::theme_void(base_size = 10) +
     ggplot2::theme(
       legend.position = legend_position,
@@ -58,7 +57,6 @@
     p <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, fill = value)) +
       ggplot2::geom_raster() +
       ggplot2::coord_fixed(expand = FALSE) +
-      ggplot2::scale_y_reverse() +
       ggplot2::scale_fill_manual(
         values = grDevices::colorRampPalette(path_segment_palette, space = "Lab")(n),
         na.value = "white"
@@ -105,14 +103,110 @@
   p
 }
 
+.capivara_result_model <- function(result) {
+  configured <- result$config$model
+  if (!is.null(configured) && length(configured) && !is.na(configured[[1]])) {
+    return(.capivara_match_kinematic_model(configured[[1]]))
+  }
+  if ("v_bar_model" %in% names(result$spaxels)) {
+    return("bisymmetric_bar")
+  }
+  "axisymmetric"
+}
+
+.capivara_save_kinematic_plot <- function(panel, png_file = NULL, pdf_file = NULL,
+                                           width, height) {
+  if (!is.null(png_file)) {
+    .capivara_dir_create(dirname(png_file))
+    ggplot2::ggsave(png_file, panel, width = width, height = height, dpi = 320, bg = "white")
+  }
+  if (!is.null(pdf_file)) {
+    .capivara_dir_create(dirname(pdf_file))
+    ggplot2::ggsave(pdf_file, panel, width = width, height = height, bg = "white")
+  }
+  panel
+}
+
+.capivara_plot_axisymmetric_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
+  display_orientation <- result$config$display_orientation
+  if (is.null(display_orientation) || !length(display_orientation)) {
+    display_orientation <- "transpose"
+  }
+  dims <- result$dims
+  to_mat <- function(value) {
+    mat <- matrix(NA_real_, dims[1], dims[2])
+    mat[cbind(result$spaxels$y, result$spaxels$x)] <- value
+    mat
+  }
+
+  flux <- result$manga$flux
+  if (is.null(flux)) {
+    flux <- matrix(as.numeric(result$spaxels$valid), dims[1], dims[2])
+  }
+  valid_footprint <- to_mat(as.numeric(result$spaxels$valid))
+  flux[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_real_
+  observed <- to_mat(result$spaxels$velocity)
+  model <- to_mat(result$spaxels$v_axisym_model)
+  residual <- to_mat(result$spaxels$v_axisym_resid)
+  vabs <- stats::quantile(abs(c(observed, model)), 0.995, na.rm = TRUE)
+  vel_lim <- if (is.finite(vabs) && vabs > 0) c(-vabs, vabs) else NULL
+  rabs <- stats::quantile(abs(residual), 0.98, na.rm = TRUE)
+  res_lim <- if (is.finite(rabs) && rabs > 0) c(-rabs, rabs) else NULL
+
+  prof <- result$axisym$profile
+  profile_sign <- sign(stats::median(prof$Vt, na.rm = TRUE))
+  if (!is.finite(profile_sign) || profile_sign == 0) {
+    profile_sign <- 1
+  }
+  prof$Vt <- prof$Vt * profile_sign
+  curve <- ggplot2::ggplot(prof, ggplot2::aes(R, Vt)) +
+    ggplot2::geom_line(colour = "#17223B", linewidth = 0.8) +
+    ggplot2::theme_classic(base_size = 9) +
+    ggplot2::labs(title = "Circular-speed profile", x = "Radius (spaxels)", y = "speed (km/s)")
+
+  summary <- result$diagnostics$summary[1, , drop = FALSE]
+  param_text <- paste0(
+    "i: ", round(result$geometry$inc_deg, 1), " deg.\n",
+    "phi: ", round(result$geometry$pa_deg, 1), " deg.\n",
+    "v_sys: ", round(result$fit$parameters$vsys[1], 1), " km/s\n",
+    "RMS residual: ", round(summary$RMS_disc[1], 1), " km/s\n",
+    "fit: ", result$fit$fit_status
+  )
+  text_panel <- ggplot2::ggplot() +
+    ggplot2::annotate("text", x = 0, y = 1, label = param_text, hjust = 0, vjust = 1, size = 3.5, lineheight = 1.15) +
+    ggplot2::xlim(0, 1) +
+    ggplot2::ylim(0, 1) +
+    ggplot2::theme_void()
+
+  panel <- (
+    .capivara_map_plot(log10(pmax(flux, 0) + 1e-3), result$plateifu, NULL,
+                        legend_position = "none", display_orientation = display_orientation) |
+      .capivara_map_plot(observed, "Emission-line velocity", "km/s", diverging = TRUE,
+                          limits = vel_lim, display_orientation = display_orientation)
+  ) / (
+    .capivara_map_plot(model, "Axisymmetric disc model", "km/s", diverging = TRUE,
+                        limits = vel_lim, display_orientation = display_orientation) |
+      .capivara_map_plot(residual, "Data - disc model", "km/s", diverging = TRUE,
+                          limits = res_lim, display_orientation = display_orientation)
+  ) / (curve | text_panel) +
+    patchwork::plot_layout(heights = c(1, 1, 0.72)) +
+    patchwork::plot_annotation(title = paste("Axisymmetric kinematic model:", result$plateifu)) &
+    ggplot2::theme(plot.margin = ggplot2::margin(6, 6, 6, 6))
+
+  .capivara_save_kinematic_plot(panel, png_file, pdf_file, width = 7.4, height = 8.8)
+}
+
 #' Plot Capivara segmentation-aware kinematic modelling products
 #'
 #' @param result Result from `run_one_galaxy()`.
 #' @param png_file,pdf_file Output paths.
 #' @return The patchwork plot object.
-#' @export
+#' @noRd
 plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
   .capivara_require(c("ggplot2", "patchwork"))
+  if (!identical(.capivara_result_model(result), "bisymmetric_bar")) {
+    return(.capivara_plot_axisymmetric_kinematics(result, png_file, pdf_file))
+  }
 
   display_orientation <- result$config$display_orientation
   if (is.null(display_orientation) || !length(display_orientation)) {
@@ -212,9 +306,15 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
 #' @param result Result from `run_one_galaxy()`.
 #' @param png_file,pdf_file Output paths.
 #' @return The patchwork plot object.
-#' @export
+#' @noRd
 plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_file = NULL) {
   .capivara_require(c("ggplot2", "patchwork"))
+  if (!identical(.capivara_result_model(result), "bisymmetric_bar")) {
+    stop(
+      "Component decomposition is available only for `model = \"bisymmetric_bar\"`.",
+      call. = FALSE
+    )
+  }
 
   display_orientation <- result$config$display_orientation
   if (is.null(display_orientation) || !length(display_orientation)) {

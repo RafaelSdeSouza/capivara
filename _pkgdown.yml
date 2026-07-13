@@ -16,54 +16,37 @@ reference:
       - segment
       - segment_large
       - choose_ncomp_by_snr
-      - cube_cluster_with_snr
       - estimate_segment_memory
   - title: Support Masks
     desc: Foreground support builders used before segmentation.
     contents:
       - build_starlet_mask
       - build_adaptive_support
-      - detect_support
-      - reject_background_regions
   - title: Spectral Summaries and Reconstruction
     desc: Flux-preserving products for downstream spectral fitting.
     contents:
       - summarize_cluster_spectra
       - reconstruct_cluster_cube
       - reconstruct_flux_preserving_cube
-      - SpecMean
   - title: Plotting
     desc: Lightweight plotting helpers.
     contents:
       - plot_cluster
       - plot_cluster_spectra
-      - capivara_plot_spectra_with_map
-  - title: Experimental Structure Scores
-    desc: Neutral morphology evidence maps. Bar and ring labels remain exploratory.
-    contents:
-      - score_structures
-      - threshold_structures
-      - catalogue_structures
-      - segment_structures
   - title: Kinematic Analysis
-    desc: Native emission-line maps, kinematic/path-aware segmentation, and disc/bisymmetric models.
+    desc: Native line maps and the neutral kinematic workflow.
+    contents:
+      - segment_kinematics
+      - run_kinematic_analysis
+      - kinematic_models
+  - title: Bar Modelling
+    desc: Explicit bisymmetric modelling for galaxies with an imaging-based bar angle.
     contents:
       - run_manga_bar_model
-      - fit_disc_model
-      - fit_axisymmetric_piecewise_model
-      - fit_bisymmetric_model
-      - estimate_disc_geometry
-      - estimate_bar_geometry
-      - plot_capivara_kinematics
-      - plot_capivara_component_decomposition
-      - resolve_manga_redshift
-  - title: Utilities
-    contents:
-      - cube_to_matrix
-      - median_scale
-      - torch_dist
 
 articles:
   - title: Workflows
     navbar: Workflows
-    contents: []
+    contents:
+      - kinematic-analysis
+      - bisymmetric-bar-model

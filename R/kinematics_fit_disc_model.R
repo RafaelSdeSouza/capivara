@@ -12,7 +12,7 @@
 #' @param min_disc_spaxels Minimum number of clean disc spaxels.
 #' @param fixed Optional named list of fixed parameters among vsys, vmax, Rt.
 #' @return A list with updated spaxels, fitted parameters, covariance, and status.
-#' @export
+#' @noRd
 fit_disc_model <- function(spaxels,
                            geometry,
                            use_errors = TRUE,

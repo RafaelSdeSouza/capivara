@@ -3,7 +3,7 @@
 #' @param batch_table_file CSV table with one row per galaxy.
 #' @param output_root Root output directory for the master summary.
 #' @return The master summary data frame.
-#' @export
+#' @noRd
 run_batch_barred_manga <- function(batch_table_file,
                                    output_root = "outputs") {
   .capivara_require(c("readr", "purrr"))

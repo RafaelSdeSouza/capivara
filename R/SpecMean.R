@@ -48,7 +48,7 @@
 #' @importFrom dplyr group_by summarise mutate ungroup
 #' @importFrom reshape2 melt dcast
 #' @importFrom utils write.csv
-#' @export
+#' @noRd
 SpecMean <- function(cluster_result) {
   cubedat <- .as_cubedat(cluster_result$original_cube)
   cluster_map <- cluster_result$cluster_map

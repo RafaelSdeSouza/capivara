@@ -11,13 +11,14 @@ emission_line <- "halpha" # e.g. "halpha", "oiii5007", "hbeta"
 
 n_segments <- 25
 n_path_segments <- 45
-knn_k <- 100
-segmentation_mode <- "all" # "kinematic", "path_signature", "spectral", or "all"
+knn_k <- 50
+segmentation_mode <- "kinematic" # or "path_signature"
+model <- "axisymmetric"          # or "bisymmetric_bar" for a known bar
 
-# Leave these as NA to estimate the geometry from the velocity field.
-disc_pa_deg <- NA_real_
-disc_inc_deg <- NA_real_
-bar_phi_deg <- NA_real_
+# Keep this empty for the ordinary disc model. A bar model must receive a bar
+# angle from imaging; Capivara will never replace it with the disc PA.
+model_control <- list()
+# model_control <- list(bar_phi_deg = 41, disc_inc_deg = 38)
 
 output_dir <- file.path(
   dirname(cube_path),
@@ -40,13 +41,12 @@ result <- run_kinematic_analysis(
   redshift = redshift,
   emission_line = emission_line,
   segmentation_mode = segmentation_mode,
+  model = model,
   output_dir = output_dir,
   knn_k = knn_k,
   n_segments = n_segments,
   n_path_segments = n_path_segments,
-  disc_pa_deg = disc_pa_deg,
-  disc_inc_deg = disc_inc_deg,
-  bar_phi_deg = bar_phi_deg,
+  model_control = model_control,
   show_plots = TRUE
 )
 

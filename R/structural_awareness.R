@@ -12,7 +12,7 @@
 #'   \code{reconstruction}, and \code{mask}.
 #' @importFrom graphics hist
 #' @importFrom utils head tail
-#' @export
+#' @noRd
 detect_support <- function(input, method = c("starlet", "adaptive"), ...) {
   method <- match.arg(method)
 
@@ -313,7 +313,7 @@ detect_support <- function(input, method = c("starlet", "adaptive"), ...) {
 #' @param starlet_args Extra arguments passed to \code{\link{detect_support}}.
 #'
 #' @return A \code{capivara_structure_scores} object.
-#' @export
+#' @noRd
 score_structures <- function(input,
                              support = NULL,
                              support_method = "starlet",
@@ -428,7 +428,7 @@ score_structures <- function(input,
 #' @param low_quantile Low hysteresis quantile for \code{mode = "extended"}.
 #'
 #' @return The input \code{scores} object with a \code{masks} entry.
-#' @export
+#' @noRd
 threshold_structures <- function(scores,
                                  mode = c("extended", "strict"),
                                  score_map = "combined_structure_score",
@@ -518,7 +518,7 @@ threshold_structures <- function(scores,
 #'
 #' @return A list with \code{catalogue}, \code{component_map}, and
 #'   \code{morphology_maps}.
-#' @export
+#' @noRd
 catalogue_structures <- function(scores,
                                  mask_name = "structure_mask",
                                  min_area = 12L) {
@@ -1752,7 +1752,7 @@ detect_ring <- function(input = NULL,
 #' @param ... Additional arguments passed to \code{\link{segment_large}}.
 #'
 #' @return A \code{segment_large} result with structural metadata attached.
-#' @export
+#' @noRd
 segment_structures <- function(input,
                                scores,
                                Ncomp = 20,

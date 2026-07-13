@@ -4,7 +4,7 @@ Title: Decomposition and Analysis of IFU Data Cubes
 Version: 0.3.0
 Imports: FITSio, dplyr, fastcluster, ggplot2, gridExtra, matrixStats, patchwork, readr, reshape2, RANN, Rcpp, scales, spectropath, tidyr, viridis, yaml
 LinkingTo: Rcpp
-Suggests: torch, EBImage, imager, minpack.lm
+Suggests: torch, EBImage, imager, knitr, minpack.lm, rmarkdown
 Remotes:
     RafaelSdeSouza/spectropath
 Author: Rafael S. de Souza
@@ -19,3 +19,4 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
+VignetteBuilder: knitr

@@ -5,7 +5,7 @@
 #' @param theta Deprojected azimuth.
 #' @param inc_rad Inclination in radians.
 #' @return Model line-of-sight velocity.
-#' @export
+#' @noRd
 disc_velocity_model <- function(par, R, theta, inc_rad) {
   vsys <- unname(par[["vsys"]])
   vmax <- unname(par[["vmax"]])
@@ -139,7 +139,7 @@ disc_velocity_model <- function(par, R, theta, inc_rad) {
 #' @param spaxels Spaxel table after deprojection.
 #' @param phi_b_deg Optional supplied in-plane bar angle relative to the major axis.
 #' @return A list with `phi_b_rad`, `phi_b_deg`, and status.
-#' @export
+#' @noRd
 estimate_bar_geometry <- function(spaxels, phi_b_deg = NULL) {
   if (!is.null(phi_b_deg) && length(phi_b_deg) == 1L && is.finite(phi_b_deg)) {
     phi <- as.numeric(phi_b_deg) * pi / 180
@@ -212,7 +212,7 @@ estimate_bar_geometry <- function(spaxels, phi_b_deg = NULL) {
 #' @param max_mean_v2 Absolute cap on mean second-order velocity amplitude.
 #' @return A list with fitted spaxels, radial profiles, parameters, and
 #'   diagnostics.
-#' @export
+#' @noRd
 fit_bisymmetric_model <- function(spaxels,
                                   geometry,
                                   bar_geometry,
@@ -347,7 +347,7 @@ fit_bisymmetric_model <- function(spaxels,
 #' @param robust_maxit Maximum robust reweighting iterations.
 #' @return A list with fitted spaxels, radial profile, parameters, and
 #'   diagnostics.
-#' @export
+#' @noRd
 fit_axisymmetric_piecewise_model <- function(spaxels,
                                              geometry,
                                              n_rings = 10L,

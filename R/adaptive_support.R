@@ -265,7 +265,7 @@ build_adaptive_support <- function(input,
 #'
 #' @return The input segmentation with an updated \code{cluster_map} and
 #'   appended diagnostics.
-#' @export
+#' @noRd
 reject_background_regions <- function(segmentation,
                                       evidence = NULL,
                                       evidence_count = NULL,

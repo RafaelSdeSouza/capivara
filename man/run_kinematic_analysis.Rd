@@ -2,55 +2,59 @@
 % Please edit documentation in R/kinematics_run_manga_bar_model.R
 \name{run_kinematic_analysis}
 \alias{run_kinematic_analysis}
-\title{Run the Capivara kinematic analysis module}
+\title{Run a Capivara kinematic analysis}
 \usage{
 run_kinematic_analysis(
   cube_path,
   redshift = NA_real_,
   emission_line = "halpha",
-  segmentation_mode = "all",
+  segmentation_mode = c("kinematic", "path_signature"),
+  model = c("axisymmetric", "bisymmetric_bar"),
   output_dir = NULL,
   object_id = NULL,
-  knn_k = 100,
+  knn_k = 50,
   n_segments = 25,
   n_path_segments = 45,
-  show_plots = interactive(),
-  ...
+  model_control = list(),
+  show_plots = interactive()
 )
 }
 \arguments{
-\item{cube_path}{Path to a MaNGA LOGCUBE.}
+\item{cube_path}{Path to an IFU FITS cube.}
 
-\item{redshift}{Optional redshift. If `NA`, uses FITS header then local
-DRPall metadata.}
+\item{redshift}{Redshift. Leave as `NA` for a MaNGA cube with local metadata.}
 
-\item{emission_line}{Emission line alias, currently typically `"halpha"`.}
+\item{emission_line}{Emission-line alias, such as `"halpha"` or `"oiii5007"`.}
 
-\item{segmentation_mode}{One of `"kinematic"`, `"path_signature"`,
-`"spectral"`, or `"all"`.}
+\item{segmentation_mode}{`"kinematic"` for line-map features or
+`"path_signature"` to also compute path-signature regions.}
 
-\item{output_dir}{Directory for products.}
+\item{model}{Kinematic model module. Use `"axisymmetric"` by default;
+`"bisymmetric_bar"` is an explicit bar hypothesis.}
 
-\item{object_id}{Optional object identifier. Defaults to inferred plate-IFU.}
+\item{output_dir}{Directory for saved products. Defaults beside the cube.}
 
-\item{knn_k}{Nearest-neighbour graph size used by the native Capivara
-segmentation runners.}
+\item{object_id}{Optional output identifier.}
 
-\item{n_segments}{Number of standard kinematic/spectral segments.}
+\item{knn_k}{kNN graph size for kinematic clustering.}
 
-\item{n_path_segments}{Number of path-signature-aware segments.}
+\item{n_segments}{Number of kinematic-aware segments.}
 
-\item{show_plots}{If `TRUE`, print the native, model, and component plots.}
+\item{n_path_segments}{Number of path-signature segments.}
 
-\item{...}{Additional geometry or robust-fitting controls accepted by
-[run_manga_bar_model()].}
+\item{model_control}{Named list of model controls. For a bar model it must
+contain `bar_phi_deg`. See [kinematic_models()] for available modules.}
+
+\item{show_plots}{Print figures as they are generated.}
 }
 \value{
-A `capivara_manga_bar_result` containing the maps, segmentations,
-  fitted models, plots, and paths to saved products.
+A `capivara_kinematic_result` with maps, segmentation, model, plots,
+  and saved-product paths.
 }
 \description{
-Friendly alias for the native MaNGA workflow. `segmentation_mode = "all"`
-creates traditional spectral, kinematic-aware, and path-signature
-segmentations before fitting the disc and bisymmetric models.
+This is the compact entry point for native emission-line kinematics. It
+makes a kinematic-aware segmentation first, then fits the requested model
+module. The default model is an axisymmetric disc because it is applicable
+to both barred and unbarred galaxies. Full-spectrum segmentation is a
+separate analysis and is run with [segment()] or [segment_large()].
 }

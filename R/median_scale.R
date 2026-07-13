@@ -12,7 +12,7 @@
 #' median_scale(c(10, 15, 20))     # Returns c(-5, 0, 5)
 #' median_scale(c(5, NA, 15, 25))  # Handles NA and returns c(-10, NA, 0, 10)
 #'
-#' @export
+#' @noRd
 median_scale <- function(x) {
   if (!is.numeric(x)) {
     stop("Input must be a numeric vector.")

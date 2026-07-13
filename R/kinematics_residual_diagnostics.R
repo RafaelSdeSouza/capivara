@@ -6,7 +6,7 @@
 #' @param fit_status Fit status string.
 #' @param geometry_status Geometry status string.
 #' @return A list with `by_class` and one-row `summary`.
-#' @export
+#' @noRd
 compute_residual_diagnostics <- function(spaxels,
                                          plateifu = NA_character_,
                                          fit_parameters = NULL,

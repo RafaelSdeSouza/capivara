@@ -42,7 +42,7 @@
 #' @importFrom tidyr pivot_longer
 #' @importFrom FITSio axVec
 #'
-#' @export
+#' @noRd
 capivara_plot_spectra_with_map <- function(cluster_result, bin_id, highlight_color = "#FFDE38", map_palette = "magma") {
   # Extract data from Capivara outputs
   cluster_map <- cluster_result$cluster_map

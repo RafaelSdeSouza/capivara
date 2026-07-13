@@ -1,0 +1,82 @@
+---
+title: "Kinematic Analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Kinematic Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(capivara)
+```
+
+Capivara separates three questions that are often mixed together:
+
+1. Which spaxels belong together in emission-line kinematics?
+2. Is an axisymmetric rotating disc an adequate comparison model?
+3. Is there evidence for a more specific perturbation, such as a bar?
+
+The first two are useful for both barred and unbarred galaxies. A bar model is
+therefore not a default setting.
+
+## 1. Kinematic-aware segmentation
+
+`segment_kinematics()` makes the native line maps and clusters flux, velocity,
+dispersion, and profile-shape information. It does not run ordinary
+full-spectrum segmentation, which answers a different question.
+
+```{r kinematic-segmentation, eval = FALSE}
+library(capivara)
+
+segments <- segment_kinematics(
+  cube_path = "/data/galaxy.fits",
+  redshift = 0.03,
+  emission_line = "halpha",
+  segmentation_mode = "kinematic",
+  knn_k = 50,
+  n_segments = 25,
+  show_plots = TRUE
+)
+```
+
+Choose `segmentation_mode = "path_signature"` when the path-signature feature
+representation is part of the science question. It additionally writes that
+segmentation; it does not replace the native kinematic maps.
+
+## 2. Axisymmetric disc comparison
+
+The default model is an axisymmetric disc. It produces an observed velocity
+map, disc model, residual map, and circular-speed profile without making any
+claim that the galaxy hosts a bar.
+
+```{r axisymmetric-model, eval = FALSE}
+result <- run_kinematic_analysis(
+  cube_path = "/data/galaxy.fits",
+  redshift = 0.03,
+  emission_line = "halpha",
+  model = "axisymmetric",
+  segmentation_mode = "kinematic",
+  knn_k = 50,
+  n_segments = 25,
+  show_plots = TRUE
+)
+
+plot(result, which = "model")
+```
+
+For a MaNGA LOGCUBE, leave `redshift = NA_real_` to resolve it from the local
+metadata/header. For another IFU cube, provide the redshift explicitly.
+
+## 3. Model modules
+
+Use `kinematic_models()` to see the installed dynamical modules. Each module
+uses the same native maps and kinematic segmentation, so new models such as a
+spiral perturbation can be added without changing the upstream workflow.
+
+```{r available-models}
+kinematic_models()
+```
+
+The bar-specific workflow is documented separately in `vignette("bisymmetric-bar-model", package = "capivara")`.

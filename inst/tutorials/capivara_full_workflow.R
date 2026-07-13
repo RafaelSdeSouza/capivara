@@ -21,8 +21,9 @@ use_starlet_mask <- TRUE
 starlet_scales <- 2:5
 include_coarse_starlet <- FALSE
 
-run_bar_model <- TRUE
-segmentation_mode_for_bar <- "path_signature" # "kinematic", "path_signature", "spectral", or "all"
+run_bar_model <- FALSE
+segmentation_mode_for_bar <- "kinematic" # or "path_signature"
+bar_phi_deg <- NA_real_ # required only when `run_bar_model` is TRUE
 
 output_dir <- file.path(dirname(cube_path), "capivara_tutorial_outputs", object_id)
 
@@ -178,22 +179,27 @@ if (nrow(fit_df)) {
 # ---- 5. Kinematics and bar modelling ---------------------------------------
 
 if (isTRUE(run_bar_model)) {
+  if (!is.finite(bar_phi_deg)) {
+    stop("Set `bar_phi_deg` from imaging before enabling `run_bar_model`.", call. = FALSE)
+  }
   message("Running Capivara kinematics + bar model...")
   bar <- run_kinematic_analysis(
     cube_path = cube_path,
     redshift = redshift,
     emission_line = emission_line,
     segmentation_mode = segmentation_mode_for_bar,
+    model = "bisymmetric_bar",
     output_dir = file.path(output_dir, "04_kinematics_bar"),
     object_id = object_id,
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = max(35, n_segments),
+    model_control = list(bar_phi_deg = bar_phi_deg),
     show_plots = FALSE
   )
 
   print(bar)
-  plot(bar, which = "summary")
+  plot(bar, which = "segmentation")
   plot(bar, which = "model")
   plot(bar, which = "components")
   saveRDS(bar, file.path(output_dir, "04_kinematics_bar_result.rds"))

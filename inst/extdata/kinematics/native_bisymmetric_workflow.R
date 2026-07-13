@@ -21,6 +21,9 @@ env_chr <- function(key, unset) {
 env_bool <- function(key, unset = "false") {
   tolower(env_chr(key, unset)) %in% c("1", "true", "yes", "y", "on")
 }
+model_kind <- .capivara_match_kinematic_model(
+  env_chr("CAPIVARA_MODEL_KIND", "axisymmetric")
+)
 
 make_bar_support_mask <- function(spaxels, phi_b_rad, width_deg = 25, r_min_frac = 0, r_max_frac = 1) {
   out <- rep(FALSE, nrow(spaxels))
@@ -85,9 +88,9 @@ spaxels$fit_weight <- ifelse(!is.na(spaxels$imputed) & spaxels$imputed, 0.35, 1)
 geometry <- estimate_disc_geometry(
   spaxels,
   geometry = list(
-    x0 = env_num("CAPIVARA_MODEL_X0", stats::median(spaxels$x[spaxels$valid], na.rm = TRUE)),
-    y0 = env_num("CAPIVARA_MODEL_Y0", stats::median(spaxels$y[spaxels$valid], na.rm = TRUE)),
-    vsys = env_num("CAPIVARA_MODEL_VSYS", 0),
+    x0 = env_num("CAPIVARA_MODEL_X0", NA_real_),
+    y0 = env_num("CAPIVARA_MODEL_Y0", NA_real_),
+    vsys = env_num("CAPIVARA_MODEL_VSYS", NA_real_),
     pa_deg = env_num("CAPIVARA_MODEL_PA_DEG", NA_real_),
     inc_deg = env_num("CAPIVARA_MODEL_INC_DEG", 60),
     coordinate_convention = "nirvana"
@@ -95,16 +98,24 @@ geometry <- estimate_disc_geometry(
   allow_placeholder_inclination = TRUE,
   placeholder_inc_deg = 60
 )
-model_x <- spaxels$y
-model_y <- max(spaxels$x, na.rm = TRUE) + min(spaxels$x, na.rm = TRUE) - spaxels$x
-spaxels <- cbind(spaxels, deproject_coordinates(model_x, model_y, geometry))
+# Fit in the original IFU array coordinates. Display orientation is handled
+# only by the plotting layer and must not rotate the physical model.
+spaxels <- cbind(spaxels, deproject_coordinates(spaxels$x, spaxels$y, geometry))
 
-bar_geometry <- estimate_bar_geometry(
-  spaxels,
-  phi_b_deg = env_num("CAPIVARA_MODEL_BAR_PHI_DEG", geometry$pa_deg)
-)
-use_bar_mask <- env_bool("CAPIVARA_MODEL_USE_BAR_MASK", "false")
+use_bar_mask <- identical(model_kind, "bisymmetric_bar") &&
+  env_bool("CAPIVARA_MODEL_USE_BAR_MASK", "false")
 bar_mask <- rep(FALSE, nrow(spaxels))
+bar_geometry <- NULL
+if (identical(model_kind, "bisymmetric_bar")) {
+  bar_phi_deg <- env_num("CAPIVARA_MODEL_BAR_PHI_DEG", NA_real_)
+  if (!is.finite(bar_phi_deg)) {
+    stop(
+      "Bisymmetric bar modelling requires CAPIVARA_MODEL_BAR_PHI_DEG.",
+      call. = FALSE
+    )
+  }
+  bar_geometry <- estimate_bar_geometry(spaxels, phi_b_deg = bar_phi_deg)
+}
 if (isTRUE(use_bar_mask)) {
   bar_mask <- make_bar_support_mask(
     spaxels,
@@ -135,19 +146,24 @@ axisym <- fit_axisymmetric_piecewise_model(
   robust = robust_fit
 )
 spaxels <- axisym$spaxels
-fit <- fit_bisymmetric_model(
-  spaxels,
-  geometry,
-  bar_geometry,
-  n_rings = n_rings,
-  smooth_lambda = smooth_lambda,
-  second_order_lambda = second_order_lambda,
-  fixed_vsys = geometry$vsys,
-  robust = robust_fit,
-  max_v2_fraction = env_num("CAPIVARA_MODEL_MAX_V2_FRACTION", 0.8),
-  max_mean_v2 = env_num("CAPIVARA_MODEL_MAX_MEAN_V2", 350)
-)
-spaxels <- fit$spaxels
+if (identical(model_kind, "bisymmetric_bar")) {
+  fit <- fit_bisymmetric_model(
+    spaxels,
+    geometry,
+    bar_geometry,
+    n_rings = n_rings,
+    smooth_lambda = smooth_lambda,
+    second_order_lambda = second_order_lambda,
+    fixed_vsys = geometry$vsys,
+    robust = robust_fit,
+    max_v2_fraction = env_num("CAPIVARA_MODEL_MAX_V2_FRACTION", 0.8),
+    max_mean_v2 = env_num("CAPIVARA_MODEL_MAX_MEAN_V2", 350)
+  )
+  spaxels <- fit$spaxels
+} else {
+  fit <- axisym
+  spaxels$v_resid <- spaxels$v_axisym_resid
+}
 
 diagnostics <- compute_residual_diagnostics(
   spaxels,
@@ -160,6 +176,7 @@ diagnostics <- compute_residual_diagnostics(
 result <- list(
   plateifu = plateifu,
   config = list(
+    model = model_kind,
     display_orientation = env_chr("CAPIVARA_MODEL_DISPLAY_ORIENTATION", "rot90_cw"),
     velocity_source = "Capivara-native LOGCUBE Halpha",
     support = paste0(
@@ -172,7 +189,7 @@ result <- list(
     n_rings = n_rings,
     robust_fit = robust_fit,
     smooth_lambda = smooth_lambda,
-    second_order_lambda = second_order_lambda,
+    second_order_lambda = if (identical(model_kind, "bisymmetric_bar")) second_order_lambda else NA_real_,
     bar_support_mask = if (use_bar_mask) "geometric_phi_b_prior" else "none",
     bar_support_width_deg = if (use_bar_mask) env_num("CAPIVARA_MODEL_BAR_MASK_WIDTH_DEG", 25) else NA_real_,
     bar_support_n_spaxels = sum(bar_mask, na.rm = TRUE),
@@ -202,8 +219,10 @@ model_plot <- plot_capivara_kinematics(
   png_file = file.path(output_dir, paste0(prefix, "_model.png")),
   pdf_file = file.path(output_dir, paste0(prefix, "_model.pdf"))
 )
-component_plot <- plot_capivara_component_decomposition(
-  result,
-  png_file = file.path(output_dir, paste0(prefix, "_components.png")),
-  pdf_file = file.path(output_dir, paste0(prefix, "_components.pdf"))
-)
+if (identical(model_kind, "bisymmetric_bar")) {
+  component_plot <- plot_capivara_component_decomposition(
+    result,
+    png_file = file.path(output_dir, paste0(prefix, "_components.png")),
+    pdf_file = file.path(output_dir, paste0(prefix, "_components.pdf"))
+  )
+}

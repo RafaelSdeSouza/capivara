@@ -35,8 +35,7 @@
 #' cluster_map <- result$cluster_map
 #' dim(cluster_map)
 #'
-#' @export
-
+#' @noRd
 cube_cluster_with_snr <- function(input, target_snr, redshift = 0, scale_fn = median_scale) {
   choose_ncomp_by_snr(
     input = input,

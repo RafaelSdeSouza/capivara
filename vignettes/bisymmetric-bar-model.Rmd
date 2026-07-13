@@ -1,0 +1,68 @@
+---
+title: "Bisymmetric Bar Modelling"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bisymmetric Bar Modelling}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+The bisymmetric module is for a galaxy with independent evidence of a bar. It
+extends the axisymmetric disc model with the two-sided streaming terms,
+following the velocity-field formulation used in the barred-galaxy literature.
+It is not a generic substitute for the disc model.
+
+## Before fitting
+
+Measure or adopt the bar angle from imaging. `bar_phi_deg` is the in-plane bar
+angle, in degrees, relative to the disc major axis. Capivara deliberately does
+not replace it with the disc position angle: doing so silently assumes an
+aligned bar and gives a misleading model for most galaxies.
+
+## Fit the bar module
+
+```{r bisymmetric-model, eval = FALSE}
+library(capivara)
+
+bar_result <- run_kinematic_analysis(
+  cube_path = "/data/known_barred_galaxy.fits",
+  redshift = 0.03,
+  emission_line = "halpha",
+  segmentation_mode = "kinematic",
+  model = "bisymmetric_bar",
+  knn_k = 50,
+  n_segments = 25,
+  model_control = list(
+    bar_phi_deg = 41,
+    disc_inc_deg = 38,
+    robust_fit = TRUE
+  ),
+  show_plots = TRUE
+)
+
+plot(bar_result, which = "components")
+```
+
+The `components` plot is intentionally unavailable for an axisymmetric run:
+the circular, tangential second-order, and radial second-order components only
+have a physical interpretation within the bisymmetric model.
+
+## Optional bar-support prior
+
+The model normally uses the full valid kinematic footprint. When a carefully
+measured bar footprint is needed as a weak geometric prior, add:
+
+```{r bar-support, eval = FALSE}
+model_control = list(
+  bar_phi_deg = 41,
+  use_bar_support_mask = TRUE,
+  bar_support_width_deg = 25
+)
+```
+
+This option should be compared against the full-footprint model, not used to
+force a bar-like residual pattern.

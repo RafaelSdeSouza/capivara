@@ -99,7 +99,7 @@
 #'
 #' @param config_file YAML config path, or a config list.
 #' @return An analysis result list.
-#' @export
+#' @noRd
 run_one_galaxy <- function(config_file) {
   .capivara_require(c("readr", "yaml", "ggplot2", "patchwork"))
   config <- .capivara_read_config(config_file)

@@ -1,79 +1,51 @@
 # Public API Audit
 
-This note records the intended user-facing surface after the kinematics/bar
-split. It is meant as a maintenance checklist before releases.
+This is the intended Capivara 2.0 user-facing surface. The rule is simple:
+users see complete science workflows; low-level implementation pieces remain
+available to package developers without filling RStudio autocomplete.
 
-## Core `capivara`
+## Everyday segmentation
 
-Core should stay focused on cube segmentation and segment-level spectra.
+| Function | Why it stays public | Minimal default |
+| --- | --- | --- |
+| `segment()` | Exact Ward segmentation for manageable cubes. | `Ncomp = 15` |
+| `segment_large()` | Sparse-Ward segmentation for real IFU cubes. | `Ncomp = 15`, `knn_k = 40` |
+| `build_starlet_mask()` | Explicit starlet support when the user needs it. | Conservative support settings |
+| `build_adaptive_support()` | Data-driven alternative support builder. | Adaptive threshold |
+| `choose_ncomp_by_snr()` | Decides component count from S/N. | User supplies target S/N |
+| `estimate_segment_memory()` | Prevents an accidental exact-Ward memory allocation. | Read-only estimate |
+| `summarize_cluster_spectra()` | Region spectra for external fitting. | Flux-aware summaries |
+| `reconstruct_cluster_cube()` | Compact representative cube product. | Cluster representatives |
+| `reconstruct_flux_preserving_cube()` | Fitting-ready reconstructed cube. | Preserved segment flux |
+| `plot_cluster()` / `plot_cluster_spectra()` | The standard visual checks. | Package palette/layout |
 
-Keep public:
+## Kinematics
 
-- `segment()` and `segment_large()`
-- `build_starlet_mask()`, `build_adaptive_support()`, and `detect_support()`
-- `summarize_cluster_spectra()`
-- `reconstruct_cluster_cube()` and `reconstruct_flux_preserving_cube()`
-- `plot_cluster()`, `plot_cluster_spectra()`, and
-  `capivara_plot_spectra_with_map()`
-- Memory/SNR helpers such as `estimate_segment_memory()` and
-  `choose_ncomp_by_snr()`
+| Function | Scope | Minimal default |
+| --- | --- | --- |
+| `segment_kinematics()` | Native line maps plus kinematic-aware segmentation. No dynamical assumption. | `knn_k = 50`, `n_segments = 25` |
+| `run_kinematic_analysis()` | Kinematic segmentation plus a neutral axisymmetric disc comparison. | `model = "axisymmetric"` |
+| `run_manga_bar_model()` | Explicit convenience wrapper for a known barred MaNGA galaxy. | Requires `bar_phi_deg` |
+| `kinematic_models()` | Lists installed modelling modules and their requirements. | Read-only registry |
 
-Keep secondary but visible for now:
+The path-signature segmentation is requested explicitly with
+`segmentation_mode = "path_signature"`. Ordinary full-spectrum segmentation is
+also explicit through `segment()` or `segment_large()`; it is not silently run
+inside a kinematic workflow.
 
-- `score_structures()`, `segment_structures()`, `catalogue_structures()`,
-  and `threshold_structures()`
+## Expert and Experimental Code
 
-Hide from the public API:
-
-- `detect_bar()`
-- `detect_ring()`
-
-Those routines are exploratory semantic-structure prototypes. Production bar
-modelling belongs to the Capivara kinematics module, where it uses velocity
-maps, disc geometry, residuals, and the bisymmetric model consistently.
-
-## Kinematics Module
-
-The companion package should expose complete workflows first, then expert
-building blocks.
-
-Primary public workflows:
-
-- `run_kinematic_analysis()`
-- `run_manga_bar_model()` for the explicitly MaNGA-named workflow
-
-Useful teaching/batch helpers:
-
-- `run_one_galaxy()`
-- `run_batch_barred_manga()`
-- `read_capivara_output()`
-
-Model and plotting functions worth exposing:
-
-- `fit_disc_model()`
-- `fit_axisymmetric_piecewise_model()`
-- `fit_bisymmetric_model()`
-- `estimate_disc_geometry()`
-- `estimate_bar_geometry()`
-- `plot_capivara_kinematics()`
-- `plot_capivara_component_decomposition()`
-
-MaNGA convenience helpers worth exposing while MaNGA remains a first-class
-example:
-
-- `infer_manga_plateifu()`
-- `resolve_manga_redshift()`
-- `manga_redshift()`
-- `manga_metadata()`
+Fitting primitives, raw readers, geometry utilities, diagnostic tables,
+batch runners, and component plotters are implementation-level functions. They
+are documented for maintainers but should not be the normal package entry
+points. The experimental structure scores are also kept out of the headline
+API until their scientific interpretation is stable.
 
 ## Documentation Policy
 
-Use roxygen comments for function-level documentation and pkgdown for the
-single rendered package website. Put tutorials in vignettes/articles once the
-code stabilizes, but keep supported source-able R scripts under
-`inst/tutorials/` for hands-on teaching. Paper-specific and exploratory runners
-live under `research/`, outside the package API.
-
-Do not expose experimental functions just because they are convenient during
-development. Prefer one polished public workflow plus a few honest expert
-helpers over a wide namespace full of half-promises.
+Pkgdown remains the website system because it renders R references and
+vignettes directly. The site has separate **Kinematic Analysis** and
+**Bisymmetric Bar Modelling** articles. Add a future spiral, warp, or outflow
+module by registering it in `kinematic_models()`, implementing its model branch,
+and adding one dedicated article; this avoids teaching every user a long list of
+special-case controls.

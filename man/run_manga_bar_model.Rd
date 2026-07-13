@@ -2,97 +2,58 @@
 % Please edit documentation in R/kinematics_run_manga_bar_model.R
 \name{run_manga_bar_model}
 \alias{run_manga_bar_model}
-\title{Run the native MaNGA kinematics and bisymmetric-bar workflow}
+\title{Run the explicit bisymmetric-bar module for a MaNGA cube}
 \usage{
 run_manga_bar_model(
   cube_path,
   redshift = NA_real_,
   emission_line = "halpha",
-  segmentation_mode = c("kinematic", "path_signature", "spectral", "all"),
+  segmentation_mode = c("kinematic", "path_signature"),
+  bar_phi_deg,
   output_dir = NULL,
   object_id = NULL,
-  repo_root = NULL,
   knn_k = 50,
   n_segments = 25,
   n_path_segments = 45,
-  starlet_scales = "2:5",
-  include_coarse_starlet = FALSE,
-  display_orientation = "rot90_cw",
-  disc_pa_deg = NA_real_,
-  disc_inc_deg = NA_real_,
-  bar_phi_deg = NA_real_,
-  use_bar_support_mask = is.finite(bar_phi_deg),
-  bar_support_width_deg = 25,
-  robust_fit = TRUE,
-  smooth_lambda = 10,
-  second_order_lambda = 25,
-  max_v2_fraction = 0.8,
-  max_mean_v2 = 350,
+  model_control = list(),
   show_plots = interactive()
 )
 }
 \arguments{
-\item{cube_path}{Path to a MaNGA LOGCUBE.}
+\item{cube_path}{Path to an IFU FITS cube.}
 
-\item{redshift}{Optional redshift. If `NA`, uses FITS header then local
-DRPall metadata.}
+\item{redshift}{Redshift. Leave as `NA` for a MaNGA cube with local metadata.}
 
-\item{emission_line}{Emission line alias, currently typically `"halpha"`.}
+\item{emission_line}{Emission-line alias, such as `"halpha"` or `"oiii5007"`.}
 
-\item{segmentation_mode}{One of `"kinematic"`, `"path_signature"`,
-`"spectral"`, or `"all"`.}
+\item{segmentation_mode}{`"kinematic"` for line-map features or
+`"path_signature"` to also compute path-signature regions.}
 
-\item{output_dir}{Directory for products.}
+\item{bar_phi_deg}{In-plane bar angle in degrees relative to the disc major
+axis.}
 
-\item{object_id}{Optional object identifier. Defaults to inferred plate-IFU.}
+\item{output_dir}{Directory for saved products. Defaults beside the cube.}
 
-\item{repo_root}{Optional Capivara repository root used only when running
-directly from a development checkout. Installed packages do not need it.}
+\item{object_id}{Optional output identifier.}
 
-\item{knn_k}{Nearest-neighbour graph size used by the native Capivara
-segmentation runners.}
+\item{knn_k}{kNN graph size for kinematic clustering.}
 
-\item{n_segments}{Number of standard kinematic/spectral segments.}
+\item{n_segments}{Number of kinematic-aware segments.}
 
-\item{n_path_segments}{Number of path-signature-aware segments.}
+\item{n_path_segments}{Number of path-signature segments.}
 
-\item{starlet_scales}{Starlet scales used for the support mask.}
+\item{model_control}{Named list of model controls. For a bar model it must
+contain `bar_phi_deg`. See [kinematic_models()] for available modules.}
 
-\item{include_coarse_starlet}{If `TRUE`, include the coarse starlet scale in
-the support mask.}
-
-\item{display_orientation}{Plot display orientation passed to the bar plots.}
-
-\item{disc_pa_deg}{Optional fixed disc position angle in degrees.}
-
-\item{disc_inc_deg}{Optional fixed disc inclination in degrees.}
-
-\item{bar_phi_deg}{Optional fixed bar angle in degrees.}
-
-\item{use_bar_support_mask}{If `TRUE`, restrict the bar term support around
-the bar angle.}
-
-\item{bar_support_width_deg}{Angular half-width for the optional bar support.}
-
-\item{robust_fit}{If `TRUE`, use robust reweighting in the model fit.}
-
-\item{smooth_lambda}{First-order smoothing penalty for velocity profiles.}
-
-\item{second_order_lambda}{Curvature penalty for second-order bar terms.}
-
-\item{max_v2_fraction}{Maximum allowed mean second-order amplitude relative
-to the circular term before shrinkage.}
-
-\item{max_mean_v2}{Absolute cap on mean second-order velocity amplitude.}
-
-\item{show_plots}{If `TRUE`, print the native, model, and component plots.}
+\item{show_plots}{Print figures as they are generated.}
 }
 \value{
-A list with plots, paths, native result, model result, and metadata.
+A `capivara_kinematic_result` with the bisymmetric model and its
+  component decomposition.
 }
 \description{
-This is the Capivara 2.0 entry point for native emission-line kinematics.
-It reads a MaNGA LOGCUBE, resolves the redshift locally when needed, creates
-standard, kinematic-aware, and path-signature segmentations, and fits a
-local NIRVANA-style bisymmetric velocity model.
+This convenience wrapper is intentionally bar-specific. It requires a bar
+angle measured from imaging or supplied by the user; it never substitutes
+the disc position angle for a bar angle. For an ordinary rotation model, use
+[run_kinematic_analysis()] with its axisymmetric default.
 }

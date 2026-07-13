@@ -16,7 +16,7 @@
 #' d <- torch_dist(x, p = 2)
 #' h <- hclust(d)
 #'
-#' @export
+#' @noRd
 torch_dist <- function(x, p = 1, device = NULL) {
   # Ensure x is a numeric matrix
   x <- as.matrix(x)

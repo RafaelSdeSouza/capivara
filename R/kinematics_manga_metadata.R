@@ -2,7 +2,7 @@
 #'
 #' @param x File name, path, header value, or plate-IFU-like string.
 #' @return A character scalar like `"8078-12703"`, or `NA_character_`.
-#' @export
+#' @noRd
 infer_manga_plateifu <- function(x) {
   if (is.null(x) || !length(x) || is.na(x[[1]])) {
     return(NA_character_)
@@ -52,7 +52,7 @@ infer_manga_plateifu <- function(x) {
 #'
 #' @param metadata_file Optional CSV/CSV.GZ file with `plateifu` and `redshift`.
 #' @return A data frame with MaNGA identifiers and redshifts.
-#' @export
+#' @noRd
 read_manga_redshift_table <- function(metadata_file = NULL) {
   path <- .manga_metadata_file(metadata_file)
   tab <- utils::read.csv(path, stringsAsFactors = FALSE)
@@ -71,7 +71,7 @@ read_manga_redshift_table <- function(metadata_file = NULL) {
 #' @param mangaid Optional MaNGA-ID fallback.
 #' @param metadata_file Optional local metadata CSV/CSV.GZ.
 #' @return A one-row data frame.
-#' @export
+#' @noRd
 manga_metadata <- function(plateifu = NULL, mangaid = NULL, metadata_file = NULL) {
   tab <- read_manga_redshift_table(metadata_file)
   keep <- rep(FALSE, nrow(tab))
@@ -95,7 +95,7 @@ manga_metadata <- function(plateifu = NULL, mangaid = NULL, metadata_file = NULL
 #' @param mangaid Optional MaNGA-ID fallback.
 #' @param metadata_file Optional local metadata CSV/CSV.GZ.
 #' @return Numeric redshift.
-#' @export
+#' @noRd
 manga_redshift <- function(plateifu = NULL, mangaid = NULL, metadata_file = NULL) {
   row <- manga_metadata(plateifu = plateifu, mangaid = mangaid, metadata_file = metadata_file)
   z <- row$redshift[[1]]
@@ -121,7 +121,7 @@ manga_redshift <- function(plateifu = NULL, mangaid = NULL, metadata_file = NULL
 #'
 #' @param cube_path Path to a MaNGA LOGCUBE.
 #' @return A list with `plateifu`, `mangaid`, and `redshift`.
-#' @export
+#' @noRd
 read_manga_cube_metadata <- function(cube_path) {
   plateifu <- infer_manga_plateifu(cube_path)
   mangaid <- NA_character_
@@ -152,7 +152,7 @@ read_manga_cube_metadata <- function(cube_path) {
 #' @param redshift Optional manual redshift.
 #' @param metadata_file Optional local metadata CSV/CSV.GZ.
 #' @return A list with `redshift`, `source`, `plateifu`, and `mangaid`.
-#' @export
+#' @noRd
 resolve_manga_redshift <- function(cube_path, redshift = NA_real_, metadata_file = NULL) {
   manual <- .manga_clean_redshift(redshift)
   if (is.finite(manual)) {

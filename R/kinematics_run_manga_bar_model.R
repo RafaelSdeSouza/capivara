@@ -37,94 +37,26 @@
   old
 }
 
-#' Run the native MaNGA kinematics and bisymmetric-bar workflow
-#'
-#' This is the Capivara 2.0 entry point for native emission-line kinematics.
-#' It reads a MaNGA LOGCUBE, resolves the redshift locally when needed, creates
-#' standard, kinematic-aware, and path-signature segmentations, and fits a
-#' local NIRVANA-style bisymmetric velocity model.
-#'
-#' @param cube_path Path to a MaNGA LOGCUBE.
-#' @param redshift Optional redshift. If `NA`, uses FITS header then local
-#'   DRPall metadata.
-#' @param emission_line Emission line alias, currently typically `"halpha"`.
-#' @param segmentation_mode One of `"kinematic"`, `"path_signature"`,
-#'   `"spectral"`, or `"all"`.
-#' @param output_dir Directory for products.
-#' @param object_id Optional object identifier. Defaults to inferred plate-IFU.
-#' @param repo_root Optional Capivara repository root used only when running
-#'   directly from a development checkout. Installed packages do not need it.
-#' @param knn_k Nearest-neighbour graph size used by the native Capivara
-#'   segmentation runners.
-#' @param n_segments Number of standard kinematic/spectral segments.
-#' @param n_path_segments Number of path-signature-aware segments.
-#' @param starlet_scales Starlet scales used for the support mask.
-#' @param include_coarse_starlet If `TRUE`, include the coarse starlet scale in
-#'   the support mask.
-#' @param display_orientation Plot display orientation passed to the bar plots.
-#' @param disc_pa_deg Optional fixed disc position angle in degrees.
-#' @param disc_inc_deg Optional fixed disc inclination in degrees.
-#' @param bar_phi_deg Optional fixed bar angle in degrees.
-#' @param use_bar_support_mask If `TRUE`, restrict the bar term support around
-#'   the bar angle.
-#' @param bar_support_width_deg Angular half-width for the optional bar support.
-#' @param robust_fit If `TRUE`, use robust reweighting in the model fit.
-#' @param smooth_lambda First-order smoothing penalty for velocity profiles.
-#' @param second_order_lambda Curvature penalty for second-order bar terms.
-#' @param max_v2_fraction Maximum allowed mean second-order amplitude relative
-#'   to the circular term before shrinkage.
-#' @param max_mean_v2 Absolute cap on mean second-order velocity amplitude.
-#' @param show_plots If `TRUE`, print the native, model, and component plots.
-#' @return A list with plots, paths, native result, model result, and metadata.
-#' @export
-run_manga_bar_model <- function(cube_path,
-                                redshift = NA_real_,
-                                emission_line = "halpha",
-                                segmentation_mode = c("kinematic", "path_signature", "spectral", "all"),
-                                output_dir = NULL,
-                                object_id = NULL,
-                                repo_root = NULL,
-                                knn_k = 50,
-                                n_segments = 25,
-                                n_path_segments = 45,
-                                starlet_scales = "2:5",
-                                include_coarse_starlet = FALSE,
-                                display_orientation = "rot90_cw",
-                                disc_pa_deg = NA_real_,
-                                disc_inc_deg = NA_real_,
-                                bar_phi_deg = NA_real_,
-                                use_bar_support_mask = is.finite(bar_phi_deg),
-                                bar_support_width_deg = 25,
-                                robust_fit = TRUE,
-                                smooth_lambda = 10,
-                                second_order_lambda = 25,
-                                max_v2_fraction = 0.8,
-                                max_mean_v2 = 350,
-                                show_plots = interactive()) {
-  segmentation_mode <- match.arg(segmentation_mode)
-  cube_path <- normalizePath(cube_path, mustWork = TRUE)
-
-  z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
-  object_id <- if (!is.null(object_id) && nzchar(object_id)) object_id else z_info$plateifu
-  if (is.na(object_id) || !nzchar(object_id)) {
-    object_id <- tools::file_path_sans_ext(basename(cube_path))
-  }
-  if (is.null(output_dir) || !nzchar(output_dir)) {
-    output_dir <- file.path(dirname(cube_path), "capivara_outputs", object_id)
-  }
-  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-
-  run_spectral_segmentation <- segmentation_mode %in% c("spectral", "all")
-  run_path_signatures <- segmentation_mode %in% c("path_signature", "all")
+.capivara_run_native_kinematics <- function(cube_path,
+                                             redshift,
+                                             emission_line,
+                                             output_dir,
+                                             object_id,
+                                             repo_root,
+                                             knn_k,
+                                             n_segments,
+                                             n_path_segments,
+                                             run_spectral_segmentation,
+                                             run_path_signatures,
+                                             starlet_scales,
+                                             include_coarse_starlet) {
   prefix <- gsub("[^A-Za-z0-9]+", "_", tolower(object_id))
   native_runner <- .capivara_workflow_file("native_kinematics_workflow.R", repo_root)
-  model_runner <- .capivara_workflow_file("native_bisymmetric_workflow.R", repo_root)
-
   native_env <- c(
     CAPIVARA_USE_ENV_INPUTS = "true",
     CAPIVARA_CUBE_PATH = cube_path,
     CAPIVARA_OUTPUT_DIR = output_dir,
-    CAPIVARA_REDSHIFT = as.character(z_info$redshift),
+    CAPIVARA_REDSHIFT = as.character(redshift),
     CAPIVARA_LINE = emission_line,
     CAPIVARA_OUTPUT_PREFIX = prefix,
     CAPIVARA_KNN = as.character(knn_k),
@@ -141,124 +73,397 @@ run_manga_bar_model <- function(cube_path,
   )
   old_native_env <- .capivara_set_env(native_env)
   on.exit(.capivara_restore_env(names(native_env), old_native_env), add = TRUE)
-  native_scope <- new.env(parent = environment(run_manga_bar_model))
+
+  native_scope <- new.env(parent = environment(.capivara_run_native_kinematics))
   source(native_runner, local = native_scope)
 
-  native_rds <- file.path(output_dir, paste0(prefix, "_", emission_line, "_capivara_kinematic_results.rds"))
-  model_prefix <- paste0(prefix, "_", emission_line, "_bisymmetric")
-  model_env <- c(
-    CAPIVARA_MODEL_USE_ENV_INPUTS = "true",
-    CAPIVARA_MODEL_NATIVE_RDS = native_rds,
-    CAPIVARA_MODEL_OUTPUT_DIR = output_dir,
-    CAPIVARA_MODEL_OUTPUT_PREFIX = model_prefix,
-    CAPIVARA_MODEL_PLATEIFU = object_id,
-    CAPIVARA_MODEL_DISPLAY_ORIENTATION = display_orientation,
-    CAPIVARA_MODEL_ROBUST = if (robust_fit) "true" else "false",
-    CAPIVARA_MODEL_SMOOTH_LAMBDA = as.character(smooth_lambda),
-    CAPIVARA_MODEL_SECOND_ORDER_LAMBDA = as.character(second_order_lambda),
-    CAPIVARA_MODEL_MAX_V2_FRACTION = as.character(max_v2_fraction),
-    CAPIVARA_MODEL_MAX_MEAN_V2 = as.character(max_mean_v2),
-    CAPIVARA_MODEL_USE_BAR_MASK = if (use_bar_support_mask) "true" else "false",
-    CAPIVARA_MODEL_BAR_MASK_WIDTH_DEG = as.character(bar_support_width_deg)
+  list(
+    prefix = prefix,
+    native_rds = file.path(
+      output_dir,
+      paste0(prefix, "_", emission_line, "_capivara_kinematic_results.rds")
+    ),
+    native = readRDS(file.path(
+      output_dir,
+      paste0(prefix, "_", emission_line, "_capivara_kinematic_results.rds")
+    )),
+    panel = native_scope$panel
   )
-  if (is.finite(disc_pa_deg)) {
-    model_env <- c(model_env, CAPIVARA_MODEL_PA_DEG = as.character(disc_pa_deg))
-  }
-  if (is.finite(disc_inc_deg)) {
-    model_env <- c(model_env, CAPIVARA_MODEL_INC_DEG = as.character(disc_inc_deg))
-  }
-  if (is.finite(bar_phi_deg)) {
-    model_env <- c(model_env, CAPIVARA_MODEL_BAR_PHI_DEG = as.character(bar_phi_deg))
-  }
-  old_model_env <- .capivara_set_env(model_env)
-  on.exit(.capivara_restore_env(names(model_env), old_model_env), add = TRUE)
-  model_scope <- new.env(parent = environment(run_manga_bar_model))
-  source(model_runner, local = model_scope)
+}
 
-  model_rds <- file.path(output_dir, paste0(model_prefix, ".rds"))
-  result <- list(
+#' Segment an IFU cube using emission-line kinematics
+#'
+#' Builds native emission-line maps, then clusters either the kinematic feature
+#' cube or the path-signature feature cube. It deliberately does not run the
+#' ordinary full-spectrum Capivara segmentation: use [segment()] or
+#' [segment_large()] when spectral segmentation is the scientific objective.
+#'
+#' @param cube_path Path to a MaNGA LOGCUBE.
+#' @param redshift Optional redshift. If `NA`, uses FITS header then local
+#'   MaNGA metadata.
+#' @param emission_line Emission line alias, such as `"halpha"` or
+#'   `"oiii5007"`.
+#' @param segmentation_mode `"kinematic"` clusters flux, velocity, dispersion,
+#'   and profile-shape maps. `"path_signature"` additionally computes the
+#'   path-signature feature segmentation.
+#' @param output_dir Directory for saved products. Defaults beside the cube.
+#' @param object_id Optional output identifier.
+#' @param knn_k kNN graph size for sparse Ward clustering.
+#' @param n_segments Number of kinematic-aware segments.
+#' @param n_path_segments Number of path-signature segments.
+#' @param starlet_scales Starlet support scales.
+#' @param include_coarse_starlet Include the coarse starlet plane in support.
+#' @param show_plots Print the compact kinematic panel.
+#' @return A `capivara_kinematic_segmentation` object containing native maps,
+#'   support, kinematic segmentation, optional path segmentation, and paths.
+#' @export
+segment_kinematics <- function(cube_path,
+                               redshift = NA_real_,
+                               emission_line = "halpha",
+                               segmentation_mode = c("kinematic", "path_signature"),
+                               output_dir = NULL,
+                               object_id = NULL,
+                               knn_k = 50,
+                               n_segments = 25,
+                               n_path_segments = 45,
+                               starlet_scales = "2:5",
+                               include_coarse_starlet = FALSE,
+                               show_plots = interactive()) {
+  segmentation_mode <- match.arg(segmentation_mode)
+  cube_path <- normalizePath(cube_path, mustWork = TRUE)
+  z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
+  object_id <- if (!is.null(object_id) && nzchar(object_id)) object_id else z_info$plateifu
+  if (is.na(object_id) || !nzchar(object_id)) {
+    object_id <- tools::file_path_sans_ext(basename(cube_path))
+  }
+  if (is.null(output_dir) || !nzchar(output_dir)) {
+    output_dir <- file.path(dirname(cube_path), "capivara_outputs", object_id)
+  }
+  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+  native_run <- .capivara_run_native_kinematics(
+    cube_path = cube_path,
+    redshift = z_info$redshift,
+    emission_line = emission_line,
+    output_dir = output_dir,
+    object_id = object_id,
+    repo_root = NULL,
+    knn_k = knn_k,
+    n_segments = n_segments,
+    n_path_segments = n_path_segments,
+    run_spectral_segmentation = FALSE,
+    run_path_signatures = identical(segmentation_mode, "path_signature"),
+    starlet_scales = starlet_scales,
+    include_coarse_starlet = include_coarse_starlet
+  )
+
+  out <- list(
     object_id = object_id,
     redshift = z_info$redshift,
     redshift_source = z_info$source,
     output_dir = output_dir,
-    native_rds = native_rds,
-    model_rds = model_rds,
-    model_png = file.path(output_dir, paste0(model_prefix, "_model.png")),
-    components_png = file.path(output_dir, paste0(model_prefix, "_components.png")),
-    native = readRDS(native_rds),
-    model = readRDS(model_rds),
-    panel = native_scope$panel,
-    model_plot = model_scope$model_plot,
-    component_plot = model_scope$component_plot
+    native_rds = native_run$native_rds,
+    native = native_run$native,
+    panel = native_run$panel,
+    segmentation_mode = segmentation_mode,
+    segmentation = if (identical(segmentation_mode, "path_signature")) {
+      native_run$native$path_signature
+    } else {
+      native_run$native$kinematic_aware
+    }
   )
-  class(result) <- c("capivara_manga_bar_result", class(result))
+  class(out) <- c("capivara_kinematic_segmentation", class(out))
+  if (isTRUE(show_plots)) {
+    print(out$panel)
+  }
+  out
+}
+
+.capivara_model_control <- function(control = list()) {
+  defaults <- list(
+    starlet_scales = "2:5",
+    include_coarse_starlet = FALSE,
+    display_orientation = "rot90_cw",
+    disc_pa_deg = NA_real_,
+    disc_inc_deg = NA_real_,
+    bar_phi_deg = NA_real_,
+    use_bar_support_mask = FALSE,
+    bar_support_width_deg = 25,
+    robust_fit = TRUE,
+    smooth_lambda = 10,
+    second_order_lambda = 25,
+    max_v2_fraction = 0.8,
+    max_mean_v2 = 350
+  )
+  if (is.null(control)) {
+    return(defaults)
+  }
+  if (!is.list(control) || is.null(names(control))) {
+    stop("`model_control` must be a named list.", call. = FALSE)
+  }
+  unknown <- setdiff(names(control), names(defaults))
+  if (length(unknown)) {
+    stop("Unknown `model_control` entries: ", paste(unknown, collapse = ", "), call. = FALSE)
+  }
+  utils::modifyList(defaults, control)
+}
+
+.capivara_run_kinematic_model <- function(cube_path,
+                                           redshift,
+                                           emission_line,
+                                           segmentation_mode,
+                                           model,
+                                           output_dir,
+                                           object_id,
+                                           knn_k,
+                                           n_segments,
+                                           n_path_segments,
+                                           model_control,
+                                           show_plots,
+                                           repo_root = NULL) {
+  segmentation_mode <- match.arg(segmentation_mode, c("kinematic", "path_signature"))
+  model <- .capivara_match_kinematic_model(model)
+  control <- .capivara_model_control(model_control)
+  if (.capivara_is_bar_model(model) && !is.finite(control$bar_phi_deg)) {
+    stop(
+      "`model = \"bisymmetric_bar\"` requires `model_control = list(bar_phi_deg = ...)`. ",
+      "The bar angle is a physical prior and is never assumed from the disc PA.",
+      call. = FALSE
+    )
+  }
+
+  cube_path <- normalizePath(cube_path, mustWork = TRUE)
+  z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
+  object_id <- if (!is.null(object_id) && nzchar(object_id)) object_id else z_info$plateifu
+  if (is.na(object_id) || !nzchar(object_id)) {
+    object_id <- tools::file_path_sans_ext(basename(cube_path))
+  }
+  if (is.null(output_dir) || !nzchar(output_dir)) {
+    output_dir <- file.path(dirname(cube_path), "capivara_outputs", object_id)
+  }
+  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+  native_run <- .capivara_run_native_kinematics(
+    cube_path = cube_path,
+    redshift = z_info$redshift,
+    emission_line = emission_line,
+    output_dir = output_dir,
+    object_id = object_id,
+    repo_root = repo_root,
+    knn_k = knn_k,
+    n_segments = n_segments,
+    n_path_segments = n_path_segments,
+    run_spectral_segmentation = FALSE,
+    run_path_signatures = identical(segmentation_mode, "path_signature"),
+    starlet_scales = control$starlet_scales,
+    include_coarse_starlet = control$include_coarse_starlet
+  )
+  model_prefix <- paste(native_run$prefix, emission_line, model, sep = "_")
+  model_runner <- .capivara_workflow_file("native_bisymmetric_workflow.R", repo_root)
+  model_env <- c(
+    CAPIVARA_MODEL_USE_ENV_INPUTS = "true",
+    CAPIVARA_MODEL_KIND = model,
+    CAPIVARA_MODEL_NATIVE_RDS = native_run$native_rds,
+    CAPIVARA_MODEL_OUTPUT_DIR = output_dir,
+    CAPIVARA_MODEL_OUTPUT_PREFIX = model_prefix,
+    CAPIVARA_MODEL_PLATEIFU = object_id,
+    CAPIVARA_MODEL_DISPLAY_ORIENTATION = control$display_orientation,
+    CAPIVARA_MODEL_ROBUST = if (isTRUE(control$robust_fit)) "true" else "false",
+    CAPIVARA_MODEL_SMOOTH_LAMBDA = as.character(control$smooth_lambda),
+    CAPIVARA_MODEL_SECOND_ORDER_LAMBDA = as.character(control$second_order_lambda),
+    CAPIVARA_MODEL_MAX_V2_FRACTION = as.character(control$max_v2_fraction),
+    CAPIVARA_MODEL_MAX_MEAN_V2 = as.character(control$max_mean_v2),
+    CAPIVARA_MODEL_USE_BAR_MASK = if (isTRUE(control$use_bar_support_mask)) "true" else "false",
+    CAPIVARA_MODEL_BAR_MASK_WIDTH_DEG = as.character(control$bar_support_width_deg)
+  )
+  if (is.finite(control$disc_pa_deg)) {
+    model_env <- c(model_env, CAPIVARA_MODEL_PA_DEG = as.character(control$disc_pa_deg))
+  }
+  if (is.finite(control$disc_inc_deg)) {
+    model_env <- c(model_env, CAPIVARA_MODEL_INC_DEG = as.character(control$disc_inc_deg))
+  }
+  if (.capivara_is_bar_model(model)) {
+    model_env <- c(model_env, CAPIVARA_MODEL_BAR_PHI_DEG = as.character(control$bar_phi_deg))
+  }
+  old_model_env <- .capivara_set_env(model_env)
+  on.exit(.capivara_restore_env(names(model_env), old_model_env), add = TRUE)
+  model_scope <- new.env(parent = environment(.capivara_run_kinematic_model))
+  source(model_runner, local = model_scope)
+
+  result <- list(
+    object_id = object_id,
+    redshift = z_info$redshift,
+    redshift_source = z_info$source,
+    model = model,
+    model_control = control,
+    output_dir = output_dir,
+    native_rds = native_run$native_rds,
+    model_rds = file.path(output_dir, paste0(model_prefix, ".rds")),
+    model_png = file.path(output_dir, paste0(model_prefix, "_model.png")),
+    components_png = if (.capivara_is_bar_model(model)) {
+      file.path(output_dir, paste0(model_prefix, "_components.png"))
+    } else {
+      NA_character_
+    },
+    native = native_run$native,
+    model_result = readRDS(file.path(output_dir, paste0(model_prefix, ".rds"))),
+    panel = native_run$panel,
+    model_plot = model_scope$model_plot,
+    component_plot = if (exists("component_plot", model_scope, inherits = FALSE)) {
+      model_scope$component_plot
+    } else {
+      NULL
+    }
+  )
+  class(result) <- c("capivara_kinematic_result", "capivara_manga_bar_result", class(result))
   if (isTRUE(show_plots)) {
     print(result$panel)
     print(result$model_plot)
-    print(result$component_plot)
+    if (!is.null(result$component_plot)) {
+      print(result$component_plot)
+    }
   }
   result
 }
 
-#' Run the Capivara kinematic analysis module
+#' Run a Capivara kinematic analysis
 #'
-#' Friendly alias for the native MaNGA workflow. `segmentation_mode = "all"`
-#' creates traditional spectral, kinematic-aware, and path-signature
-#' segmentations before fitting the disc and bisymmetric models.
+#' This is the compact entry point for native emission-line kinematics. It
+#' makes a kinematic-aware segmentation first, then fits the requested model
+#' module. The default model is an axisymmetric disc because it is applicable
+#' to both barred and unbarred galaxies. Full-spectrum segmentation is a
+#' separate analysis and is run with [segment()] or [segment_large()].
 #'
-#' @inheritParams run_manga_bar_model
-#' @param ... Additional geometry or robust-fitting controls accepted by
-#'   [run_manga_bar_model()].
-#' @return A `capivara_manga_bar_result` containing the maps, segmentations,
-#'   fitted models, plots, and paths to saved products.
+#' @param cube_path Path to an IFU FITS cube.
+#' @param redshift Redshift. Leave as `NA` for a MaNGA cube with local metadata.
+#' @param emission_line Emission-line alias, such as `"halpha"` or `"oiii5007"`.
+#' @param segmentation_mode `"kinematic"` for line-map features or
+#'   `"path_signature"` to also compute path-signature regions.
+#' @param model Kinematic model module. Use `"axisymmetric"` by default;
+#'   `"bisymmetric_bar"` is an explicit bar hypothesis.
+#' @param output_dir Directory for saved products. Defaults beside the cube.
+#' @param object_id Optional output identifier.
+#' @param knn_k kNN graph size for kinematic clustering.
+#' @param n_segments Number of kinematic-aware segments.
+#' @param n_path_segments Number of path-signature segments.
+#' @param model_control Named list of model controls. For a bar model it must
+#'   contain `bar_phi_deg`. See [kinematic_models()] for available modules.
+#' @param show_plots Print figures as they are generated.
+#' @return A `capivara_kinematic_result` with maps, segmentation, model, plots,
+#'   and saved-product paths.
 #' @export
 run_kinematic_analysis <- function(cube_path,
                                    redshift = NA_real_,
                                    emission_line = "halpha",
-                                   segmentation_mode = "all",
+                                   segmentation_mode = c("kinematic", "path_signature"),
+                                   model = c("axisymmetric", "bisymmetric_bar"),
                                    output_dir = NULL,
                                    object_id = NULL,
-                                   knn_k = 100,
+                                   knn_k = 50,
                                    n_segments = 25,
                                    n_path_segments = 45,
-                                   show_plots = interactive(),
-                                   ...) {
-  run_manga_bar_model(
+                                   model_control = list(),
+                                   show_plots = interactive()) {
+  segmentation_mode <- match.arg(segmentation_mode)
+  model <- .capivara_match_kinematic_model(model)
+  .capivara_run_kinematic_model(
     cube_path = cube_path,
     redshift = redshift,
     emission_line = emission_line,
     segmentation_mode = segmentation_mode,
+    model = model,
     output_dir = output_dir,
     object_id = object_id,
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = n_path_segments,
-    show_plots = show_plots,
-    ...
+    model_control = model_control,
+    show_plots = show_plots
+  )
+}
+
+#' Run the explicit bisymmetric-bar module for a MaNGA cube
+#'
+#' This convenience wrapper is intentionally bar-specific. It requires a bar
+#' angle measured from imaging or supplied by the user; it never substitutes
+#' the disc position angle for a bar angle. For an ordinary rotation model, use
+#' [run_kinematic_analysis()] with its axisymmetric default.
+#'
+#' @inheritParams run_kinematic_analysis
+#' @param bar_phi_deg In-plane bar angle in degrees relative to the disc major
+#'   axis.
+#' @return A `capivara_kinematic_result` with the bisymmetric model and its
+#'   component decomposition.
+#' @export
+run_manga_bar_model <- function(cube_path,
+                                redshift = NA_real_,
+                                emission_line = "halpha",
+                                segmentation_mode = c("kinematic", "path_signature"),
+                                bar_phi_deg,
+                                output_dir = NULL,
+                                object_id = NULL,
+                                knn_k = 50,
+                                n_segments = 25,
+                                n_path_segments = 45,
+                                model_control = list(),
+                                show_plots = interactive()) {
+  if (missing(bar_phi_deg) || !is.finite(bar_phi_deg)) {
+    stop("Supply `bar_phi_deg` to run the bisymmetric bar module.", call. = FALSE)
+  }
+  if (is.null(model_control)) {
+    model_control <- list()
+  }
+  if (!is.list(model_control)) {
+    stop("`model_control` must be a named list.", call. = FALSE)
+  }
+  model_control$bar_phi_deg <- bar_phi_deg
+  run_kinematic_analysis(
+    cube_path = cube_path,
+    redshift = redshift,
+    emission_line = emission_line,
+    segmentation_mode = segmentation_mode,
+    model = "bisymmetric_bar",
+    output_dir = output_dir,
+    object_id = object_id,
+    knn_k = knn_k,
+    n_segments = n_segments,
+    n_path_segments = n_path_segments,
+    model_control = model_control,
+    show_plots = show_plots
   )
 }
 
 #' @export
-print.capivara_manga_bar_result <- function(x, ...) {
-  cat("Capivara MaNGA bar result\n")
+print.capivara_kinematic_result <- function(x, ...) {
+  cat("Capivara kinematic result\n")
   cat("  object: ", x$object_id, "\n", sep = "")
+  cat("  model: ", x$model, "\n", sep = "")
   cat("  redshift: ", x$redshift, " (", x$redshift_source, ")\n", sep = "")
   cat("  output_dir: ", x$output_dir, "\n", sep = "")
   cat("  model_png: ", x$model_png, "\n", sep = "")
-  cat("  components_png: ", x$components_png, "\n", sep = "")
+  if (!is.na(x$components_png)) {
+    cat("  components_png: ", x$components_png, "\n", sep = "")
+  }
   invisible(x)
 }
 
 #' @export
-plot.capivara_manga_bar_result <- function(x, which = c("all", "summary", "model", "components"), ...) {
+plot.capivara_kinematic_result <- function(x,
+                                           which = c("all", "segmentation", "model", "components"),
+                                           ...) {
   which <- match.arg(which)
-  if (which %in% c("all", "summary")) {
+  if (which %in% c("all", "segmentation")) {
     print(x$panel)
   }
   if (which %in% c("all", "model")) {
     print(x$model_plot)
   }
-  if (which %in% c("all", "components")) {
+  if (identical(which, "components")) {
+    if (is.null(x$component_plot)) {
+      stop("Component decomposition is available only for `model = \"bisymmetric_bar\"`.", call. = FALSE)
+    }
+    print(x$component_plot)
+  } else if (identical(which, "all") && !is.null(x$component_plot)) {
     print(x$component_plot)
   }
   invisible(x)

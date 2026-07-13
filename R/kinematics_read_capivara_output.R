@@ -5,7 +5,7 @@
 #' @param segment_table_file CSV table mapping segment labels to classes and
 #'   fitting flags.
 #' @return A list with `segmentation_map` and `segment_table`.
-#' @export
+#' @noRd
 read_capivara_output <- function(segmentation_file, segment_table_file) {
   .capivara_require(c("FITSio", "readr"))
 
