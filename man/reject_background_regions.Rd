@@ -29,23 +29,24 @@ function tries to use \code{segmentation$support_info$evidence_count}.}
 \item{min_median_evidence}{Minimum median evidence required for a region. If
 \code{NULL}, uses \code{low_evidence_quantile} of region median evidence.}
 
-\item{min_median_persistence}{Minimum median persistence required for a region.}
+\item{min_median_persistence}{Minimum median persistence required for a
+region.}
 
-\item{low_evidence_quantile}{Quantile used to define low-evidence regions when
-\code{min_median_evidence = NULL}.}
+\item{low_evidence_quantile}{Quantile used to define low-evidence regions
+when \code{min_median_evidence = NULL}.}
 
-\item{reject_edge_low_evidence}{Logical; reject edge-connected regions with low
+\item{reject_edge_low_evidence}{Logical; reject edge-connected regions with
+low median evidence.}
+
+\item{reject_large_low_evidence}{Logical; reject large regions with low
 median evidence.}
-
-\item{reject_large_low_evidence}{Logical; reject large regions with low median
-evidence.}
 
 \item{large_area_quantile}{Quantile of region areas used to identify large
 regions.}
 }
 \value{
-The input segmentation with an updated \code{cluster_map} and appended
-diagnostics.
+The input segmentation with an updated \code{cluster_map} and
+  appended diagnostics.
 }
 \description{
 Reject background-like regions after segmentation

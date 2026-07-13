@@ -29,17 +29,18 @@ Hide from the public API:
 - `detect_ring()`
 
 Those routines are exploratory semantic-structure prototypes. Production bar
-modelling now belongs to `capivaraKinematics`, where it can use velocity maps,
-disc geometry, residuals, and the bisymmetric model consistently.
+modelling belongs to the Capivara kinematics module, where it uses velocity
+maps, disc geometry, residuals, and the bisymmetric model consistently.
 
-## `capivaraKinematics`
+## Kinematics Module
 
 The companion package should expose complete workflows first, then expert
 building blocks.
 
-Primary public workflow:
+Primary public workflows:
 
-- `run_manga_bar_model()`
+- `run_kinematic_analysis()`
+- `run_manga_bar_model()` for the explicitly MaNGA-named workflow
 
 Useful teaching/batch helpers:
 
@@ -67,10 +68,11 @@ example:
 
 ## Documentation Policy
 
-Use roxygen comments for function-level documentation and pkgdown for rendered
-package websites. Put tutorials in vignettes/articles once the code stabilizes,
-but keep source-able R scripts under `scripts/` or `examples/` for hands-on
-teaching.
+Use roxygen comments for function-level documentation and pkgdown for the
+single rendered package website. Put tutorials in vignettes/articles once the
+code stabilizes, but keep supported source-able R scripts under
+`inst/tutorials/` for hands-on teaching. Paper-specific and exploratory runners
+live under `research/`, outside the package API.
 
 Do not expose experimental functions just because they are convenient during
 development. Prefer one polished public workflow plus a few honest expert

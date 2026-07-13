@@ -5,7 +5,7 @@
 ^\.quarto$
 ^_site$
 ^outputs$
-^scripts$
+^research$
 ^extensions$
 ^LICENSE\.md$
 ^.*\.DS_Store$

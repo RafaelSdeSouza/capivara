@@ -1,11 +1,13 @@
 # Capivara Package Organization
 
-Capivara should be documented as a small family of R packages rather than one
-large mixed namespace.
+Capivara 2.0 is one user-facing R package with focused modules. This preserves
+one installation path and one documentation site while keeping the public API
+organised by scientific task.
 
 ## Core `capivara`
 
-Purpose: segmentation and flux-preserving spectral summaries for IFU cubes.
+Purpose: segmentation, regional spectral summaries, and native kinematic
+analysis for IFU cubes.
 
 Public API:
 
@@ -16,27 +18,18 @@ Public API:
 - `reconstruct_cluster_cube()` and `reconstruct_flux_preserving_cube()` for
   bin-level products.
 - Lightweight plotting helpers.
+- `run_kinematic_analysis()` for the full native velocity-map, segmentation,
+  disc, and bisymmetric workflow.
+- `fit_disc_model()` and `fit_bisymmetric_model()` for expert modelling.
 
 Experimental semantic morphology should not be the headline API. Core can keep
 neutral structure-score tools, but production bar modelling belongs in the
-kinematics/bar companion package.
+kinematics module, where it uses velocity maps, disc geometry, residuals, and
+the bisymmetric model consistently.
 
-## `capivaraKinematics`
-
-Purpose: velocity-map products, disc models, and bisymmetric/bar modelling using
-Capivara segmentation products.
-
-Primary entry point:
-
-- `run_manga_bar_model()`
-
-Advanced entry points:
-
-- `estimate_disc_geometry()`
-- `fit_axisymmetric_piecewise_model()`
-- `fit_bisymmetric_model()`
-- `plot_capivara_kinematics()`
-- `plot_capivara_component_decomposition()`
+`spectropath` is a required dependency of the kinematics module. It remains a
+small independent implementation of the path-signature mathematics, but users
+do not need to install or configure it separately.
 
 ## Documentation Recommendation
 

@@ -107,9 +107,6 @@ A list containing:
 \item{starlet_info}{When \code{use_starlet_mask = TRUE}, a list containing
 the spatial mask, white-light image, starlet decomposition,
 reconstruction, and masked cube used before clustering.}
-\item{support_info}{When \code{use_starlet_mask = TRUE}, a general support
-metadata list. For adaptive support this contains the evidence and persistence
-maps used to build the mask.}
 
 This process is often used in IFU data analysis, where clustering is applied to grouped
 spectral profiles of spatial pixels to identify regions with similar characteristics.

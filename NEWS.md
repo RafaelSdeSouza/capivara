@@ -6,7 +6,7 @@ Released: 2026-05-05
 
 - `segment_large()` as the scalable sparse-Ward backend for large cubes where exact Ward is RAM-limited.
 - `estimate_segment_memory()` to estimate the exact Ward all-pairs distance-vector RAM requirement before allocating it.
-- `scripts/benchmark_segment_large.R` for RAM-aware sparse-Ward benchmarking. It skips `segment()` automatically when the exact distance vector would exceed the configured threshold.
+- `research/benchmarks_segment_large.R` for RAM-aware sparse-Ward benchmarking. It skips `segment()` automatically when the exact distance vector would exceed the configured threshold.
 
 ## Changed
 
@@ -24,7 +24,7 @@ Released: 2026-03-18
 - `summarize_cluster_spectra()` for median, summed, and inverse-variance-weighted cluster spectra.
 - `choose_ncomp_by_snr()` for variance-aware component selection from an SNR threshold.
 - `reconstruct_cluster_cube()` and `reconstruct_flux_preserving_cube()` for representative and flux-preserving model cubes.
-- `scripts/run_manga_starlet_comparison.R` for a full-frame MaNGA comparison workflow.
+- `research/manga/run_manga_starlet_comparison.R` for a full-frame MaNGA comparison workflow.
 
 ## Changed
 

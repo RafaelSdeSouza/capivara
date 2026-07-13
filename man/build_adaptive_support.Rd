@@ -25,8 +25,8 @@ for all slices, a numeric vector of indices, or a character vector matching
 cube dimnames along the third dimension.}
 
 \item{transform}{Per-slice image transform before robust sky normalization.
-Options are \code{"none"}, \code{"asinh"}, \code{"signed_log1p"}, \code{"log1p"},
-\code{"copula_uniform"}, and \code{"copula_gaussian"}.}
+Options are \code{"none"}, \code{"asinh"}, \code{"signed_log1p"},
+\code{"log1p"}, \code{"copula_uniform"}, and \code{"copula_gaussian"}.}
 
 \item{sky_method}{Pixels used for robust sky/noise estimation. \code{"border"}
 uses image borders; \code{"all"} uses all finite pixels.}
@@ -39,16 +39,16 @@ uses image borders; \code{"all"} uses all finite pixels.}
 \item{min_band_persistence}{Minimum number of selected slices above
 \code{z_threshold}. If \code{NULL}, defaults to two slices when possible.}
 
-\item{single_band_z}{Optional single-slice rescue threshold. Use \code{Inf} to
-disable.}
+\item{single_band_z}{Optional single-slice rescue threshold. Use \code{Inf}
+to disable.}
 
 \item{smooth_sigma}{Optional Gaussian smoothing applied to each significance
 map before thresholding. Requires \code{EBImage} or \code{imager}.}
 }
 \value{
 A list with \code{collapsed}, \code{reconstruction}, \code{mask},
-\code{evidence}, \code{evidence_count}, \code{z_maps}, \code{band_stats}, and
-metadata.
+  \code{evidence}, \code{evidence_count}, \code{z_maps}, \code{band_stats},
+  and metadata.
 }
 \description{
 Builds a foreground support from band-wise or wavelength-slice detection

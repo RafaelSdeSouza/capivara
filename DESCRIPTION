@@ -2,9 +2,11 @@ Package: capivara
 Type: Package
 Title: Decomposition and Analysis of IFU Data Cubes
 Version: 0.3.0
-Imports: FITSio, dplyr, fastcluster, ggplot2, matrixStats, reshape2, tidyr, viridis, RANN, Rcpp
+Imports: FITSio, dplyr, fastcluster, ggplot2, gridExtra, matrixStats, patchwork, readr, reshape2, RANN, Rcpp, scales, spectropath, tidyr, viridis, yaml
 LinkingTo: Rcpp
-Suggests: torch, EBImage, imager, spectropath
+Suggests: torch, EBImage, imager, minpack.lm
+Remotes:
+    RafaelSdeSouza/spectropath
 Author: Rafael S. de Souza
 Maintainer: Rafael S. de Souza <rd23aag@herts.ac.uk>
 Description: The 'capivara' package provides tools for spectral segmentation

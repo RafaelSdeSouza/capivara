@@ -1,11 +1,23 @@
-# capivaraKinematics prototype
+# capivaraKinematics
 
-Experimental companion workflow for Capivara-native kinematic modelling of
-barred MaNGA galaxies.
+Companion R package for Capivara-native velocity maps and segmentation-aware
+disc/bisymmetric modelling of IFU cubes.
 
-This code intentionally lives outside the core Capivara package. The goal is to
-test a segmentation-aware method on real Capivara outputs, then split the stable
-parts into a companion/plugin package in the style of `capivaraPPXF`.
+This code intentionally lives outside the core Capivara package. It is the
+kinematics companion in the same spirit as `capivaraPPXF`.
+
+## Install
+
+Install the core package first, then this companion package:
+
+```r
+install.packages("remotes")
+remotes::install_github("RafaelSdeSouza/capivara")
+remotes::install_local("/path/to/capivara/extensions/capivaraKinematics", dependencies = TRUE)
+```
+
+`spectropath` is a required dependency, so it is installed automatically with
+`capivaraKinematics`. It provides the path-signature segmentation features.
 
 ## Native Workflow
 
@@ -35,8 +47,11 @@ velocity scale, and the bisymmetric equation against published figures.
   `extensions/capivaraKinematics/R/manga_metadata.R`
 - One-call native kinematics + bar wrapper:
   `extensions/capivaraKinematics/R/run_manga_bar_model.R`
-- RStudio visual example:
-  `extensions/capivaraKinematics/examples/visual_manga_bisymmetric.R`
+- One-cube RStudio example:
+  `extensions/capivaraKinematics/examples/run_one_cube.R`
+- Teaching tutorial (segmentation, regional spectra, quick spectral fit,
+  kinematics, and the bisymmetric model):
+  `extensions/capivaraKinematics/examples/tutorials/capivara_full_workflow.R`
 
 The bundled redshift table is a compact DRPall v3_1_1-derived table with
 `plateifu`, `mangaid`, redshift, sky position, and DRP quality metadata for
@@ -44,23 +59,19 @@ the MaNGA science rows. This is DRP metadata, not DAP modelling output.
 
 ## Simple R Call
 
-For development from the Capivara repo:
+Once installed, the whole workflow is one function call:
 
 ```r
-repo_root <- "/Users/rd23aag/Documents/GitHub/capivara"
-
-source(file.path(repo_root, "extensions", "capivaraKinematics", "R", "capivara_kinematics_utils.R"))
-source(file.path(repo_root, "extensions", "capivaraKinematics", "R", "manga_metadata.R"))
-source(file.path(repo_root, "extensions", "capivaraKinematics", "R", "run_manga_bar_model.R"))
+library(capivara)
+library(capivaraKinematics)
 
 result <- run_manga_bar_model(
   cube_path = "/path/to/manga-8078-12703-LOGCUBE.fits",
   redshift = NA_real_,
-  segmentation_mode = "kinematic",
-  repo_root = repo_root,
-  disc_pa_deg = 14.7,
-  disc_inc_deg = 36.4,
-  bar_phi_deg = 40.9,
+  segmentation_mode = "all",
+  knn_k = 100,
+  n_segments = 25,
+  n_path_segments = 45,
   show_plots = TRUE
 )
 
@@ -92,45 +103,11 @@ bisymmetric model, so this should be described as a local NIRVANA-style model,
 not a full reimplementation of NIRVANA. It does not yet include NIRVANA's
 Bayesian sampler, beam smearing, or full dispersion likelihood.
 
-## 8078 Native Reproduction
+## RStudio Teaching Script
 
-The current native example can be reproduced with one clean script:
+Open `examples/tutorials/capivara_full_workflow.R`, edit the small input block
+at the top, and click **Source**. It shows every stage in RStudio and writes
+the resulting figures, tables, and RDS objects beside the input cube.
 
-```sh
-Rscript extensions/capivaraKinematics/examples/native_manga_bisymmetric_8078.R
-```
-
-The script has one edit block at the top for `cube_path`, `redshift`,
-`output_dir`, geometry, and segmentation settings. It then creates all native
-Capivara maps, segmentations, the bisymmetric model, and the figures.
-
-For a new cube, copy and edit the generic template:
-
-```sh
-Rscript extensions/capivaraKinematics/examples/native_manga_bisymmetric.R
-```
-
-This template is designed to be run by changing only the input block at the top.
-
-The lower-level runner is still available for development:
-
-```sh
-Rscript extensions/capivaraKinematics/scripts/run_8078_native_starletfull.R
-```
-
-By default this writes to `/private/tmp/capivara_native_8078_starletfull`.
-The recipe uses:
-
-- `manga-8078-12703-LOGCUBE.fits`
-- `z = 0.0281`
-- Halpha
-- `knn_k = 100`
-- `Ncomp = 25`
-- path-signature groups `45`
-- starlet scales `1:5`
-- coarse starlet plane included
-- Halpha peak search `350 km/s`
-- centroid window `220 km/s`
-- nearest-filled line-map holes are tracked with `halpha_imputed`
-
-No VorBin, Voronoi binning, or S/N-driven spatial binning is used.
+The 8078 paper-calibration runners are retained under the repository's
+`research/manga/` directory; they are not part of the supported user API.

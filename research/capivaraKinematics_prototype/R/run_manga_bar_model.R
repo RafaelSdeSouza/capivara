@@ -1,19 +1,24 @@
-.capivara_find_repo_root <- function(repo_root = NULL) {
-  candidates <- character()
+.capivara_workflow_file <- function(name, repo_root = NULL) {
+  installed <- system.file("extdata", name, package = "capivaraKinematics")
+  if (nzchar(installed) && file.exists(installed)) {
+    return(installed)
+  }
+
+  # This fallback is only for running directly from a source checkout.
   if (!is.null(repo_root) && length(repo_root) && !is.na(repo_root[[1]]) && nzchar(repo_root[[1]])) {
-    candidates <- c(candidates, repo_root[[1]])
-  }
-  env_root <- Sys.getenv("CAPIVARA_REPO_ROOT", unset = "")
-  if (nzchar(env_root)) {
-    candidates <- c(candidates, env_root)
-  }
-  candidates <- c(candidates, getwd(), normalizePath(file.path(getwd(), ".."), mustWork = FALSE))
-  for (path in candidates) {
-    if (dir.exists(path) && file.exists(file.path(path, "DESCRIPTION")) && dir.exists(file.path(path, "R"))) {
-      return(normalizePath(path, mustWork = TRUE))
+    candidate <- file.path(
+      normalizePath(repo_root[[1]], mustWork = TRUE),
+      "extensions", "capivaraKinematics", "inst", "extdata", name
+    )
+    if (file.exists(candidate)) {
+      return(candidate)
     }
   }
-  stop("Could not find the Capivara repository root. Pass repo_root explicitly.", call. = FALSE)
+
+  stop(
+    "Could not locate the bundled Capivara kinematics workflow. Reinstall capivaraKinematics.",
+    call. = FALSE
+  )
 }
 
 .capivara_restore_env <- function(keys, old_values) {
@@ -47,7 +52,8 @@
 #'   `"spectral"`, or `"all"`.
 #' @param output_dir Directory for products.
 #' @param object_id Optional object identifier. Defaults to inferred plate-IFU.
-#' @param repo_root Capivara repository root for this prototype.
+#' @param repo_root Optional Capivara repository root used only when running
+#'   directly from a development checkout. Installed packages do not need it.
 #' @param knn_k Nearest-neighbour graph size used by the native Capivara
 #'   segmentation runners.
 #' @param n_segments Number of standard kinematic/spectral segments.
@@ -96,7 +102,6 @@ run_manga_bar_model <- function(cube_path,
                                 max_mean_v2 = 350,
                                 show_plots = interactive()) {
   segmentation_mode <- match.arg(segmentation_mode)
-  repo_root <- .capivara_find_repo_root(repo_root)
   cube_path <- normalizePath(cube_path, mustWork = TRUE)
 
   z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
@@ -112,17 +117,10 @@ run_manga_bar_model <- function(cube_path,
   run_spectral_segmentation <- segmentation_mode %in% c("spectral", "all")
   run_path_signatures <- segmentation_mode %in% c("path_signature", "all")
   prefix <- gsub("[^A-Za-z0-9]+", "_", tolower(object_id))
-  native_runner <- file.path(repo_root, "scripts", "run_manga_10218_bar_merger_maps.R")
-  model_runner <- file.path(repo_root, "extensions", "capivaraKinematics", "scripts", "run_8078_native_bisymmetric_model.R")
-  if (!file.exists(native_runner)) {
-    stop("Could not find native runner: ", native_runner, call. = FALSE)
-  }
-  if (!file.exists(model_runner)) {
-    stop("Could not find model runner: ", model_runner, call. = FALSE)
-  }
+  native_runner <- .capivara_workflow_file("native_kinematics_workflow.R", repo_root)
+  model_runner <- .capivara_workflow_file("native_bisymmetric_workflow.R", repo_root)
 
   native_env <- c(
-    CAPIVARA_REPO_ROOT = repo_root,
     CAPIVARA_USE_ENV_INPUTS = "true",
     CAPIVARA_CUBE_PATH = cube_path,
     CAPIVARA_OUTPUT_DIR = output_dir,
@@ -143,13 +141,12 @@ run_manga_bar_model <- function(cube_path,
   )
   old_native_env <- .capivara_set_env(native_env)
   on.exit(.capivara_restore_env(names(native_env), old_native_env), add = TRUE)
-  native_scope <- new.env(parent = globalenv())
+  native_scope <- new.env(parent = environment(run_manga_bar_model))
   source(native_runner, local = native_scope)
 
   native_rds <- file.path(output_dir, paste0(prefix, "_", emission_line, "_capivara_kinematic_results.rds"))
   model_prefix <- paste0(prefix, "_", emission_line, "_bisymmetric")
   model_env <- c(
-    CAPIVARA_REPO_ROOT = repo_root,
     CAPIVARA_MODEL_USE_ENV_INPUTS = "true",
     CAPIVARA_MODEL_NATIVE_RDS = native_rds,
     CAPIVARA_MODEL_OUTPUT_DIR = output_dir,
@@ -175,7 +172,7 @@ run_manga_bar_model <- function(cube_path,
   }
   old_model_env <- .capivara_set_env(model_env)
   on.exit(.capivara_restore_env(names(model_env), old_model_env), add = TRUE)
-  model_scope <- new.env(parent = globalenv())
+  model_scope <- new.env(parent = environment(run_manga_bar_model))
   source(model_runner, local = model_scope)
 
   model_rds <- file.path(output_dir, paste0(model_prefix, ".rds"))

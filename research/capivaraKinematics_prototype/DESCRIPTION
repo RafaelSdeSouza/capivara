@@ -9,14 +9,19 @@ Description: Experimental companion workflow for segmentation-aware kinematic
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
+    capivara,
     FITSio,
     ggplot2,
     dplyr,
+    gridExtra,
     readr,
+    scales,
+    spectropath,
     yaml,
     patchwork
 Suggests:
     minpack.lm,
-    spectropath,
     viridis
+Remotes:
+    RafaelSdeSouza/spectropath
 RoxygenNote: 7.3.3

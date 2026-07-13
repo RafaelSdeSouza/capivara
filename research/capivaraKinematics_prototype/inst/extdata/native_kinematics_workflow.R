@@ -1,8 +1,9 @@
 args <- commandArgs(trailingOnly = TRUE)
 use_env_inputs <- tolower(Sys.getenv("CAPIVARA_USE_ENV_INPUTS", unset = "false")) %in% c("1", "true", "yes", "y", "on")
 
-# Usage:
-#   Rscript scripts/run_manga_10218_bar_merger_maps.R [cube_path] [out_dir]
+# Internal workflow called by run_manga_bar_model().
+# It is bundled with capivaraKinematics so installed users do not need a
+# Capivara source checkout.
 #
 # Common knobs:
 #   CAPIVARA_REDSHIFT=0.0461
@@ -14,15 +15,6 @@ use_env_inputs <- tolower(Sys.getenv("CAPIVARA_USE_ENV_INPUTS", unset = "false")
 #
 # If [out_dir] is omitted, products are written beside the cube in:
 #   dirname(cube_path)/capivara_outputs
-
-script_arg <- commandArgs()[grep("^--file=", commandArgs())]
-script_path <- if (length(script_arg)) sub("^--file=", "", script_arg[[1]]) else file.path(getwd(), "scripts/run_manga_10218_bar_merger_maps.R")
-repo_root <- Sys.getenv("CAPIVARA_REPO_ROOT", unset = "")
-if (!nzchar(repo_root)) {
-  repo_root <- normalizePath(file.path(dirname(script_path), ".."), mustWork = TRUE)
-} else {
-  repo_root <- normalizePath(repo_root, mustWork = TRUE)
-}
 
 cube_path <- if (!use_env_inputs && length(args) >= 1) {
   args[[1]]
@@ -183,15 +175,10 @@ if (run_path_signatures && !requireNamespace("spectropath", quietly = TRUE)) {
   stop("Install spectropath or set CAPIVARA_RUN_PATH_SIGNATURES=false for native quick-mode segmentation.")
 }
 
-if (requireNamespace("pkgload", quietly = TRUE)) {
-  pkgload::load_all(repo_root, quiet = TRUE)
-} else {
-  library(capivara)
+if (!requireNamespace("capivara", quietly = TRUE)) {
+  stop("Install the `capivara` package before running capivaraKinematics.", call. = FALSE)
 }
-galaxy_mask_helpers <- file.path(repo_root, "extensions", "capivaraKinematics", "R", "galaxy_mask.R")
-if (file.exists(galaxy_mask_helpers)) {
-  source(galaxy_mask_helpers)
-}
+library(capivara)
 
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 

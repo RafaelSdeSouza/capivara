@@ -225,8 +225,34 @@ Capivara keeps the public segmentation API small:
 
 ## Companion packages
 
-Capivara is the segmentation layer. Companion packages can consume the
-same region maps and summed spectra:
+Capivara 2.0 includes the native kinematics module: emission-line maps,
+kinematic-aware and path-signature segmentation, disc fitting, and the local
+NIRVANA-style bisymmetric bar model. `spectropath` is installed automatically
+with Capivara and provides the path-signature features.
+
+For a full native MaNGA workflow:
+
+```r
+result <- run_kinematic_analysis(
+  cube_path = "/path/to/manga-8078-12703-LOGCUBE.fits",
+  redshift = NA_real_,
+  emission_line = "halpha",
+  segmentation_mode = "all",
+  knn_k = 100,
+  n_segments = 25,
+  n_path_segments = 45,
+  show_plots = TRUE
+)
+```
+
+For an editable RStudio version, open the installed script with:
+
+```r
+file.edit(system.file("tutorials", "run_kinematic_analysis.R", package = "capivara"))
+```
+
+`capivaraPPXF` remains a separate fitting companion because it wraps a distinct
+stellar-population and spectral-fitting workflow:
 
 - [`capivaraPPXF`](https://github.com/RafaelSdeSouza/capivaraPPXF):
   pPXF-based stellar populations, stellar/gas kinematics, emission-line
@@ -236,8 +262,8 @@ same region maps and summed spectra:
 - [`saguiSED`](https://github.com/RafaelSdeSouza/saguiSED): SED fitting
   for Sagui regional photometry.
 
-This separation keeps Capivara installable and focused while still
-allowing a complete analysis workflow.
+This keeps one coherent Capivara analysis workflow while leaving specialised
+fitting packages independent.
 
 ## Visual example
 

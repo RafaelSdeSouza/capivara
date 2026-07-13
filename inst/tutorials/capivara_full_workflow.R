@@ -6,7 +6,6 @@
 
 # ---- 0. User settings -------------------------------------------------------
 
-repo_root <- "/Users/rd23aag/Documents/GitHub/capivara"
 cube_path <- Sys.getenv(
   "CAPIVARA_TUTORIAL_CUBE",
   unset = "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/normal_bar/manga-8078-12703-LOGCUBE.fits"
@@ -29,30 +28,16 @@ output_dir <- file.path(dirname(cube_path), "capivara_tutorial_outputs", object_
 
 # ---- 1. Setup ---------------------------------------------------------------
 
-if (!dir.exists(repo_root)) {
-  stop("Edit `repo_root`; it does not exist: ", repo_root, call. = FALSE)
-}
 if (!file.exists(cube_path)) {
   stop("Edit `cube_path`; cube not found: ", cube_path, call. = FALSE)
 }
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 suppressPackageStartupMessages({
+  library(capivara)
   library(FITSio)
   library(ggplot2)
 })
-
-if (requireNamespace("pkgload", quietly = TRUE)) {
-  pkgload::load_all(repo_root, quiet = TRUE)
-} else {
-  stop("Install pkgload or install capivara before running this tutorial.", call. = FALSE)
-}
-
-source_extension <- function(path) {
-  files <- list.files(path, pattern = "\\.R$", full.names = TRUE)
-  for (ff in files) source(ff, local = .GlobalEnv)
-}
-source_extension(file.path(repo_root, "extensions", "capivaraKinematics", "R"))
 
 line_rest <- switch(
   tolower(emission_line),
@@ -194,14 +179,13 @@ if (nrow(fit_df)) {
 
 if (isTRUE(run_bar_model)) {
   message("Running Capivara kinematics + bar model...")
-  bar <- run_manga_bar_model(
+  bar <- run_kinematic_analysis(
     cube_path = cube_path,
     redshift = redshift,
     emission_line = emission_line,
     segmentation_mode = segmentation_mode_for_bar,
     output_dir = file.path(output_dir, "04_kinematics_bar"),
     object_id = object_id,
-    repo_root = repo_root,
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = max(35, n_segments),

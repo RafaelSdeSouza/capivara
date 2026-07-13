@@ -39,12 +39,24 @@ reference:
       - plot_cluster_spectra
       - capivara_plot_spectra_with_map
   - title: Experimental Structure Scores
-    desc: Neutral morphology evidence maps. Semantic bar/ring modelling lives in capivaraKinematics.
+    desc: Neutral morphology evidence maps. Bar and ring labels remain exploratory.
     contents:
       - score_structures
       - threshold_structures
       - catalogue_structures
       - segment_structures
+  - title: Kinematic Analysis
+    desc: Native emission-line maps, kinematic/path-aware segmentation, and disc/bisymmetric models.
+    contents:
+      - run_manga_bar_model
+      - fit_disc_model
+      - fit_axisymmetric_piecewise_model
+      - fit_bisymmetric_model
+      - estimate_disc_geometry
+      - estimate_bar_geometry
+      - plot_capivara_kinematics
+      - plot_capivara_component_decomposition
+      - resolve_manga_redshift
   - title: Utilities
     contents:
       - cube_to_matrix

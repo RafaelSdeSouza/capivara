@@ -1,14 +1,3 @@
-script_arg <- commandArgs()[grep("^--file=", commandArgs())]
-script_path <- if (length(script_arg)) sub("^--file=", "", script_arg[[1]]) else file.path(getwd(), "extensions/capivaraKinematics/scripts/run_8078_native_bisymmetric_model.R")
-repo <- Sys.getenv("CAPIVARA_REPO_ROOT", unset = "")
-if (!nzchar(repo)) {
-  repo <- normalizePath(file.path(dirname(script_path), "..", "..", ".."), mustWork = TRUE)
-} else {
-  repo <- normalizePath(repo, mustWork = TRUE)
-}
-ext <- file.path(repo, "extensions", "capivaraKinematics", "R")
-invisible(lapply(list.files(ext, pattern = "R$", full.names = TRUE), source))
-
 env_arg <- function(key, unset) {
   value <- Sys.getenv(key, unset = NA_character_)
   if (!is.na(value) && nzchar(value)) value else unset
