@@ -46,7 +46,7 @@ print(result)
 # paper layout.
 model_panels <- kinematic_panels(result, view = "model")
 component_panels <- kinematic_panels(result, view = "components")
-print(component_panels$tangential_bar_component)
+print(component_panels$circular_component)
 
 for (view in c("model", "components")) {
   panels <- if (identical(view, "model")) model_panels else component_panels
