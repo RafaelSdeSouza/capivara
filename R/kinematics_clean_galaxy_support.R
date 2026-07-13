@@ -13,7 +13,7 @@
 #' @param connectivity Either 4 or 8.
 #' @return Logical matrix with the same dimensions as `valid_mask`.
 #' @export
-better_galaxy_mask <- function(valid_mask,
+clean_galaxy_support <- function(valid_mask,
                                close_iterations = 1L,
                                fill_holes = TRUE,
                                preserve_input = TRUE,

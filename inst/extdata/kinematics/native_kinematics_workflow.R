@@ -614,8 +614,8 @@ star <- build_starlet_mask(
 )
 support_raw <- star$mask
 support <- support_raw
-if (exists("better_galaxy_mask", mode = "function")) {
-  support <- better_galaxy_mask(support_raw, close_iterations = 1L, fill_holes = TRUE, preserve_input = TRUE, connectivity = 8L)
+if (exists("clean_galaxy_support", mode = "function")) {
+  support <- clean_galaxy_support(support_raw, close_iterations = 1L, fill_holes = TRUE, preserve_input = TRUE, connectivity = 8L)
 }
 
 seg <- list(
