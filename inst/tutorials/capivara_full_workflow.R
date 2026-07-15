@@ -23,7 +23,7 @@ include_coarse_starlet <- FALSE
 
 run_bar_model <- FALSE
 segmentation_mode_for_bar <- "kinematic" # or "path_signature"
-bar_phi_deg <- NA_real_ # required only when `run_bar_model` is TRUE
+bar_phi_deg <- NA_real_ # automatic from white light; set a measured angle to override
 
 output_dir <- file.path(dirname(cube_path), "capivara_tutorial_outputs", object_id)
 
@@ -179,9 +179,6 @@ if (nrow(fit_df)) {
 # ---- 5. Kinematics and bar modelling ---------------------------------------
 
 if (isTRUE(run_bar_model)) {
-  if (!is.finite(bar_phi_deg)) {
-    stop("Set `bar_phi_deg` from imaging before enabling `run_bar_model`.", call. = FALSE)
-  }
   message("Running Capivara kinematics + bar model...")
   bar <- run_kinematic_analysis(
     cube_path = cube_path,

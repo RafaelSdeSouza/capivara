@@ -20,9 +20,133 @@
   pmin(pmax(x, range[1]), range[2])
 }
 
+.capivara_asinh_stretch <- function(mat, lower_quantile = 0.005,
+                                    upper_quantile = 0.999,
+                                    softness = 0.035) {
+  values <- mat[is.finite(mat)]
+  if (length(values) < 2L) {
+    return(mat)
+  }
+  limits <- stats::quantile(
+    values,
+    probs = c(lower_quantile, upper_quantile),
+    na.rm = TRUE,
+    names = FALSE
+  )
+  if (!all(is.finite(limits)) || limits[2] <= limits[1]) {
+    return(mat)
+  }
+  scale <- max((limits[2] - limits[1]) * softness, .Machine$double.eps)
+  clipped <- pmin(pmax(mat, limits[1]), limits[2])
+  stretched <- asinh(pmax(clipped - limits[1], 0) / scale)
+  stretched / asinh((limits[2] - limits[1]) / scale)
+}
+
+.capivara_native_white_light <- function(result, fallback) {
+  white_light <- tryCatch(result$native$starlet$collapsed, error = function(e) NULL)
+  if (is.matrix(white_light) && identical(dim(white_light), dim(fallback))) {
+    return(white_light)
+  }
+  fallback
+}
+
+.capivara_add_outline <- function(plot, mask, display_orientation = "transpose",
+                                  colour = "#45D6D0", linetype = "solid",
+                                  linewidth = 0.55) {
+  if (is.null(mask) || !is.matrix(mask) || !any(mask, na.rm = TRUE)) {
+    return(plot)
+  }
+  mask <- .capivara_display_matrix(mask, display_orientation)
+  outline <- matrix_to_long(ifelse(is.finite(mask) & mask, 1, 0))
+  plot + ggplot2::geom_contour(
+    data = outline,
+    ggplot2::aes(x = x, y = y, z = value),
+    breaks = 0.5,
+    colour = colour,
+    linetype = linetype,
+    linewidth = linewidth,
+    inherit.aes = FALSE
+  )
+}
+
+.capivara_display_points <- function(x, y, dims, orientation = "transpose") {
+  orientation <- tolower(as.character(orientation[[1]]))
+  nr <- dims[1]
+  nc <- dims[2]
+  out <- switch(
+    orientation,
+    identity = data.frame(x = x, y = y),
+    transpose = data.frame(x = y, y = x),
+    flip_x = data.frame(x = nc + 1 - x, y = y),
+    flip_y = data.frame(x = x, y = nr + 1 - y),
+    rot90_cw = data.frame(x = nr + 1 - y, y = x),
+    rot90_ccw = data.frame(x = y, y = nr + 1 - x),
+    rot180 = data.frame(x = nc + 1 - x, y = nr + 1 - y),
+    stop("Unsupported display orientation: ", orientation, call. = FALSE)
+  )
+  out
+}
+
+.capivara_bar_axis_line <- function(result, radius_quantile = 0.72) {
+  spaxels <- result$spaxels
+  geometry <- result$geometry
+  phi <- tryCatch(result$bar_geometry$phi_b_rad, error = function(e) NA_real_)
+  required <- c("valid", "R")
+  if (!is.finite(phi) || !all(required %in% names(spaxels))) {
+    return(data.frame(x = numeric(), y = numeric()))
+  }
+  ok <- spaxels$valid & is.finite(spaxels$R)
+  r_max <- stats::quantile(spaxels$R[ok], radius_quantile, na.rm = TRUE)
+  if (!is.finite(r_max) || r_max <= 0) {
+    return(data.frame(x = numeric(), y = numeric()))
+  }
+
+  radius <- seq(-r_max, r_max, length.out = 80L)
+  convention <- tolower(as.character(geometry$coordinate_convention[[1]]))
+  if (identical(convention, "capivara_legacy")) {
+    # Invert the legacy projected-polar transformation for theta = phi_b.
+    X <- radius * cos(phi)
+    Y <- radius * sin(phi) * cos(geometry$inc_rad)
+    x <- geometry$x0 - sin(geometry$pa_rad) * X - cos(geometry$pa_rad) * Y
+    y <- geometry$y0 + cos(geometry$pa_rad) * X - sin(geometry$pa_rad) * Y
+  } else {
+    # Invert the NIRVANA projected-polar transformation for theta = phi_b.
+    X <- radius * cos(phi)
+    Y <- -radius * sin(phi) * cos(geometry$inc_rad)
+    x <- geometry$x0 + sin(geometry$pa_rad) * X - cos(geometry$pa_rad) * Y
+    y <- geometry$y0 + cos(geometry$pa_rad) * X + sin(geometry$pa_rad) * Y
+  }
+  data.frame(x = x, y = y)
+}
+
+.capivara_add_bar_axis <- function(plot, result, display_orientation = "transpose") {
+  axis <- .capivara_bar_axis_line(result)
+  if (!nrow(axis)) {
+    return(plot)
+  }
+  axis <- .capivara_display_points(axis$x, axis$y, result$dims, display_orientation)
+  display_dims <- dim(.capivara_display_matrix(matrix(0, result$dims[1], result$dims[2]), display_orientation))
+  axis <- axis[
+    axis$x >= 1 & axis$x <= display_dims[2] & axis$y >= 1 & axis$y <= display_dims[1],
+    , drop = FALSE
+  ]
+  if (!nrow(axis)) {
+    return(plot)
+  }
+  plot + ggplot2::geom_path(
+    data = axis,
+    ggplot2::aes(x = x, y = y),
+    colour = "#E743A8",
+    linetype = "dashed",
+    linewidth = 0.6,
+    inherit.aes = FALSE
+  )
+}
+
 .capivara_map_plot <- function(mat, title, fill_label = NULL, diverging = FALSE,
                                discrete = FALSE, limits = NULL, legend_position = "bottom",
-                               display_orientation = "transpose") {
+                               display_orientation = "transpose", white_light = FALSE,
+                               outline = NULL, outline_colour = "#45D6D0") {
   path_div_palette <- c("#082A55", "#145A96", "#5EA4C8", "#F7F3E8", "#F2A15F", "#C43D2E", "#6E1419")
   path_flux_palette <- c("#101D3A", "#174A7C", "#1E7A9C", "#36A793", "#B8D66A", "#F0D343", "#F59A2F", "#C94E27", "#7F1D1D")
   path_segment_palette <- c("#082A55", "#145A96", "#1E7A9C", "#36A793", "#B8D66A", "#F0D343", "#F59A2F", "#C94E27", "#7F1D1D", "#6B3FA0", "#157A62", "#C9A227")
@@ -92,6 +216,13 @@
       oob = .capivara_squish_oob,
       na.value = "grey92"
     )
+  } else if (isTRUE(white_light)) {
+    p <- p + ggplot2::scale_fill_gradientn(
+      colours = c("#070B16", "#153755", "#2D6F86", "#61B5A7", "#D1DDD1", "#F0B4B0"),
+      limits = c(0, 1),
+      oob = .capivara_squish_oob,
+      na.value = "#070B16"
+    )
   } else {
     p <- p + ggplot2::scale_fill_gradientn(
       colours = path_flux_palette,
@@ -100,7 +231,7 @@
       na.value = "grey92"
     )
   }
-  p
+  .capivara_add_outline(p, outline, display_orientation, colour = outline_colour)
 }
 
 .capivara_result_model <- function(result) {
@@ -143,6 +274,7 @@
   if (is.null(flux)) {
     flux <- matrix(as.numeric(result$spaxels$valid), dims[1], dims[2])
   }
+  white_light <- .capivara_native_white_light(result, flux)
   valid_footprint <- to_mat(as.numeric(result$spaxels$valid))
   flux[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_real_
   observed <- to_mat(result$spaxels$velocity)
@@ -180,8 +312,9 @@
 
   panels <- list(
     footprint = .capivara_map_plot(
-      log10(pmax(flux, 0) + 1e-3), result$plateifu, NULL,
-      legend_position = "none", display_orientation = display_orientation
+      .capivara_asinh_stretch(white_light), "White light (asinh)", NULL,
+      legend_position = "none", display_orientation = display_orientation,
+      white_light = TRUE, outline = valid_footprint > 0
     ),
     velocity = .capivara_map_plot(
       observed, "Emission-line velocity", "km/s", diverging = TRUE,
@@ -241,6 +374,7 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
     flux <- matrix(as.numeric(result$spaxels$valid), dims[1], dims[2])
   }
   valid_footprint <- to_mat(as.numeric(result$spaxels$valid))
+  white_light <- .capivara_native_white_light(result, flux)
   flux[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_real_
   observed <- to_mat(result$spaxels$velocity)
   bar_model <- to_mat(result$spaxels$v_bar_model)
@@ -294,8 +428,9 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
 
   panels <- list(
     footprint = .capivara_map_plot(
-      log10(pmax(flux, 0) + 1e-3), paste(result$plateifu), NULL,
-      legend_position = "none", display_orientation = display_orientation
+      .capivara_asinh_stretch(white_light), "White light (asinh)", NULL,
+      legend_position = "none", display_orientation = display_orientation,
+      white_light = TRUE, outline = valid_footprint > 0
     ),
     velocity = .capivara_map_plot(
       observed, "Halpha Velocity", "km/s", diverging = TRUE,
@@ -400,27 +535,18 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
     surface <- matrix(NA_real_, dims[1], dims[2])
   }
   surface <- mask_to_valid(surface)
-  bar_support <- to_mat(as.numeric(tolower(result$spaxels$seg_class) == "bar" & result$spaxels$valid))
-  has_bar_support <- sum(bar_support > 0, na.rm = TRUE) > 0
-  bar_panel <- if (has_bar_support) {
-    .capivara_map_plot(bar_support, "Bar support mask", "bar", discrete = TRUE, display_orientation = display_orientation)
-  } else {
-    bar_text <- paste0(
-      "Bar angle prior\n",
-      "phi_b = ", round(result$bar_geometry$phi_b_deg, 1), " deg\n",
-      "no support mask"
-    )
-    ggplot2::ggplot() +
-      ggplot2::annotate("text", x = 0.5, y = 0.55, label = bar_text, hjust = 0.5, vjust = 0.5, size = 4, lineheight = 1.2) +
-      ggplot2::xlim(0, 1) +
-      ggplot2::ylim(0, 1) +
-      ggplot2::theme_void() +
-      ggplot2::theme(
-        panel.border = ggplot2::element_rect(colour = "grey25", fill = NA, linewidth = 0.35),
-        plot.title = ggplot2::element_text(size = 10, hjust = 0.5)
-      ) +
-      ggplot2::labs(title = "Bar prior")
+  white_light <- .capivara_native_white_light(result, surface)
+  kinematic_segments <- result$segmentation_map
+  if (is.null(kinematic_segments) || !identical(dim(kinematic_segments), dims)) {
+    kinematic_segments <- matrix(NA_integer_, dims[1], dims[2])
   }
+  kinematic_segments[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_integer_
+  bar_context <- .capivara_map_plot(
+    .capivara_asinh_stretch(white_light), "White light, support, bar prior", NULL,
+    legend_position = "none", display_orientation = display_orientation,
+    white_light = TRUE, outline = valid_footprint > 0
+  )
+  bar_context <- .capivara_add_bar_axis(bar_context, result, display_orientation)
 
   vabs <- stats::quantile(abs(c(observed, model, vt)), 0.995, na.rm = TRUE)
   vel_lim <- c(-vabs, vabs)
@@ -432,6 +558,11 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
   surface_lim <- stats::quantile(surface, c(0.02, 0.995), na.rm = TRUE)
 
   panels <- list(
+    bar_context = bar_context,
+    kinematic_segments = .capivara_map_plot(
+      kinematic_segments, "Kinematic-aware segments", "segment", discrete = TRUE,
+      legend_position = "none", display_orientation = display_orientation
+    ),
     velocity = .capivara_map_plot(
       observed, "Halpha Velocity", "km/s", diverging = TRUE,
       limits = vel_lim, display_orientation = display_orientation
@@ -445,7 +576,6 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
       limits = log10(pmax(surface_lim, 0) + 1e-4),
       display_orientation = display_orientation
     ),
-    bar_support = bar_panel,
     model = .capivara_map_plot(
       model, "Model", "km/s", diverging = TRUE,
       limits = vel_lim, display_orientation = display_orientation
@@ -481,7 +611,7 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
   )
 
   panel <- (
-    panels$velocity | panels$dispersion | panels$surface_brightness | panels$bar_support
+    panels$bar_context | panels$kinematic_segments | panels$velocity | panels$surface_brightness
   ) / (
     panels$model | panels$circular_component | panels$tangential_bar_component | panels$radial_bar_component
   ) / (

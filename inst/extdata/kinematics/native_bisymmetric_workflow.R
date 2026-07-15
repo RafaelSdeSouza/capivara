@@ -56,6 +56,24 @@ dims <- dim(kin$velocity)
 support <- native$support
 valid <- support & kin$valid & is.finite(kin$velocity)
 
+native_white_light_centre <- function(native, dims) {
+  white_light <- native$starlet$collapsed
+  if (!is.matrix(white_light) || !identical(dim(white_light), dims) || !any(is.finite(white_light))) {
+    return(list(x = NA_real_, y = NA_real_, source = "kinematic_flux_fallback"))
+  }
+  hit <- which.max(ifelse(is.finite(white_light), white_light, -Inf))
+  pixel <- arrayInd(hit, dim(white_light))
+  list(x = pixel[2], y = pixel[1], source = "native_white_light_peak")
+}
+
+white_centre <- native_white_light_centre(native, dims)
+model_x0 <- env_num("CAPIVARA_MODEL_X0", NA_real_)
+model_y0 <- env_num("CAPIVARA_MODEL_Y0", NA_real_)
+if (!is.finite(model_x0) || !is.finite(model_y0)) {
+  model_x0 <- white_centre$x
+  model_y0 <- white_centre$y
+}
+
 manga <- list(
   velocity = kin$velocity,
   velocity_error = NULL,
@@ -69,10 +87,17 @@ manga <- list(
   maps_file = native_rds,
   velocity_component = "native_halpha"
 )
+kinematic_segments <- native$kinematic_aware$cluster_map
+if (is.null(kinematic_segments) || !identical(dim(kinematic_segments), dims)) {
+  kinematic_segments <- matrix(NA_integer_, dims[1], dims[2])
+  kinematic_segments[valid] <- 1L
+}
+segment_labels <- sort(unique(as.integer(stats::na.omit(as.vector(kinematic_segments)))))
+segment_labels <- segment_labels[segment_labels > 0L]
 cap <- list(
-  segmentation_map = matrix(1L, dims[1], dims[2]),
+  segmentation_map = kinematic_segments,
   segment_table = data.frame(
-    label = 1L,
+    label = segment_labels,
     class = "disc",
     use_for_disc_fit = TRUE,
     use_for_bar_diagnostics = FALSE,
@@ -88,11 +113,11 @@ spaxels$fit_weight <- ifelse(!is.na(spaxels$imputed) & spaxels$imputed, 0.35, 1)
 geometry <- estimate_disc_geometry(
   spaxels,
   geometry = list(
-    x0 = env_num("CAPIVARA_MODEL_X0", NA_real_),
-    y0 = env_num("CAPIVARA_MODEL_Y0", NA_real_),
+    x0 = model_x0,
+    y0 = model_y0,
     vsys = env_num("CAPIVARA_MODEL_VSYS", NA_real_),
     pa_deg = env_num("CAPIVARA_MODEL_PA_DEG", NA_real_),
-    inc_deg = env_num("CAPIVARA_MODEL_INC_DEG", 60),
+    inc_deg = env_num("CAPIVARA_MODEL_INC_DEG", NA_real_),
     coordinate_convention = "nirvana"
   ),
   allow_placeholder_inclination = TRUE,
@@ -108,13 +133,12 @@ bar_mask <- rep(FALSE, nrow(spaxels))
 bar_geometry <- NULL
 if (identical(model_kind, "bisymmetric_bar")) {
   bar_phi_deg <- env_num("CAPIVARA_MODEL_BAR_PHI_DEG", NA_real_)
-  if (!is.finite(bar_phi_deg)) {
-    stop(
-      "Bisymmetric bar modelling requires CAPIVARA_MODEL_BAR_PHI_DEG.",
-      call. = FALSE
-    )
-  }
-  bar_geometry <- estimate_bar_geometry(spaxels, phi_b_deg = bar_phi_deg)
+  bar_geometry <- estimate_bar_geometry(
+    spaxels,
+    phi_b_deg = bar_phi_deg,
+    white_light = native$starlet$collapsed,
+    geometry = geometry
+  )
 }
 if (isTRUE(use_bar_mask)) {
   bar_mask <- make_bar_support_mask(
@@ -125,13 +149,7 @@ if (isTRUE(use_bar_mask)) {
     r_max_frac = env_num("CAPIVARA_MODEL_BAR_MASK_R_MAX_FRAC", 1)
   )
   spaxels$seg_class[bar_mask] <- "bar"
-  cap$segment_table <- data.frame(
-    label = c(1L, 2L),
-    class = c("disc", "bar"),
-    use_for_disc_fit = c(TRUE, TRUE),
-    use_for_bar_diagnostics = c(FALSE, TRUE),
-    stringsAsFactors = FALSE
-  )
+  spaxels$use_for_bar_diagnostics[bar_mask] <- TRUE
 }
 n_rings <- as.integer(env_num("CAPIVARA_MODEL_N_RINGS", 22))
 robust_fit <- env_bool("CAPIVARA_MODEL_ROBUST", "true")
@@ -179,12 +197,17 @@ result <- list(
     model = model_kind,
     display_orientation = env_chr("CAPIVARA_MODEL_DISPLAY_ORIENTATION", "rot90_cw"),
     velocity_source = "Capivara-native LOGCUBE Halpha",
-    support = paste0(
-      "starlet scales ",
-      Sys.getenv("CAPIVARA_STARLET_SCALES", unset = "2:5"),
-      if (tolower(Sys.getenv("CAPIVARA_STARLET_INCLUDE_COARSE", unset = "true")) %in% c("1", "true", "yes")) " + coarse" else "",
-      ", preserved input, filled holes flagged"
-    ),
+    support = if (identical(native$support_method, "line_flux")) {
+      "connected line-flux kinematic support"
+    } else {
+      paste0(
+        "connected starlet support, scales ",
+        Sys.getenv("CAPIVARA_STARLET_SCALES", unset = "2:5")
+      )
+    },
+    segmentation_role = "kinematic regions retained for visualization and diagnostics; velocity model fit is spaxel-wise",
+    centre_source = white_centre$source,
+    bar_angle_source = if (identical(model_kind, "bisymmetric_bar")) bar_geometry$bar_status else NA_character_,
     imputed_fit_weight = 0.35,
     n_rings = n_rings,
     robust_fit = robust_fit,

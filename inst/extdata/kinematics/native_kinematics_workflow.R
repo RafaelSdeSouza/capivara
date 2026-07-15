@@ -160,6 +160,12 @@ centroid_window_kms <- env_num(c("CAPIVARA_CENTROID_WINDOW_KMS", "CAPIVARA_10218
 peak_search_kms <- env_num(c("CAPIVARA_PEAK_SEARCH_KMS", "CAPIVARA_10218_PEAK_SEARCH_KMS"), "350")
 starlet_scales <- parse_int_seq(env_chr(c("CAPIVARA_STARLET_SCALES", "CAPIVARA_10218_STARLET_SCALES"), "2:5"), "2:5")
 starlet_include_coarse <- env_bool(c("CAPIVARA_STARLET_INCLUDE_COARSE", "CAPIVARA_10218_STARLET_INCLUDE_COARSE"), "false")
+kinematic_support <- tolower(env_chr(c("CAPIVARA_KINEMATIC_SUPPORT", "CAPIVARA_10218_KINEMATIC_SUPPORT"), "starlet"))
+if (!kinematic_support %in% c("starlet", "line_flux")) {
+  stop("CAPIVARA_KINEMATIC_SUPPORT must be 'starlet' or 'line_flux'.", call. = FALSE)
+}
+line_flux_sigma <- env_num(c("CAPIVARA_KINEMATIC_LINE_FLUX_SIGMA", "CAPIVARA_10218_KINEMATIC_LINE_FLUX_SIGMA"), "3")
+if (!is.finite(line_flux_sigma) || line_flux_sigma <= 0) line_flux_sigma <- 3
 object_prefix <- sanitize_slug(env_chr(c("CAPIVARA_OUTPUT_PREFIX", "CAPIVARA_10218_OUTPUT_PREFIX"), "manga10218"))
 file_prefix <- paste(object_prefix, line$slug, sep = "_")
 
@@ -373,6 +379,66 @@ compute_line_maps <- function(cube,
     h3_proxy = h3_proxy,
     h4_proxy = h4_proxy,
     valid = ok
+  )
+}
+
+clean_support <- function(mask) {
+  if (!exists("clean_galaxy_support", mode = "function", inherits = TRUE)) {
+    return(mask)
+  }
+  clean_galaxy_support(
+    mask,
+    close_iterations = 1L,
+    fill_holes = TRUE,
+    preserve_input = FALSE,
+    connectivity = 8L
+  )
+}
+
+line_flux_support <- function(flux, candidate_mask, z_threshold = 3) {
+  candidate_mask <- is.finite(candidate_mask) & candidate_mask
+  nr <- nrow(flux)
+  nc <- ncol(flux)
+  border <- matrix(FALSE, nr, nc)
+  br <- max(1L, floor(0.10 * nr))
+  bc <- max(1L, floor(0.10 * nc))
+  border[seq_len(br), ] <- TRUE
+  border[(nr - br + 1L):nr, ] <- TRUE
+  border[, seq_len(bc)] <- TRUE
+  border[, (nc - bc + 1L):nc] <- TRUE
+
+  sky <- flux[border & candidate_mask & is.finite(flux)]
+  if (length(sky) < 20L) {
+    values <- flux[candidate_mask & is.finite(flux)]
+    if (!length(values)) {
+      stop("No finite line flux is available for line-flux support.", call. = FALSE)
+    }
+    sky <- values[values <= stats::quantile(values, 0.25, na.rm = TRUE)]
+  }
+  center <- stats::median(sky, na.rm = TRUE)
+  scale <- stats::mad(sky, center = center, constant = 1.4826, na.rm = TRUE)
+  if (!is.finite(scale) || scale <= 0) {
+    q <- stats::quantile(sky, c(0.25, 0.75), na.rm = TRUE, names = FALSE)
+    scale <- diff(q) / 1.349
+  }
+  if (!is.finite(scale) || scale <= 0) scale <- stats::sd(sky, na.rm = TRUE)
+  if (!is.finite(scale) || scale <= 0) {
+    stop("Could not estimate border noise for line-flux support.", call. = FALSE)
+  }
+
+  threshold <- center + z_threshold * scale
+  raw_mask <- candidate_mask & is.finite(flux) & flux > threshold
+  mask <- clean_support(raw_mask)
+  if (sum(mask, na.rm = TRUE) < 6L) {
+    stop("Line-flux support is too small; lower `line_flux_sigma` or use starlet support.", call. = FALSE)
+  }
+  list(
+    mask = mask,
+    raw_mask = raw_mask,
+    threshold = threshold,
+    center = center,
+    scale = scale,
+    z_threshold = z_threshold
   )
 }
 
@@ -613,9 +679,31 @@ star <- build_starlet_mask(
   positive_only = TRUE
 )
 support_raw <- star$mask
-support <- support_raw
-if (exists("clean_galaxy_support", mode = "function")) {
-  support <- clean_galaxy_support(support_raw, close_iterations = 1L, fill_holes = TRUE, preserve_input = TRUE, connectivity = 8L)
+support_starlet <- clean_support(support_raw)
+support <- support_starlet
+support_info <- list(method = "starlet")
+if (identical(kinematic_support, "line_flux")) {
+  message("Building line-flux kinematic support...")
+  preliminary_kin <- compute_line_maps(
+    cube,
+    wave,
+    support_starlet,
+    redshift,
+    rest_wave = line$rest_wave,
+    line_name = line$name,
+    line_window_kms = line_window_kms,
+    peak_search_kms = peak_search_kms,
+    centroid_window_kms = centroid_window_kms,
+    cont_inner_kms = cont_inner_kms,
+    cont_outer_kms = cont_outer_kms
+  )
+  support_info <- line_flux_support(
+    preliminary_kin$flux,
+    support_starlet,
+    z_threshold = line_flux_sigma
+  )
+  support_info$method <- "line_flux"
+  support <- support_info$mask
 }
 
 seg <- list(
@@ -713,7 +801,10 @@ if (run_path_signatures) {
 message("Saving products...")
 plot_cont(star$collapsed, file.path(out_dir, paste0(object_prefix, "_white_light.png")), "white light")
 plot_cont(ifelse(support_raw, 1, NA_real_), file.path(out_dir, paste0(object_prefix, "_starlet_support_raw.png")), sprintf("raw starlet support: %d spaxels", sum(support_raw)), palette = c("#F2D06B", "#F2D06B"), limits = c(0, 1))
-plot_cont(ifelse(support, 1, NA_real_), file.path(out_dir, paste0(object_prefix, "_starlet_support.png")), sprintf("better starlet mask: %d spaxels", sum(support)), palette = c("#F2D06B", "#F2D06B"), limits = c(0, 1))
+plot_cont(ifelse(support_starlet, 1, NA_real_), file.path(out_dir, paste0(object_prefix, "_starlet_support.png")), sprintf("connected starlet support: %d spaxels", sum(support_starlet)), palette = c("#F2D06B", "#F2D06B"), limits = c(0, 1))
+if (identical(kinematic_support, "line_flux")) {
+  plot_cont(ifelse(support, 1, NA_real_), file.path(out_dir, paste0(file_prefix, "_line_flux_support.png")), sprintf("%s flux support (%.1f sigma): %d spaxels", line$name, line_flux_sigma, sum(support)), palette = c("#F2D06B", "#F2D06B"), limits = c(0, 1))
+}
 if (run_spectral_segmentation) {
   plot_seg(seg$cluster_map, file.path(out_dir, sprintf("%s_capivara_segments_n%d.png", object_prefix, ncomp)), sprintf("Capivara full-spectrum segments (N=%d)", ncomp), n = ncomp)
 }
@@ -771,7 +862,8 @@ if (run_path_signatures) {
 }
 
 tab <- expand.grid(x = seq_len(dim(cube)[1]), y = seq_len(dim(cube)[2]))
-tab$starlet_support <- as.vector(support)
+tab$starlet_support <- as.vector(support_starlet)
+tab$kinematic_support <- as.vector(support)
 tab$capivara_segment <- as.vector(seg$cluster_map)
 tab[[paste0(line$slug, "_flux")]] <- as.vector(kin$flux)
 tab[[paste0(line$slug, "_velocity_centered")]] <- as.vector(kin$velocity)
@@ -791,7 +883,8 @@ if (run_path_signatures) {
 }
 
 maps <- list(
-  starlet_support = support + 0,
+  starlet_support = support_starlet + 0,
+  kinematic_support = support + 0,
   capivara_segment = seg$cluster_map,
   setNames(list(log10(kin$flux)), paste0(line$slug, "_log_flux"))[[1]],
   setNames(list(kin$velocity), paste0(line$slug, "_velocity_centered"))[[1]],
@@ -852,6 +945,9 @@ saveRDS(
     starlet_include_coarse = starlet_include_coarse,
     starlet = star,
     support_raw = support_raw,
+    support_starlet = support_starlet,
+    support_method = kinematic_support,
+    support_info = support_info,
     support = support,
     capivara = seg,
     kinematics = kin,

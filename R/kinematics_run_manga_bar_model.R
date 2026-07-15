@@ -49,7 +49,9 @@
                                              run_spectral_segmentation,
                                              run_path_signatures,
                                              starlet_scales,
-                                             include_coarse_starlet) {
+                                             include_coarse_starlet,
+                                             support_mode,
+                                             line_flux_sigma) {
   prefix <- gsub("[^A-Za-z0-9]+", "_", tolower(object_id))
   native_runner <- .capivara_workflow_file("native_kinematics_workflow.R", repo_root)
   native_env <- c(
@@ -67,6 +69,8 @@
     CAPIVARA_PATH_NCOMP = as.character(n_path_segments),
     CAPIVARA_STARLET_SCALES = starlet_scales,
     CAPIVARA_STARLET_INCLUDE_COARSE = if (include_coarse_starlet) "true" else "false",
+    CAPIVARA_KINEMATIC_SUPPORT = support_mode,
+    CAPIVARA_KINEMATIC_LINE_FLUX_SIGMA = as.character(line_flux_sigma),
     CAPIVARA_LINE_WINDOW_KMS = "600",
     CAPIVARA_PEAK_SEARCH_KMS = "350",
     CAPIVARA_CENTROID_WINDOW_KMS = "220"
@@ -113,6 +117,11 @@
 #' @param n_path_segments Number of path-signature segments.
 #' @param starlet_scales Starlet support scales.
 #' @param include_coarse_starlet Include the coarse starlet plane in support.
+#' @param support_mode Foreground support for the kinematic maps. `"starlet"`
+#'   keeps the white-light starlet footprint; `"line_flux"` trims that
+#'   footprint with a robust emission-line-flux threshold before fitting.
+#' @param line_flux_sigma Border-noise threshold, in robust sigma units, when
+#'   `support_mode = "line_flux"`.
 #' @param show_plots Print the compact kinematic panel.
 #' @return A `capivara_kinematic_segmentation` object containing native maps,
 #'   support, kinematic segmentation, optional path segmentation, and paths.
@@ -128,8 +137,11 @@ segment_kinematics <- function(cube_path,
                                n_path_segments = 45,
                                starlet_scales = "2:5",
                                include_coarse_starlet = FALSE,
+                               support_mode = c("starlet", "line_flux"),
+                               line_flux_sigma = 3,
                                show_plots = interactive()) {
   segmentation_mode <- match.arg(segmentation_mode)
+  support_mode <- match.arg(support_mode)
   cube_path <- normalizePath(cube_path, mustWork = TRUE)
   z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
   object_id <- if (!is.null(object_id) && nzchar(object_id)) object_id else z_info$plateifu
@@ -154,7 +166,9 @@ segment_kinematics <- function(cube_path,
     run_spectral_segmentation = FALSE,
     run_path_signatures = identical(segmentation_mode, "path_signature"),
     starlet_scales = starlet_scales,
-    include_coarse_starlet = include_coarse_starlet
+    include_coarse_starlet = include_coarse_starlet,
+    support_mode = support_mode,
+    line_flux_sigma = line_flux_sigma
   )
 
   out <- list(
@@ -198,6 +212,9 @@ segment_kinematics <- function(cube_path,
   if (is.null(control)) {
     return(defaults)
   }
+  if (is.list(control) && !length(control)) {
+    return(defaults)
+  }
   if (!is.list(control) || is.null(names(control))) {
     stop("`model_control` must be a named list.", call. = FALSE)
   }
@@ -220,17 +237,13 @@ segment_kinematics <- function(cube_path,
                                            n_path_segments,
                                            model_control,
                                            show_plots,
+                                           support_mode,
+                                           line_flux_sigma,
                                            repo_root = NULL) {
   segmentation_mode <- match.arg(segmentation_mode, c("kinematic", "path_signature"))
   model <- .capivara_match_kinematic_model(model)
+  support_mode <- match.arg(support_mode, c("starlet", "line_flux"))
   control <- .capivara_model_control(model_control)
-  if (.capivara_is_bar_model(model) && !is.finite(control$bar_phi_deg)) {
-    stop(
-      "`model = \"bisymmetric_bar\"` requires `model_control = list(bar_phi_deg = ...)`. ",
-      "The bar angle is a physical prior and is never assumed from the disc PA.",
-      call. = FALSE
-    )
-  }
 
   cube_path <- normalizePath(cube_path, mustWork = TRUE)
   z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
@@ -256,7 +269,9 @@ segment_kinematics <- function(cube_path,
     run_spectral_segmentation = FALSE,
     run_path_signatures = identical(segmentation_mode, "path_signature"),
     starlet_scales = control$starlet_scales,
-    include_coarse_starlet = control$include_coarse_starlet
+    include_coarse_starlet = control$include_coarse_starlet,
+    support_mode = support_mode,
+    line_flux_sigma = line_flux_sigma
   )
   model_prefix <- paste(native_run$prefix, emission_line, model, sep = "_")
   model_runner <- .capivara_workflow_file("native_bisymmetric_workflow.R", repo_root)
@@ -282,7 +297,7 @@ segment_kinematics <- function(cube_path,
   if (is.finite(control$disc_inc_deg)) {
     model_env <- c(model_env, CAPIVARA_MODEL_INC_DEG = as.character(control$disc_inc_deg))
   }
-  if (.capivara_is_bar_model(model)) {
+  if (.capivara_is_bar_model(model) && is.finite(control$bar_phi_deg)) {
     model_env <- c(model_env, CAPIVARA_MODEL_BAR_PHI_DEG = as.character(control$bar_phi_deg))
   }
   old_model_env <- .capivara_set_env(model_env)
@@ -346,8 +361,15 @@ segment_kinematics <- function(cube_path,
 #' @param knn_k kNN graph size for kinematic clustering.
 #' @param n_segments Number of kinematic-aware segments.
 #' @param n_path_segments Number of path-signature segments.
-#' @param model_control Named list of model controls. For a bar model it must
-#'   contain `bar_phi_deg`. See [kinematic_models()] for available modules.
+#' @param support_mode Foreground support for the kinematic maps. `"starlet"`
+#'   keeps the white-light starlet footprint; `"line_flux"` trims it with a
+#'   robust emission-line-flux threshold.
+#' @param line_flux_sigma Border-noise threshold, in robust sigma units, for
+#'   `"line_flux"` support.
+#' @param model_control Named list of model controls. For a bar model,
+#'   `bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
+#'   estimates it from the inner white-light elongation. See
+#'   [kinematic_models()] for available modules.
 #' @param show_plots Print figures as they are generated.
 #' @return A `capivara_kinematic_result` with maps, segmentation, model, plots,
 #'   and saved-product paths.
@@ -362,10 +384,13 @@ run_kinematic_analysis <- function(cube_path,
                                    knn_k = 50,
                                    n_segments = 25,
                                    n_path_segments = 45,
+                                   support_mode = c("starlet", "line_flux"),
+                                   line_flux_sigma = 3,
                                    model_control = list(),
                                    show_plots = interactive()) {
   segmentation_mode <- match.arg(segmentation_mode)
   model <- .capivara_match_kinematic_model(model)
+  support_mode <- match.arg(support_mode)
   .capivara_run_kinematic_model(
     cube_path = cube_path,
     redshift = redshift,
@@ -377,6 +402,8 @@ run_kinematic_analysis <- function(cube_path,
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = n_path_segments,
+    support_mode = support_mode,
+    line_flux_sigma = line_flux_sigma,
     model_control = model_control,
     show_plots = show_plots
   )
@@ -384,14 +411,15 @@ run_kinematic_analysis <- function(cube_path,
 
 #' Run the explicit bisymmetric-bar module for a MaNGA cube
 #'
-#' This convenience wrapper is intentionally bar-specific. It requires a bar
-#' angle measured from imaging or supplied by the user; it never substitutes
-#' the disc position angle for a bar angle. For an ordinary rotation model, use
+#' This convenience wrapper is intentionally bar-specific. By default it
+#' derives a photometric in-plane bar-angle prior from the white-light image;
+#' supplying `bar_phi_deg` overrides that estimate. It never substitutes the
+#' disc position angle for a bar angle. For an ordinary rotation model, use
 #' [run_kinematic_analysis()] with its axisymmetric default.
 #'
 #' @inheritParams run_kinematic_analysis
-#' @param bar_phi_deg In-plane bar angle in degrees relative to the disc major
-#'   axis.
+#' @param bar_phi_deg Optional manual in-plane bar angle in degrees relative to
+#'   the disc major axis. Leave as `NA` to estimate it from white light.
 #' @return A `capivara_kinematic_result` with the bisymmetric model and its
 #'   component decomposition.
 #' @export
@@ -399,24 +427,26 @@ run_manga_bar_model <- function(cube_path,
                                 redshift = NA_real_,
                                 emission_line = "halpha",
                                 segmentation_mode = c("kinematic", "path_signature"),
-                                bar_phi_deg,
+                                bar_phi_deg = NA_real_,
                                 output_dir = NULL,
                                 object_id = NULL,
                                 knn_k = 50,
                                 n_segments = 25,
                                 n_path_segments = 45,
+                                support_mode = c("starlet", "line_flux"),
+                                line_flux_sigma = 3,
                                 model_control = list(),
                                 show_plots = interactive()) {
-  if (missing(bar_phi_deg) || !is.finite(bar_phi_deg)) {
-    stop("Supply `bar_phi_deg` to run the bisymmetric bar module.", call. = FALSE)
-  }
   if (is.null(model_control)) {
     model_control <- list()
   }
   if (!is.list(model_control)) {
     stop("`model_control` must be a named list.", call. = FALSE)
   }
-  model_control$bar_phi_deg <- bar_phi_deg
+  support_mode <- match.arg(support_mode)
+  if (is.finite(bar_phi_deg)) {
+    model_control$bar_phi_deg <- bar_phi_deg
+  }
   run_kinematic_analysis(
     cube_path = cube_path,
     redshift = redshift,
@@ -428,6 +458,8 @@ run_manga_bar_model <- function(cube_path,
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = n_path_segments,
+    support_mode = support_mode,
+    line_flux_sigma = line_flux_sigma,
     model_control = model_control,
     show_plots = show_plots
   )

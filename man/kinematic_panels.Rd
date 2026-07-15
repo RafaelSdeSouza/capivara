@@ -27,6 +27,7 @@ For an axisymmetric model, `view = "model"` returns `footprint`, `velocity`,
 `disc_model`, `disc_residual`, `circular_speed`, and `summary`. For a
 bisymmetric bar model it returns the corresponding full-model, axisymmetric,
 residual, and velocity-profile panels. `view = "components"` returns the
-individual circular and bar-flow component maps, along with the supporting
-line-property maps and residual comparisons.
+white-light/bar-prior and kinematic-segmentation context panels, the
+individual circular and bar-flow component maps, supporting line-property
+maps, and residual comparisons.
 }

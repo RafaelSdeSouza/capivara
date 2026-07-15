@@ -45,6 +45,13 @@ Choose `segmentation_mode = "path_signature"` when the path-signature feature
 representation is part of the science question. It additionally writes that
 segmentation; it does not replace the native kinematic maps.
 
+`support_mode = "starlet"` is the conservative default and retains the
+white-light galaxy footprint. For emission-line work in a field with appreciable
+sky, set `support_mode = "line_flux"`; Capivara then uses a robust
+border-noise threshold on the measured line-flux map and keeps its main
+connected component. `line_flux_sigma = 3` is a useful strict starting point;
+lower it if faint extended line emission is scientifically important.
+
 ## 2. Axisymmetric disc comparison
 
 The default model is an axisymmetric disc. It produces an observed velocity

@@ -15,6 +15,8 @@ run_kinematic_analysis(
   knn_k = 50,
   n_segments = 25,
   n_path_segments = 45,
+  support_mode = c("starlet", "line_flux"),
+  line_flux_sigma = 3,
   model_control = list(),
   show_plots = interactive()
 )
@@ -42,8 +44,17 @@ run_kinematic_analysis(
 
 \item{n_path_segments}{Number of path-signature segments.}
 
-\item{model_control}{Named list of model controls. For a bar model it must
-contain `bar_phi_deg`. See [kinematic_models()] for available modules.}
+\item{support_mode}{Foreground support for the kinematic maps. `"starlet"`
+keeps the white-light starlet footprint; `"line_flux"` trims it with a
+robust emission-line-flux threshold.}
+
+\item{line_flux_sigma}{Border-noise threshold, in robust sigma units, for
+`"line_flux"` support.}
+
+\item{model_control}{Named list of model controls. For a bar model,
+`bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
+estimates it from the inner white-light elongation. See
+[kinematic_models()] for available modules.}
 
 \item{show_plots}{Print figures as they are generated.}
 }

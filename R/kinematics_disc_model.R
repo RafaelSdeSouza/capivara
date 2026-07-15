@@ -134,16 +134,30 @@ disc_velocity_model <- function(par, R, theta, inc_rad) {
   coef
 }
 
-#' Estimate the in-plane bar angle from Capivara-labelled bar spaxels
+#' Estimate the in-plane bar angle for a bisymmetric model
 #'
 #' @param spaxels Spaxel table after deprojection.
 #' @param phi_b_deg Optional supplied in-plane bar angle relative to the major axis.
+#' @param white_light Optional collapsed white-light image. When supplied with
+#'   `geometry`, its central elongated light distribution provides an automatic
+#'   photometric bar-angle prior.
+#' @param geometry Disc geometry used to deproject the photometric angle.
 #' @return A list with `phi_b_rad`, `phi_b_deg`, and status.
 #' @noRd
-estimate_bar_geometry <- function(spaxels, phi_b_deg = NULL) {
+estimate_bar_geometry <- function(spaxels,
+                                  phi_b_deg = NULL,
+                                  white_light = NULL,
+                                  geometry = NULL) {
   if (!is.null(phi_b_deg) && length(phi_b_deg) == 1L && is.finite(phi_b_deg)) {
     phi <- as.numeric(phi_b_deg) * pi / 180
     return(list(phi_b_rad = phi, phi_b_deg = as.numeric(phi_b_deg), bar_status = "bar_angle_supplied"))
+  }
+
+  if (is.matrix(white_light) && is.list(geometry)) {
+    axis <- .capivara_white_light_bar_axis(white_light, geometry)
+    if (!is.null(axis)) {
+      return(axis)
+    }
   }
 
   bar <- spaxels$valid & tolower(spaxels$seg_class) == "bar" &
@@ -158,6 +172,88 @@ estimate_bar_geometry <- function(spaxels, phi_b_deg = NULL) {
   phi <- atan2(axis[2], axis[1])
   phi <- ((phi + pi / 2) %% pi) - pi / 2
   list(phi_b_rad = phi, phi_b_deg = phi * 180 / pi, bar_status = "bar_angle_estimated_from_capivara_bar_support")
+}
+
+.capivara_white_light_bar_axis <- function(white_light,
+                                           geometry,
+                                           inner_radius_fraction = 0.55,
+                                           brightness_quantile = 0.65,
+                                           min_pixels = 20L) {
+  required_geometry <- c("x0", "y0", "pa_rad", "inc_rad", "coordinate_convention")
+  if (!all(required_geometry %in% names(geometry)) ||
+      !all(is.finite(unlist(geometry[c("x0", "y0", "pa_rad", "inc_rad")]))) ||
+      !any(is.finite(white_light))) {
+    return(NULL)
+  }
+
+  # Match R's column-major matrix vectorisation: row/y changes fastest.
+  grid <- expand.grid(
+    y = seq_len(nrow(white_light)),
+    x = seq_len(ncol(white_light))
+  )
+  grid <- grid[c("x", "y")]
+  light <- as.vector(white_light)
+  finite <- is.finite(light)
+  if (sum(finite) < min_pixels) {
+    return(NULL)
+  }
+
+  background <- stats::quantile(light[finite], 0.10, na.rm = TRUE, names = FALSE)
+  signal <- pmax(light - background, 0)
+  positive <- finite & signal > 0
+  if (sum(positive) < min_pixels) {
+    return(NULL)
+  }
+
+  projected <- deproject_coordinates(grid$x, grid$y, geometry)
+  extent_cut <- stats::quantile(signal[positive], 0.20, na.rm = TRUE, names = FALSE)
+  extent <- positive & signal >= extent_cut & is.finite(projected$R)
+  r95 <- stats::quantile(projected$R[extent], 0.95, na.rm = TRUE, names = FALSE)
+  if (!is.finite(r95) || r95 <= 0) {
+    return(NULL)
+  }
+
+  central <- extent & projected$R <= inner_radius_fraction * r95
+  if (sum(central) < min_pixels) {
+    return(NULL)
+  }
+  light_cut <- stats::quantile(signal[central], brightness_quantile, na.rm = TRUE, names = FALSE)
+  selected <- central & signal >= light_cut
+  if (sum(selected) < min_pixels) {
+    return(NULL)
+  }
+
+  weights <- signal[selected]
+  xy <- cbind(grid$x[selected], grid$y[selected])
+  centre <- colSums(xy * weights) / sum(weights)
+  centred <- sweep(xy, 2L, centre, "-")
+  covariance <- crossprod(centred * sqrt(weights)) / sum(weights)
+  eig <- eigen(covariance, symmetric = TRUE)
+  if (!all(is.finite(eig$values)) || eig$values[[2]] <= 0) {
+    return(NULL)
+  }
+
+  projected_axis <- eig$vectors[, 1L]
+  endpoint <- deproject_coordinates(
+    c(geometry$x0, geometry$x0 + projected_axis[[1L]]),
+    c(geometry$y0, geometry$y0 + projected_axis[[2L]]),
+    geometry
+  )
+  phi <- endpoint$theta[[2L]]
+  if (!is.finite(phi)) {
+    return(NULL)
+  }
+  phi <- ((phi + pi / 2) %% pi) - pi / 2
+
+  list(
+    phi_b_rad = phi,
+    phi_b_deg = phi * 180 / pi,
+    bar_status = "bar_angle_estimated_from_inner_white_light",
+    photometric_axis_ratio = sqrt(eig$values[[1L]] / eig$values[[2L]]),
+    photometric_n_pixels = sum(selected),
+    photometric_inner_radius = inner_radius_fraction * r95,
+    photometric_brightness_quantile = brightness_quantile
+  )
 }
 
 .capivara_velocity_weights <- function(spaxels, use_errors = TRUE) {

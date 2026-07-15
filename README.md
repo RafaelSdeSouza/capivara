@@ -245,9 +245,16 @@ kinematic_segments <- segment_kinematics(
   segmentation_mode = "kinematic",
   knn_k = 50,
   n_segments = 25,
+  support_mode = "line_flux", # optional: stricter emission-line footprint
+  line_flux_sigma = 3,
   show_plots = TRUE
 )
 ```
+
+Use the default `support_mode = "starlet"` when the continuum footprint is the
+science target. `"line_flux"` is useful for emission-line kinematics when a
+compact, connected gas footprint should exclude sky; reduce
+`line_flux_sigma` if faint extended emission is relevant.
 
 For the default disc model:
 
@@ -264,18 +271,21 @@ result <- run_kinematic_analysis(
 )
 ```
 
-For a galaxy already known to be barred, opt into the bar module and supply the
-bar angle measured from imaging:
+For a galaxy already known to be barred, opt into the bar module. Capivara
+derives a photometric bar-angle prior from the inner white-light morphology;
+inspect the magenta axis in the component panel before interpreting the fit:
 
 ```r
 bar_result <- run_kinematic_analysis(
   cube_path = "/path/to/manga-8078-12703-LOGCUBE.fits",
   emission_line = "halpha",
   model = "bisymmetric_bar",
-  model_control = list(bar_phi_deg = 41),
   show_plots = TRUE
 )
 ```
+
+To override that estimate with an independently measured in-plane angle, use
+`model_control = list(bar_phi_deg = 41)`.
 
 To take full control of figure styling, extract the individual ggplot panels
 without rerunning the cube analysis:

@@ -16,6 +16,8 @@ segment_kinematics(
   n_path_segments = 45,
   starlet_scales = "2:5",
   include_coarse_starlet = FALSE,
+  support_mode = c("starlet", "line_flux"),
+  line_flux_sigma = 3,
   show_plots = interactive()
 )
 }
@@ -45,6 +47,13 @@ path-signature feature segmentation.}
 \item{starlet_scales}{Starlet support scales.}
 
 \item{include_coarse_starlet}{Include the coarse starlet plane in support.}
+
+\item{support_mode}{Foreground support for the kinematic maps. `"starlet"`
+keeps the white-light starlet footprint; `"line_flux"` trims that
+footprint with a robust emission-line-flux threshold before fitting.}
+
+\item{line_flux_sigma}{Border-noise threshold, in robust sigma units, when
+`support_mode = "line_flux"`.}
 
 \item{show_plots}{Print the compact kinematic panel.}
 }

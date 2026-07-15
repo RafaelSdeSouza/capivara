@@ -14,11 +14,13 @@ n_path_segments <- 45
 knn_k <- 50
 segmentation_mode <- "kinematic" # or "path_signature"
 model <- "axisymmetric"          # or "bisymmetric_bar" for a known bar
+support_mode <- "starlet"         # or "line_flux" for a clean gas-kinematics footprint
+line_flux_sigma <- 3              # robust border-noise threshold for `line_flux`
 
-# Keep this empty for the ordinary disc model. A bar model must receive a bar
-# angle from imaging; Capivara will never replace it with the disc PA.
+# Keep this empty for the ordinary disc model. For a bar model, Capivara derives
+# the prior from white light and never substitutes the disc PA.
 model_control <- list()
-# model_control <- list(bar_phi_deg = 41, disc_inc_deg = 38)
+# model_control <- list(bar_phi_deg = 41, disc_inc_deg = 38) # manual override
 
 output_dir <- file.path(
   dirname(cube_path),
@@ -46,6 +48,8 @@ result <- run_kinematic_analysis(
   knn_k = knn_k,
   n_segments = n_segments,
   n_path_segments = n_path_segments,
+  support_mode = support_mode,
+  line_flux_sigma = line_flux_sigma,
   model_control = model_control,
   show_plots = TRUE
 )
