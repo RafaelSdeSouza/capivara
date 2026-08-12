@@ -52,9 +52,9 @@ flux_preserving <- reconstruct_flux_preserving_cube(
 )
 ```
 
-[`reconstruct_cluster_cube()`](https://rafaelsdesouza.github.io/capivara/reference/reconstruct_cluster_cube.md)
+[`reconstruct_cluster_cube()`](https://rafaelsdesouza.com.br/capivara/reference/reconstruct_cluster_cube.md)
 fills a region with a representative spectrum.
-[`reconstruct_flux_preserving_cube()`](https://rafaelsdesouza.github.io/capivara/reference/reconstruct_flux_preserving_cube.md)
+[`reconstruct_flux_preserving_cube()`](https://rafaelsdesouza.com.br/capivara/reference/reconstruct_flux_preserving_cube.md)
 distributes each summed regional spectrum over its assigned spaxels so
 summing the reconstruction over the region recovers the regional total.
 These are different products; retain the function and options used when

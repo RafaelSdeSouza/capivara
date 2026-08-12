@@ -41,6 +41,8 @@ a:hover {
 
 a:focus-visible,
 button:focus-visible,
+.form-control:focus-visible,
+input:focus-visible,
 .nav-link:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--cap-orange) 70%, white);
   outline-offset: 3px;

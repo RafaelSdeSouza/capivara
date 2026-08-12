@@ -19,7 +19,7 @@ provenance table for the current reproduction status.
 The visual sequence is: IFS cube, eligible spatial support, categorical
 spectral regions, then summed regional spectra. The image directly shows
 the input and region-map stages; regional spectra are obtained with
-[`summarize_cluster_spectra()`](https://rafaelsdesouza.github.io/capivara/reference/summarize_cluster_spectra.md)
+[`summarize_cluster_spectra()`](https://rafaelsdesouza.com.br/capivara/reference/summarize_cluster_spectra.md)
 and are not implicitly encoded by the colours.
 
 ## Exact and sparse-graph comparison
@@ -29,9 +29,9 @@ segmentation with and without starlet
 support](../reference/figures/manga_8443_6102_compare_current.png)
 
 MaNGA 8443-6102: existing comparison of
-[`segment()`](https://rafaelsdesouza.github.io/capivara/reference/segment.md)
+[`segment()`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 and
-[`segment_large()`](https://rafaelsdesouza.github.io/capivara/reference/segment_large.md)
+[`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md)
 with and without starlet support. This panel is retained with an
 explicit incomplete-provenance status until its exact generator and
 configuration are verified.
@@ -62,17 +62,17 @@ regional_spectra <- summarize_cluster_spectra(seg)$sum_spectra
 
 The path is intentionally a user-supplied placeholder. The executable
 [Getting
-started](https://rafaelsdesouza.github.io/capivara/articles/getting-started.md)
+started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
 guide contains the self-contained first run with no hidden file
 dependency.
 
 ## Kinematic and model-specific examples
 
 The [Kinematic
-analysis](https://rafaelsdesouza.github.io/capivara/articles/kinematic-analysis.md)
+analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md)
 guide separates line-map segmentation from an axisymmetric disc
 comparison. The [Bisymmetric bar
-models](https://rafaelsdesouza.github.io/capivara/articles/bisymmetric-bar-model.md)
+models](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md)
 guide applies only when independent evidence supports a bar hypothesis;
 neither example changes the interpretation of ordinary spectral-region
 labels.

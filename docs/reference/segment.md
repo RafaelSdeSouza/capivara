@@ -110,7 +110,7 @@ segment(
 
   Optional named list passed to the selected support builder. For
   `"adaptive"`, arguments are passed to
-  [`build_adaptive_support`](https://rafaelsdesouza.github.io/capivara/reference/build_adaptive_support.md).
+  [`build_adaptive_support`](https://rafaelsdesouza.com.br/capivara/reference/build_adaptive_support.md).
 
 - collapse_fn:
 
@@ -221,8 +221,8 @@ Steps performed by the function:
 
 ## See also
 
-[`segment_large`](https://rafaelsdesouza.github.io/capivara/reference/segment_large.md),
-[`build_starlet_mask`](https://rafaelsdesouza.github.io/capivara/reference/build_starlet_mask.md),
+[`segment_large`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md),
+[`build_starlet_mask`](https://rafaelsdesouza.com.br/capivara/reference/build_starlet_mask.md),
 [`hclust`](https://rdrr.io/pkg/fastcluster/man/hclust.html),
 [`cutree`](https://rdrr.io/r/stats/cutree.html)
 

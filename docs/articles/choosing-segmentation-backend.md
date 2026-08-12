@@ -6,7 +6,7 @@ make different computational approximations.
 
 ## Exact Ward
 
-[`segment()`](https://rafaelsdesouza.github.io/capivara/reference/segment.md)
+[`segment()`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 constructs the full pairwise distance object among valid spaxels. The
 distance storage therefore grows quadratically with the number of
 eligible spaxels. Estimate the lower-bound memory before a large run:
@@ -27,7 +27,7 @@ intended analysis.
 
 ## Sparse Ward
 
-[`segment_large()`](https://rafaelsdesouza.github.io/capivara/reference/segment_large.md)
+[`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md)
 avoids storing the full all-pairs distance matrix by building a coherent
 nearest-neighbour graph.
 
@@ -75,7 +75,7 @@ should not be treated as aliases.
 
 ## Choose the component count
 
-[`choose_ncomp_by_snr()`](https://rafaelsdesouza.github.io/capivara/reference/choose_ncomp_by_snr.md)
+[`choose_ncomp_by_snr()`](https://rafaelsdesouza.com.br/capivara/reference/choose_ncomp_by_snr.md)
 evaluates candidate cuts and returns the largest tested count whose
 minimum regional S/N remains above the requested threshold.
 

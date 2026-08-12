@@ -1,8 +1,8 @@
 # FITS and DS9 Export
 
-[`segment()`](https://rafaelsdesouza.github.io/capivara/reference/segment.md)
+[`segment()`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 and
-[`segment_large()`](https://rafaelsdesouza.github.io/capivara/reference/segment_large.md)
+[`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md)
 return a two-dimensional categorical map in `seg$cluster_map`. Its
 dimensions match the input cube’s spatial footprint.
 

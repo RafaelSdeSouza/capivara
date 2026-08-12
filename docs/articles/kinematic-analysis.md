@@ -11,7 +11,7 @@ model is therefore not a default setting.
 
 ## 1. Kinematic-aware segmentation
 
-[`segment_kinematics()`](https://rafaelsdesouza.github.io/capivara/reference/segment_kinematics.md)
+[`segment_kinematics()`](https://rafaelsdesouza.com.br/capivara/reference/segment_kinematics.md)
 makes the native line maps and clusters flux, velocity, dispersion, and
 profile-shape information. It does not run ordinary full-spectrum
 segmentation, which answers a different question.
@@ -70,7 +70,7 @@ explicitly.
 ## 3. Model modules
 
 Use
-[`kinematic_models()`](https://rafaelsdesouza.github.io/capivara/reference/kinematic_models.md)
+[`kinematic_models()`](https://rafaelsdesouza.com.br/capivara/reference/kinematic_models.md)
 to see the installed dynamical modules. Each module uses the same native
 maps and kinematic segmentation, so new models such as a spiral
 perturbation can be added without changing the upstream workflow.
@@ -83,11 +83,11 @@ kinematic_models()
 ```
 
 The bar-specific workflow is documented separately in
-[`vignette("bisymmetric-bar-model", package = "capivara")`](https://rafaelsdesouza.github.io/capivara/articles/bisymmetric-bar-model.md).
+[`vignette("bisymmetric-bar-model", package = "capivara")`](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md).
 
 Return to the [spectral-segmentation first
-run](https://rafaelsdesouza.github.io/capivara/articles/getting-started.md),
+run](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md),
 or inspect the [result-led
-examples](https://rafaelsdesouza.github.io/capivara/articles/examples.md).
+examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md).
 Kinematic labels remain categorical; the velocity and dispersion maps
 are separate measured or modelled quantities.

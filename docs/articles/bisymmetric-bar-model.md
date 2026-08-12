@@ -62,7 +62,7 @@ This option should be compared against the full-footprint model, not
 used to force a bar-like residual pattern.
 
 For the neutral default workflow, start with [Kinematic
-analysis](https://rafaelsdesouza.github.io/capivara/articles/kinematic-analysis.md).
+analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md).
 A single demonstration is not evidence for a bar or outflow detection;
 interpretation requires the model diagnostics and independent
 observational context.

@@ -21,7 +21,7 @@ plot_cluster_spectra(
 - cluster_result:
 
   A list produced by a segmentation function (e.g.
-  [`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md))
+  [`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md))
   containing at least the following elements:
 
   - `cluster_map`: A matrix mapping each spatial pixel to a cluster.
@@ -68,7 +68,7 @@ The function performs the following steps:
 
 ## See also
 
-[`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md),
+[`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md),
 `cube_to_matrix()`, [`axVec`](https://rdrr.io/pkg/FITSio/man/axVec.html)
 
 ## Examples

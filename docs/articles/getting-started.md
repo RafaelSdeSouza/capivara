@@ -284,13 +284,13 @@ generator mapping as incomplete.
 For an observed cube, read the FITS object with
 [`FITSio::readFITS()`](https://rdrr.io/pkg/FITSio/man/readFITS.html) and
 pass it to
-[`segment()`](https://rafaelsdesouza.github.io/capivara/reference/segment.md)
+[`segment()`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 or
-[`segment_large()`](https://rafaelsdesouza.github.io/capivara/reference/segment_large.md).
+[`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md).
 The [backend
-guide](https://rafaelsdesouza.github.io/capivara/articles/choosing-segmentation-backend.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md)
 explains that choice; the [support
-guide](https://rafaelsdesouza.github.io/capivara/articles/support-masks.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md)
 covers data-driven support masks; and the [FITS export
-guide](https://rafaelsdesouza.github.io/capivara/articles/fits-ds9-export.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
 preserves label and WCS conventions.

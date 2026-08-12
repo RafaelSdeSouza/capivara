@@ -3,4 +3,4 @@
 # This page has moved
 
 [Continue to the current
-documentation](https://rafaelsdesouza.github.io/capivara/news/index.md).
+documentation](https://rafaelsdesouza.com.br/capivara/news/index.md).

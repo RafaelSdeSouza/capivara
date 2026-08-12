@@ -2,7 +2,7 @@
 
 This backend keeps Ward's merge criterion but restricts candidate merges
 to a k-nearest-neighbor graph. It is intended for large cubes where
-[`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md)
+[`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 becomes memory-limited because exact Ward needs an all-pairs distance
 object.
 
@@ -62,7 +62,7 @@ segment_large(
 
   Optional row-wise spectral scaling function. Defaults to
   `median_scale()`, matching
-  [`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md).
+  [`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md).
 
 - target_snr:
 
@@ -117,7 +117,7 @@ segment_large(
 
   Optional named list passed to the selected support builder. For
   `"adaptive"`, arguments are passed to
-  [`build_adaptive_support`](https://rafaelsdesouza.github.io/capivara/reference/build_adaptive_support.md).
+  [`build_adaptive_support`](https://rafaelsdesouza.com.br/capivara/reference/build_adaptive_support.md).
 
 - collapse_fn:
 
@@ -187,7 +187,7 @@ segment_large(
   Valid-pixel rule. `"sagui"` applies the stricter finite-fraction,
   energy, and row-MAD screen used by Sagui's sparse-Ward backend;
   `"signal"` matches the exact
-  [`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md)
+  [`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
   support; `"finite"` requires all channels to be finite.
 
 - return_details:
@@ -201,6 +201,6 @@ segment_large(
 ## Value
 
 A Capivara-style segmentation object with the same core fields as
-[`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md):
+[`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md):
 `cluster_map`, `header`, `axDat`, `cluster_snr`, and `original_cube`.
 Scalable-backend diagnostics are stored under `backend_info`.

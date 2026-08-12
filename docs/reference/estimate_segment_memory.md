@@ -25,7 +25,7 @@ estimate_segment_memory(
 - valid_mode:
 
   Valid-pixel rule used when `input` is a cube: `"signal"` matches
-  [`segment`](https://rafaelsdesouza.github.io/capivara/reference/segment.md),
+  [`segment`](https://rafaelsdesouza.com.br/capivara/reference/segment.md),
   while `"finite"` requires every spectral channel to be finite.
 
 - knn_k:

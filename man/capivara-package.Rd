@@ -8,4 +8,13 @@
 \description{
 Spectral segmentation and analysis tools for IFU data cubes.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://rafaelsdesouza.com.br/capivara/}
+  \item \url{https://github.com/RafaelSdeSouza/capivara}
+  \item Report bugs at \url{https://github.com/RafaelSdeSouza/capivara/issues}
+}
+
+}
 \keyword{internal}

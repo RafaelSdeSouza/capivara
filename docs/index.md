@@ -146,31 +146,31 @@ the output is a software demonstration, not observational evidence.
 Use `spectra$sum_spectra` for flux-preserving regional science products.
 Means and medians are diagnostic summaries unless a downstream analysis
 explicitly requires them. The [Getting started
-guide](https://rafaelsdesouza.github.io/capivara/articles/getting-started.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
 executes this workflow and connects each returned object to the
 real-data example above.
 
 ## Continue with
 
 - [Choose the exact or sparse-graph
-  backend](https://rafaelsdesouza.github.io/capivara/articles/choosing-segmentation-backend.md)
+  backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md)
 - [Construct and interpret support
-  masks](https://rafaelsdesouza.github.io/capivara/articles/support-masks.md)
+  masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md)
 - [Export flux-preserving regional
-  spectra](https://rafaelsdesouza.github.io/capivara/articles/flux-preserving-products.md)
+  spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md)
 - [Write FITS maps for
-  DS9](https://rafaelsdesouza.github.io/capivara/articles/fits-ds9-export.md)
+  DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
 - [Inspect verified examples and
-  provenance](https://rafaelsdesouza.github.io/capivara/articles/examples.md)
+  provenance](https://rafaelsdesouza.com.br/capivara/articles/examples.md)
 
 ## Core API
 
 The [Reference
-index](https://rafaelsdesouza.github.io/capivara/reference/index.md)
-groups the documented public API by scientific role. Kinematic analysis
-and an explicit bisymmetric model are documented separately so
-bar-specific assumptions are not inherited by the general
-spectral-segmentation workflow.
+index](https://rafaelsdesouza.com.br/capivara/reference/index.md) groups
+the documented public API by scientific role. Kinematic analysis and an
+explicit bisymmetric model are documented separately so bar-specific
+assumptions are not inherited by the general spectral-segmentation
+workflow.
 
 ## About
 

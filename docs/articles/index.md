@@ -3,25 +3,25 @@
 ### Start here
 
 - [Getting
-  Started](https://rafaelsdesouza.github.io/capivara/articles/getting-started.md):
+  Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md):
 
 ### User guide
 
 - [Choosing a Segmentation
-  Backend](https://rafaelsdesouza.github.io/capivara/articles/choosing-segmentation-backend.md):
+  Backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md):
 - [Support
-  Masks](https://rafaelsdesouza.github.io/capivara/articles/support-masks.md):
+  Masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md):
 - [Flux-Preserving Spectral
-  Products](https://rafaelsdesouza.github.io/capivara/articles/flux-preserving-products.md):
+  Products](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md):
 - [FITS and DS9
-  Export](https://rafaelsdesouza.github.io/capivara/articles/fits-ds9-export.md):
+  Export](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md):
 - [Kinematic
-  Analysis](https://rafaelsdesouza.github.io/capivara/articles/kinematic-analysis.md):
+  Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md):
 - [Bisymmetric Bar
-  Modelling](https://rafaelsdesouza.github.io/capivara/articles/bisymmetric-bar-model.md):
+  Modelling](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md):
 
 ### Examples and reproduction
 
-- [Examples](https://rafaelsdesouza.github.io/capivara/articles/examples.md):
+- [Examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md):
 - [Reproducing the
-  Paper](https://rafaelsdesouza.github.io/capivara/articles/reproducing-paper.md):
+  Paper](https://rafaelsdesouza.com.br/capivara/articles/reproducing-paper.md):
