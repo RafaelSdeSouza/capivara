@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Getting Started • capivara</title>
+<title>Get Started • capivara</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Getting Started">
+<meta property="og:title" content="Get Started">
 <meta name="theme-color" content="#14233a">
 </head>
 <body>
@@ -35,17 +35,17 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -74,7 +74,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Getting Started</h1>
+      <h1>Get Started</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/RafaelSdeSouza/capivara/blob/HEAD/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
@@ -83,10 +83,8 @@
 
     
     
-<p>Capivara assigns eligible spaxels in an integral-field spectroscopy
-(IFS) cube to categorical regions with coherent spectra. Support
-construction, region assignment, and regional spectral products are
-distinct steps.</p>
+<p>Capivara groups spaxels with coherent spectra and returns their
+summed regional spectra.</p>
 <div class="section level2">
 <h2 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
 </h2>
@@ -94,19 +92,15 @@ distinct steps.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"RafaelSdeSouza/capivara"</span>, upgrade <span class="op">=</span> <span class="st">"never"</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rafaelsdesouza.com.br/capivara/">capivara</a></span><span class="op">)</span></span></code></pre></div>
-<p>The minimal example below uses the exact Ward backend and does not
-require <code>torch</code>, Python, a GPU, survey downloads, or a local
-data file.</p>
+<p>The example below uses the exact Ward backend and the standard
+package dependencies.</p>
 </div>
 <div class="section level2">
 <h2 id="simulate-a-cube">Simulate a cube<a class="anchor" aria-label="anchor" href="#simulate-a-cube"></a>
 </h2>
-<p>This cube is generated only to exercise the package API. Its toy
-spatial model mixes a bulge, disc, compact nucleus, and two star-forming
-knots. The four input profiles include simplified Hβ, [O III], Mg b, Na
-D, Hα, and [N II] features. It is not an observation and must not be
-interpreted as scientific evidence. The displayed seed makes the example
-deterministic.</p>
+<p>This fixed-seed simulation mixes a bulge, disc, compact nucleus, and
+two star-forming knots. The four input profiles include Hβ, [O III], Mg
+b, Na D, Hα, and [N II] features.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">241021962</span><span class="op">)</span></span>
 <span></span>
@@ -162,10 +156,9 @@ deterministic.</p>
 <span>    <span class="op">}</span></span>
 <span>  <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>The elliptical logical matrix is the spatial support:
-<code>TRUE</code> identifies eligible spaxels. Setting the cube to
-<code>NA</code> outside that support ensures those positions remain
-unassigned. A support mask does not itself assign region labels.</p>
+<p>The elliptical logical matrix is the spatial support.
+<code>TRUE</code> marks spaxels to segment; positions outside it remain
+<code>NA</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="segment-the-cube">Segment the cube<a class="anchor" aria-label="anchor" href="#segment-the-cube"></a>
@@ -362,25 +355,22 @@ the summed spectrum is</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>F</mi><mrow><mi>k</mi><mo>,</mo><mi>λ</mi></mrow></msub><mo>=</mo><munder><mo>∑</mo><mrow><mi>p</mi><mo>∈</mo><mi>k</mi></mrow></munder><msub><mi>F</mi><mrow><mi>p</mi><mo>,</mo><mi>λ</mi></mrow></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
 F_{k,\lambda} = \sum_{p \in k} F_{p,\lambda}.
 </annotation></semantics></math></p>
-<p>Use <code>sum_spectra</code> when total regional flux is the required
-science product. <code>median_spectra</code> and
-<code>mean_spectra</code> are diagnostic summaries unless a specific
-downstream method requires them.</p>
+<p>Use <code>sum_spectra</code> for total regional flux.
+<code>median_spectra</code> and <code>mean_spectra</code> describe
+spectral shape.</p>
 </div>
 <div class="section level2">
 <h2 id="use-real-data">Use real data<a class="anchor" aria-label="anchor" href="#use-real-data"></a>
 </h2>
 <figure class="science-figure"><img src="../reference/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour"><figcaption>
-Real MaNGA examples showing inputs and categorical region maps. Colours
-identify region labels only. The image-provenance table records the
-target information that could be verified locally and marks the
-generator mapping as incomplete.
+Real MaNGA galaxies and their Capivara region maps. Colours identify
+regions and do not represent an ordered quantity.
 </figcaption></figure><p>For an observed cube, read the FITS object with
 <code><a href="https://rdrr.io/pkg/FITSio/man/readFITS.html" class="external-link">FITSio::readFITS()</a></code> and pass it to <code><a href="../reference/segment.html">segment()</a></code> or
 <code><a href="../reference/segment_large.html">segment_large()</a></code>. The <a href="choosing-segmentation-backend.html">backend guide</a> explains
 that choice; the <a href="support-masks.html">support guide</a> covers
-data-driven support masks; and the <a href="fits-ds9-export.html">FITS
-export guide</a> preserves label and WCS conventions.</p>
+data-driven masks; and <a href="fits-ds9-export.html">FITS and DS9</a>
+shows how to save the map with its WCS.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

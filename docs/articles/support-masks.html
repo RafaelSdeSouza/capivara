@@ -35,17 +35,17 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -110,11 +110,9 @@ adaptive multi-band support.</p>
 starlet scales, and reconstructed from the selected scales.
 <code>include_coarse</code> controls the coarse plane;
 <code>denoise_k</code> is expressed in MAD units; and
-<code>positive_only</code> excludes negative reconstructed values.
-Record every setting because a support change alters which spaxels can
-receive a label.</p>
-<p>Inspect the support independently when the footprint is
-scientifically important:</p>
+<code>positive_only</code> excludes negative reconstructed values. These
+settings determine the support.</p>
+<p>Plot the support before segmentation:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">support_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_starlet_mask.html">build_starlet_mask</a></span><span class="op">(</span></span>
 <span>  <span class="va">cube</span>,</span>
@@ -155,18 +153,15 @@ transforms.</p>
 <span>    min_band_persistence <span class="op">=</span> <span class="fl">2</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Transform choice, sky estimator, persistence requirement, and
-thresholds must be retained with the segmentation provenance. Do not
-describe an excluded spaxel as a separate physical region.</p>
+<p>The transform, sky estimator, persistence, and thresholds determine
+the adaptive support. Excluded spaxels remain unassigned.</p>
 </div>
 <div class="section level2">
 <h2 id="missing-and-background-values">Missing and background values<a class="anchor" aria-label="anchor" href="#missing-and-background-values"></a>
 </h2>
-<p>With <code>mask_mode = "na"</code>, excluded cube values and returned
-map locations are missing. A FITS export may convert those map values to
-zero for display, while positive integers retain the Capivara region
-identifiers. This conversion is a file convention; it must not be
-applied to the science cube silently.</p>
+<p>With <code>mask_mode = "na"</code>, excluded cube values and map
+locations are missing. A FITS export may use zero for the background;
+the science cube remains unchanged.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

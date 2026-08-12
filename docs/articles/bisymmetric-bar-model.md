@@ -1,20 +1,16 @@
-# Bisymmetric Bar Modelling
+# Bar Model
 
-The bisymmetric module is for a galaxy with independent evidence of a
-bar. It extends the axisymmetric disc model with the two-sided streaming
-terms, following the velocity-field formulation used in the
-barred-galaxy literature. It is not a generic substitute for the disc
-model.
+The bisymmetric module extends the axisymmetric disc model with
+two-sided streaming terms. Use it for a galaxy with independent evidence
+of a bar.
 
 ## Before fitting
 
-Capivara first estimates a photometric bar-angle prior from the central
-white-light elongation, then deprojects it relative to the kinematic
-disc major axis. It deliberately does not substitute the disc position
-angle: doing so silently assumes an aligned bar and gives a misleading
-model for most galaxies. Inspect the magenta prior in the component
-figure before interpreting the bisymmetric terms. A measured in-plane
-angle can always override the automatic estimate with `bar_phi_deg`.
+Capivara estimates a bar-angle prior from the central white-light
+elongation and deprojects it relative to the kinematic disc major axis.
+It does not use the disc position angle as the bar angle, because that
+would assume alignment. Use `bar_phi_deg` to supply a measured in-plane
+angle.
 
 ## Fit the bar module
 
@@ -39,16 +35,14 @@ bar_result <- run_kinematic_analysis(
 plot(bar_result, which = "components")
 ```
 
-The `components` plot is intentionally unavailable for an axisymmetric
-run: the circular, tangential second-order, and radial second-order
-components only have a physical interpretation within the bisymmetric
-model.
+The `components` plot is available only for the bisymmetric model. It
+shows the circular, tangential second-order, and radial second-order
+terms.
 
 ## Optional bar-support prior
 
-The model normally uses the full valid kinematic footprint. When a
-carefully measured bar footprint is needed as a weak geometric prior,
-add:
+The model normally uses the full kinematic footprint. To add a measured
+bar footprint as a weak geometric prior:
 
 ``` r
 model_control = list(
@@ -58,11 +52,9 @@ model_control = list(
 )
 ```
 
-This option should be compared against the full-footprint model, not
-used to force a bar-like residual pattern.
+Compare this result with the full-footprint model.
 
-For the neutral default workflow, start with [Kinematic
-analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md).
-A single demonstration is not evidence for a bar or outflow detection;
-interpretation requires the model diagnostics and independent
-observational context.
+Start with the axisymmetric model in [Kinematic
+Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md).
+Interpret a bar only after comparing the model diagnostics with
+independent observations.

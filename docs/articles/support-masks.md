@@ -29,12 +29,10 @@ seg <- segment_large(
 The cube is collapsed to a white-light image, decomposed across starlet
 scales, and reconstructed from the selected scales. `include_coarse`
 controls the coarse plane; `denoise_k` is expressed in MAD units; and
-`positive_only` excludes negative reconstructed values. Record every
-setting because a support change alters which spaxels can receive a
-label.
+`positive_only` excludes negative reconstructed values. These settings
+determine the support.
 
-Inspect the support independently when the footprint is scientifically
-important:
+Plot the support before segmentation:
 
 ``` r
 support_result <- build_starlet_mask(
@@ -79,14 +77,11 @@ seg <- segment(
 )
 ```
 
-Transform choice, sky estimator, persistence requirement, and thresholds
-must be retained with the segmentation provenance. Do not describe an
-excluded spaxel as a separate physical region.
+The transform, sky estimator, persistence, and thresholds determine the
+adaptive support. Excluded spaxels remain unassigned.
 
 ## Missing and background values
 
-With `mask_mode = "na"`, excluded cube values and returned map locations
-are missing. A FITS export may convert those map values to zero for
-display, while positive integers retain the Capivara region identifiers.
-This conversion is a file convention; it must not be applied to the
-science cube silently.
+With `mask_mode = "na"`, excluded cube values and map locations are
+missing. A FITS export may use zero for the background; the science cube
+remains unchanged.

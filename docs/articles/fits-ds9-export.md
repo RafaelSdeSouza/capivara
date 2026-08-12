@@ -1,4 +1,4 @@
-# FITS and DS9 Export
+# FITS and DS9
 
 [`segment()`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 and
@@ -24,9 +24,8 @@ FITSio::writeFITSim(
 )
 ```
 
-The zero conversion makes background handling explicit for FITS viewers.
-It does not introduce a new Capivara region, and the positive integers
-do not form an ordered physical scale.
+Zero marks the background in the FITS file. Positive integers identify
+Capivara regions.
 
 ## Preserve WCS
 
@@ -45,10 +44,8 @@ FITSio::writeFITSim(
 )
 ```
 
-Verify the output orientation and WCS against the original cube in the
-target viewer. FITS libraries can expose axis ordering differently from
-plotting code, so visual agreement alone is not a substitute for
-checking coordinate metadata.
+Check the output orientation and WCS against the original cube. FITS
+libraries may expose axis ordering differently from plotting code.
 
 ## Regional spectra
 
@@ -62,7 +59,6 @@ write.csv(
 )
 ```
 
-The region column links every table row to the same positive identifier
-in the FITS map. Preserve the wavelength coordinate, input cube
-identifier, support settings, backend parameters, and output paths
-alongside these files.
+The `region` column links each table row to the same identifier in the
+FITS map. Save the wavelength coordinate and segmentation parameters
+with the files.

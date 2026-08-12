@@ -11,12 +11,10 @@ and returning flux-preserving regional spectra.
 segmentation maps, with each categorical region shown in a distinct
 colour](reference/figures/mosaic_segmented_sagui.png)
 
-Real MaNGA examples showing inputs and categorical Capivara region maps.
-Region colours identify labels only; they do not encode an ordered
-physical quantity. The repository provenance record identifies the
-targets and records the currently unresolved generator mapping.
+Real MaNGA galaxies and their Capivara region maps. Colours identify
+regions and do not represent an ordered quantity.
 
-The workflow separates four objects that should not be conflated:
+The workflow has four stages:
 
 1.  IFS cube
 2.  spatial support
@@ -31,17 +29,14 @@ remotes::install_github("RafaelSdeSouza/capivara", upgrade = "never")
 library(capivara)
 ```
 
-`torch` is optional. The exact first-run workflow below uses the
-declared base R and package dependencies and does not require a GPU,
-Python, a survey download, or a local FITS file.
+`torch` is optional. The example below runs with the standard package
+dependencies.
 
 ## Quick start
 
-This example creates a small **synthetic** IFS cube with a fixed seed.
-Its four input profiles contain recognisable Hβ, \[O III\], Mg b, Na D,
-Hα, and \[N II\] features and are mixed across a toy bulge, disc,
-nucleus, and two star-forming knots. This is an API demonstration, not
-scientific evidence.
+This fixed-seed example creates a small synthetic IFS cube. Its four
+profiles contain Hβ, \[O III\], Mg b, Na D, Hα, and \[N II\] features
+mixed across a bulge, disc, nucleus, and two star-forming knots.
 
 ``` r
 library(capivara)
@@ -138,17 +133,14 @@ beside their median-normalised spectra with realistic absorption and
 nebular-line
 features](reference/figures/capivara-first-run-synthetic-map-1.png)
 
-Fixed-seed simulated IFS cube: six categorical Capivara regions and
-their median-normalised spectral profiles. The vertical annotations mark
-the simplified absorption and nebular features built into the toy input;
-the output is a software demonstration, not observational evidence.
+Fixed-seed IFS simulation with six Capivara regions and their
+median-normalised spectra. The vertical annotations mark the input
+absorption and nebular features.
 
-Use `spectra$sum_spectra` for flux-preserving regional science products.
-Means and medians are diagnostic summaries unless a downstream analysis
-explicitly requires them. The [Getting started
+Use `spectra$sum_spectra` for flux-preserving regional spectra. Means
+and medians describe spectral shape. The [Get Started
 guide](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
-executes this workflow and connects each returned object to the
-real-data example above.
+runs the complete example.
 
 ## Continue with
 
@@ -160,25 +152,21 @@ real-data example above.
   spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md)
 - [Write FITS maps for
   DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
-- [Inspect verified examples and
-  provenance](https://rafaelsdesouza.com.br/capivara/articles/examples.md)
+- [View MaNGA
+  examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md)
 
-## Core API
+## Functions
 
-The [Reference
+The [function
 index](https://rafaelsdesouza.com.br/capivara/reference/index.md) groups
-the documented public API by scientific role. Kinematic analysis and an
-explicit bisymmetric model are documented separately so bar-specific
-assumptions are not inherited by the general spectral-segmentation
-workflow.
+the public API by task. Kinematic analysis and bisymmetric modelling
+have separate guides.
 
 ## About
 
 Capivara is an R package for spectral segmentation and post-processing
-of IFS data cubes. The canonical citation is generated from
-`inst/CITATION`; cite the [published MNRAS
-article](https://doi.org/10.1093/mnras/staf688) when using the package
-in scientific work.
+of IFS data cubes. Use `citation("capivara")` or cite the [MNRAS
+paper](https://doi.org/10.1093/mnras/staf688).
 
 # Package index
 
@@ -254,28 +242,28 @@ Explicit modelling for galaxies with independent evidence of a bar.
 
 # Articles
 
-### Start here
+### Start
 
-- [Getting
+- [Get
   Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md):
 
 ### User guide
 
-- [Choosing a Segmentation
-  Backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md):
+- [Segmentation
+  Backends](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md):
 - [Support
   Masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md):
-- [Flux-Preserving Spectral
-  Products](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md):
-- [FITS and DS9
-  Export](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md):
+- [Regional
+  Spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md):
+- [FITS and
+  DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md):
 - [Kinematic
   Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md):
-- [Bisymmetric Bar
-  Modelling](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md):
+- [Bar
+  Model](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md):
 
-### Examples and reproduction
+### Examples
 
 - [Examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md):
-- [Reproducing the
-  Paper](https://rafaelsdesouza.com.br/capivara/articles/reproducing-paper.md):
+- [Paper
+  Reproduction](https://rafaelsdesouza.com.br/capivara/articles/reproducing-paper.md):

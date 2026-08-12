@@ -39,17 +39,17 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -78,8 +78,8 @@
 <p>Capivara performs spectral segmentation of integral-field spectroscopy (IFS) cubes, assigning eligible spaxels to regions with coherent spectra and returning flux-preserving regional spectra.</p>
 <p><a href="https://doi.org/10.1093/mnras/staf688" class="external-link">Peer-reviewed paper</a> · <a href="https://arxiv.org/abs/2410.21962" class="external-link">arXiv:2410.21962</a></p>
 <figure class="science-figure"><img src="reference/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour"><figcaption>
-Real MaNGA examples showing inputs and categorical Capivara region maps. Region colours identify labels only; they do not encode an ordered physical quantity. The repository provenance record identifies the targets and records the currently unresolved generator mapping.
-</figcaption></figure><p>The workflow separates four objects that should not be conflated:</p>
+Real MaNGA galaxies and their Capivara region maps. Colours identify regions and do not represent an ordered quantity.
+</figcaption></figure><p>The workflow has four stages:</p>
 <ol class="science-flow">
 <li>
 IFS cube
@@ -101,12 +101,12 @@ regional spectra
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"RafaelSdeSouza/capivara"</span>, upgrade <span class="op">=</span> <span class="st">"never"</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rafaelsdesouza.com.br/capivara/">capivara</a></span><span class="op">)</span></span></code></pre></div>
-<p><code>torch</code> is optional. The exact first-run workflow below uses the declared base R and package dependencies and does not require a GPU, Python, a survey download, or a local FITS file.</p>
+<p><code>torch</code> is optional. The example below runs with the standard package dependencies.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>This example creates a small <strong>synthetic</strong> IFS cube with a fixed seed. Its four input profiles contain recognisable Hβ, [O III], Mg b, Na D, Hα, and [N II] features and are mixed across a toy bulge, disc, nucleus, and two star-forming knots. This is an API demonstration, not scientific evidence.</p>
+<p>This fixed-seed example creates a small synthetic IFS cube. Its four profiles contain Hβ, [O III], Mg b, Na D, Hα, and [N II] features mixed across a bulge, disc, nucleus, and two star-forming knots.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rafaelsdesouza.com.br/capivara/">capivara</a></span><span class="op">)</span></span>
 <span></span>
@@ -220,8 +220,8 @@ regional spectra
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/plot_cluster.html">plot_cluster</a></span><span class="op">(</span><span class="va">seg</span><span class="op">)</span></span></code></pre></div>
 <figure class="science-figure"><img src="reference/figures/capivara-first-run-synthetic-map-1.png" alt="Synthetic Capivara IFS example showing six categorical spatial regions beside their median-normalised spectra with realistic absorption and nebular-line features"><figcaption>
-Fixed-seed simulated IFS cube: six categorical Capivara regions and their median-normalised spectral profiles. The vertical annotations mark the simplified absorption and nebular features built into the toy input; the output is a software demonstration, not observational evidence.
-</figcaption></figure><p>Use <code>spectra$sum_spectra</code> for flux-preserving regional science products. Means and medians are diagnostic summaries unless a downstream analysis explicitly requires them. The <a href="articles/getting-started.html">Getting started guide</a> executes this workflow and connects each returned object to the real-data example above.</p>
+Fixed-seed IFS simulation with six Capivara regions and their median-normalised spectra. The vertical annotations mark the input absorption and nebular features.
+</figcaption></figure><p>Use <code>spectra$sum_spectra</code> for flux-preserving regional spectra. Means and medians describe spectral shape. The <a href="articles/getting-started.html">Get Started guide</a> runs the complete example.</p>
 </div>
 <div class="section level2">
 <h2 id="continue-with">Continue with<a class="anchor" aria-label="anchor" href="#continue-with"></a>
@@ -231,18 +231,18 @@ Fixed-seed simulated IFS cube: six categorical Capivara regions and their median
 <li><a href="articles/support-masks.html">Construct and interpret support masks</a></li>
 <li><a href="articles/flux-preserving-products.html">Export flux-preserving regional spectra</a></li>
 <li><a href="articles/fits-ds9-export.html">Write FITS maps for DS9</a></li>
-<li><a href="articles/examples.html">Inspect verified examples and provenance</a></li>
+<li><a href="articles/examples.html">View MaNGA examples</a></li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="core-api">Core API<a class="anchor" aria-label="anchor" href="#core-api"></a>
+<h2 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a>
 </h2>
-<p>The <a href="reference/index.html">Reference index</a> groups the documented public API by scientific role. Kinematic analysis and an explicit bisymmetric model are documented separately so bar-specific assumptions are not inherited by the general spectral-segmentation workflow.</p>
+<p>The <a href="reference/index.html">function index</a> groups the public API by task. Kinematic analysis and bisymmetric modelling have separate guides.</p>
 </div>
 <div class="section level2">
 <h2 id="about">About<a class="anchor" aria-label="anchor" href="#about"></a>
 </h2>
-<p>Capivara is an R package for spectral segmentation and post-processing of IFS data cubes. The canonical citation is generated from <code>inst/CITATION</code>; cite the <a href="https://doi.org/10.1093/mnras/staf688" class="external-link">published MNRAS article</a> when using the package in scientific work.</p>
+<p>Capivara is an R package for spectral segmentation and post-processing of IFS data cubes. Use <code>citation("capivara")</code> or cite the <a href="https://doi.org/10.1093/mnras/staf688" class="external-link">MNRAS paper</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

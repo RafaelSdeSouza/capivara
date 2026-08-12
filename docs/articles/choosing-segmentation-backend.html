@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Choosing a Segmentation Backend • capivara</title>
+<title>Segmentation Backends • capivara</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Choosing a Segmentation Backend">
+<meta property="og:title" content="Segmentation Backends">
 <meta name="theme-color" content="#14233a">
 </head>
 <body>
@@ -35,17 +35,17 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -74,7 +74,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Choosing a Segmentation Backend</h1>
+      <h1>Segmentation Backends</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/RafaelSdeSouza/capivara/blob/HEAD/vignettes/choosing-segmentation-backend.Rmd" class="external-link"><code>vignettes/choosing-segmentation-backend.Rmd</code></a></small>
@@ -101,9 +101,8 @@ before a large run:</p>
 <span>  Ncomp <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  use_starlet_mask <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Use the exact backend when the supported footprint is small enough
-for the available memory and the all-pairs Ward construction is part of
-the intended analysis.</p>
+<p>Use the exact backend when its all-pairs distance matrix fits in
+memory.</p>
 </div>
 <div class="section level2">
 <h2 id="sparse-ward">Sparse Ward<a class="anchor" aria-label="anchor" href="#sparse-ward"></a>
@@ -121,11 +120,9 @@ distance matrix by building a coherent nearest-neighbour graph.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">seg</span><span class="op">$</span><span class="va">backend_info</span></span></code></pre></div>
-<p><code>knn_k</code> controls graph density. It is an analysis
-parameter, not a hidden performance toggle: record it with the input
-cube, support definition, random seed where applicable, and output path.
-<code>auto_k</code> may increase graph density to obtain a connected
-graph; inspect and retain <code>backend_info</code> when using it.</p>
+<p><code>knn_k</code> controls graph density. With
+<code>auto_k = TRUE</code>, Capivara may increase it to connect the
+graph; the value used is returned in <code>backend_info</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="select-spectral-channels">Select spectral channels<a class="anchor" aria-label="anchor" href="#select-spectral-channels"></a>
@@ -143,11 +140,9 @@ interval while keeping the full cube in the returned object:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">full_regional_spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarize_cluster_spectra.html">summarize_cluster_spectra</a></span><span class="op">(</span><span class="va">seg_window</span><span class="op">)</span><span class="op">$</span><span class="va">sum_spectra</span></span></code></pre></div>
-<p><code>feature_wavelength_range</code> selects clustering features. In
-contrast, when <code>target_snr</code> is used,
-<code>wavelength_range</code> selects the channels used by the S/N
-screen. The two intervals answer different questions and should not be
-treated as aliases.</p>
+<p><code>feature_wavelength_range</code> selects the clustering
+channels. <code>wavelength_range</code> selects the channels used by the
+S/N screen. The two parameters are not aliases.</p>
 </div>
 <div class="section level2">
 <h2 id="choose-the-component-count">Choose the component count<a class="anchor" aria-label="anchor" href="#choose-the-component-count"></a>
@@ -163,9 +158,8 @@ above the requested threshold.</p>
 <span>  k_values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">20</span><span class="op">)</span>,</span>
 <span>  wavelength_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">lambda_min</span>, <span class="va">lambda_max</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The target, variance treatment, candidate grid, and wavelength
-interval are part of the scientific configuration and should accompany
-the result.</p>
+<p>The result depends on the target, variance cube, candidate grid, and
+wavelength interval.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

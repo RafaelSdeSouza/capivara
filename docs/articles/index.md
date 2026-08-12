@@ -1,27 +1,27 @@
 # Articles
 
-### Start here
+### Start
 
-- [Getting
+- [Get
   Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md):
 
 ### User guide
 
-- [Choosing a Segmentation
-  Backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md):
+- [Segmentation
+  Backends](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md):
 - [Support
   Masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md):
-- [Flux-Preserving Spectral
-  Products](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md):
-- [FITS and DS9
-  Export](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md):
+- [Regional
+  Spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md):
+- [FITS and
+  DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md):
 - [Kinematic
   Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md):
-- [Bisymmetric Bar
-  Modelling](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md):
+- [Bar
+  Model](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md):
 
-### Examples and reproduction
+### Examples
 
 - [Examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md):
-- [Reproducing the
-  Paper](https://rafaelsdesouza.com.br/capivara/articles/reproducing-paper.md):
+- [Paper
+  Reproduction](https://rafaelsdesouza.com.br/capivara/articles/reproducing-paper.md):

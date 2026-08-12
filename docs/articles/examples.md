@@ -1,10 +1,6 @@
 # Examples
 
-These panels are existing real-data outputs, not outputs of the
-synthetic first-run cube. Their provenance is recorded in
-`docs/website_image_provenance.csv`; unresolved generator,
-configuration, and machine-readable product mappings are marked there
-rather than inferred from filenames.
+These examples use real MaNGA cubes.
 
 ## MaNGA segmentation mosaic
 
@@ -12,15 +8,12 @@ rather than inferred from filenames.
 segmentation maps, with each categorical region shown in a distinct
 colour](../reference/figures/mosaic_segmented_sagui.png)
 
-Real MaNGA inputs and Capivara categorical region maps. Colours
-distinguish labels and do not encode an ordered quantity. See the
-provenance table for the current reproduction status.
+Real MaNGA inputs and Capivara region maps. Colours identify regions and
+do not represent an ordered quantity.
 
-The visual sequence is: IFS cube, eligible spatial support, categorical
-spectral regions, then summed regional spectra. The image directly shows
-the input and region-map stages; regional spectra are obtained with
+The panels show the IFS cube, spatial support, and spectral regions. Use
 [`summarize_cluster_spectra()`](https://rafaelsdesouza.com.br/capivara/reference/summarize_cluster_spectra.md)
-and are not implicitly encoded by the colours.
+to obtain the summed regional spectra.
 
 ## Exact and sparse-graph comparison
 
@@ -28,21 +21,19 @@ and are not implicitly encoded by the colours.
 segmentation with and without starlet
 support](../reference/figures/manga_8443_6102_compare_current.png)
 
-MaNGA 8443-6102: existing comparison of
+MaNGA 8443-6102 segmented with
 [`segment()`](https://rafaelsdesouza.com.br/capivara/reference/segment.md)
 and
-[`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md)
-with and without starlet support. This panel is retained with an
-explicit incomplete-provenance status until its exact generator and
-configuration are verified.
+[`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md),
+with and without starlet support.
 
-Use the same scientific configuration record for a new observed cube:
+For a new observed cube:
 
 ``` r
 library(capivara)
 library(FITSio)
 
-cube <- FITSio::readFITS("/path/to/verified-input-cube.fits")
+cube <- FITSio::readFITS("/path/to/input_cube.fits")
 
 seg <- segment_large(
   input = cube,
@@ -60,19 +51,14 @@ seg <- segment_large(
 regional_spectra <- summarize_cluster_spectra(seg)$sum_spectra
 ```
 
-The path is intentionally a user-supplied placeholder. The executable
-[Getting
-started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
-guide contains the self-contained first run with no hidden file
-dependency.
+Replace the path with a local FITS cube. The [Get
+Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
+guide provides a runnable simulation.
 
 ## Kinematic and model-specific examples
 
 The [Kinematic
-analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md)
-guide separates line-map segmentation from an axisymmetric disc
-comparison. The [Bisymmetric bar
-models](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md)
-guide applies only when independent evidence supports a bar hypothesis;
-neither example changes the interpretation of ordinary spectral-region
-labels.
+Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md)
+guide covers line maps and an axisymmetric disc model. The [Bar
+Model](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md)
+guide adds bisymmetric terms for a known barred galaxy.

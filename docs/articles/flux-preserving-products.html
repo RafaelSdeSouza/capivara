@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Flux-Preserving Spectral Products • capivara</title>
+<title>Regional Spectra • capivara</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Flux-Preserving Spectral Products">
+<meta property="og:title" content="Regional Spectra">
 <meta name="theme-color" content="#14233a">
 </head>
 <body>
@@ -35,17 +35,17 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -74,7 +74,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Flux-Preserving Spectral Products</h1>
+      <h1>Regional Spectra</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/RafaelSdeSouza/capivara/blob/HEAD/vignettes/flux-preserving-products.Rmd" class="external-link"><code>vignettes/flux-preserving-products.Rmd</code></a></small>
@@ -83,9 +83,8 @@
 
     
     
-<p>The segmentation map is categorical. The corresponding summed
-regional spectra are the flux-preserving products for downstream
-fitting.</p>
+<p>The segmentation map is categorical. Summing the spaxels in each
+region gives the flux-preserving spectrum used for fitting.</p>
 <div class="section level2">
 <h2 id="regional-summaries">Regional summaries<a class="anchor" aria-label="anchor" href="#regional-summaries"></a>
 </h2>
@@ -110,11 +109,9 @@ F_{k,\lambda}^{\mathrm{sum}} = \sum_{p \in k} F_{p,\lambda}.
 </annotation></semantics></math></p>
 <p>When a variance cube is supplied, the regional variance is the sum of
 valid input variances multiplied by <code>variance_inflation</code>.
-That factor is an explicit way to carry a chosen covariance correction;
-Capivara does not infer spatial covariance from the flux cube.</p>
-<p>The returned means and medians are useful diagnostic spectra. They do
-not preserve the total regional flux and should not be substituted for
-summed spectra without a downstream reason.</p>
+Capivara does not estimate spatial covariance from the flux cube.</p>
+<p>Means and medians describe spectral shape; only the summed spectra
+preserve the total regional flux.</p>
 </div>
 <div class="section level2">
 <h2 id="representative-cubes">Representative cubes<a class="anchor" aria-label="anchor" href="#representative-cubes"></a>
@@ -135,9 +132,8 @@ summed spectra without a downstream reason.</p>
 <p><code><a href="../reference/reconstruct_cluster_cube.html">reconstruct_cluster_cube()</a></code> fills a region with a
 representative spectrum. <code><a href="../reference/reconstruct_flux_preserving_cube.html">reconstruct_flux_preserving_cube()</a></code>
 distributes each summed regional spectrum over its assigned spaxels so
-summing the reconstruction over the region recovers the regional total.
-These are different products; retain the function and options used when
-exporting either one.</p>
+summing the reconstruction over the region recovers the regional
+total.</p>
 </div>
 <div class="section level2">
 <h2 id="maptable-correspondence">Map–table correspondence<a class="anchor" aria-label="anchor" href="#maptable-correspondence"></a>

@@ -35,17 +35,17 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -90,15 +90,15 @@
 <li>Is there evidence for a more specific perturbation, such as a
 bar?</li>
 </ol>
-<p>The first two are useful for both barred and unbarred galaxies. A bar
-model is therefore not a default setting.</p>
+<p>The first two apply to both barred and unbarred galaxies. The bar
+model is optional.</p>
 <div class="section level2">
 <h2 id="kinematic-aware-segmentation">1. Kinematic-aware segmentation<a class="anchor" aria-label="anchor" href="#kinematic-aware-segmentation"></a>
 </h2>
-<p><code><a href="../reference/segment_kinematics.html">segment_kinematics()</a></code> makes the native line maps and
-clusters flux, velocity, dispersion, and profile-shape information. It
-does not run ordinary full-spectrum segmentation, which answers a
-different question.</p>
+<p><code><a href="../reference/segment_kinematics.html">segment_kinematics()</a></code> makes line maps and clusters flux,
+velocity, dispersion, and profile-shape information. Full-spectrum
+segmentation is handled by <code><a href="../reference/segment.html">segment()</a></code> and
+<code><a href="../reference/segment_large.html">segment_large()</a></code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rafaelsdesouza.com.br/capivara/">capivara</a></span><span class="op">)</span></span>
 <span></span>
@@ -111,10 +111,9 @@ different question.</p>
 <span>  n_segments <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  show_plots <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Choose <code>segmentation_mode = "path_signature"</code> when the
-path-signature feature representation is part of the science question.
-It additionally writes that segmentation; it does not replace the native
-kinematic maps.</p>
+<p>Choose <code>segmentation_mode = "path_signature"</code> to add a
+path-signature segmentation. The native kinematic maps are still
+returned.</p>
 <p><code>support_mode = "starlet"</code> is the conservative default and
 retains the white-light galaxy footprint. For emission-line work in a
 field with appreciable sky, set <code>support_mode = "line_flux"</code>;
@@ -127,9 +126,8 @@ important.</p>
 <div class="section level2">
 <h2 id="axisymmetric-disc-comparison">2. Axisymmetric disc comparison<a class="anchor" aria-label="anchor" href="#axisymmetric-disc-comparison"></a>
 </h2>
-<p>The default model is an axisymmetric disc. It produces an observed
-velocity map, disc model, residual map, and circular-speed profile
-without making any claim that the galaxy hosts a bar.</p>
+<p>The default axisymmetric model returns the observed velocity map,
+disc model, residual map, and circular-speed profile.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_kinematic_analysis.html">run_kinematic_analysis</a></span><span class="op">(</span></span>
 <span>  cube_path <span class="op">=</span> <span class="st">"/data/galaxy.fits"</span>,</span>
@@ -143,9 +141,9 @@ without making any claim that the galaxy hosts a bar.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">result</span>, which <span class="op">=</span> <span class="st">"model"</span><span class="op">)</span></span></code></pre></div>
-<p>For a MaNGA LOGCUBE, leave <code>redshift = NA_real_</code> to
-resolve it from the local metadata/header. For another IFU cube, provide
-the redshift explicitly.</p>
+<p>For a MaNGA LOGCUBE, leave <code>redshift = NA_real_</code> to read
+it from the local metadata or header. For another IFU cube, provide the
+redshift.</p>
 </div>
 <div class="section level2">
 <h2 id="model-modules">3. Model modules<a class="anchor" aria-label="anchor" href="#model-modules"></a>
@@ -161,10 +159,9 @@ without changing the upstream workflow.</p>
 <span><span class="co">#&gt; 2 bisymmetric_bar   Bisymmetric bar               TRUE            TRUE</span></span></code></pre></div>
 <p>The bar-specific workflow is documented separately in
 <code><a href="../articles/bisymmetric-bar-model.html">vignette("bisymmetric-bar-model", package = "capivara")</a></code>.</p>
-<p>Return to the <a href="getting-started.html">spectral-segmentation
-first run</a>, or inspect the <a href="examples.html">result-led
-examples</a>. Kinematic labels remain categorical; the velocity and
-dispersion maps are separate measured or modelled quantities.</p>
+<p>Return to <a href="getting-started.html">Get Started</a>, or view the
+<a href="examples.html">MaNGA examples</a>. Region labels are
+categorical; velocity and dispersion are separate quantities.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

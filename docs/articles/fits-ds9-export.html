@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>FITS and DS9 Export • capivara</title>
+<title>FITS and DS9 • capivara</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="FITS and DS9 Export">
+<meta property="og:title" content="FITS and DS9">
 <meta name="theme-color" content="#14233a">
 </head>
 <body>
@@ -35,17 +35,17 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -74,7 +74,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>FITS and DS9 Export</h1>
+      <h1>FITS and DS9</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/RafaelSdeSouza/capivara/blob/HEAD/vignettes/fits-ds9-export.Rmd" class="external-link"><code>vignettes/fits-ds9-export.Rmd</code></a></small>
@@ -103,9 +103,8 @@ dimensions match the input cube’s spatial footprint.</p>
 <span>  file <span class="op">=</span> <span class="st">"capivara_segmentation_map.fits"</span>,</span>
 <span>  c1 <span class="op">=</span> <span class="st">"Capivara map: 0=background; positive integers=region identifiers"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The zero conversion makes background handling explicit for FITS
-viewers. It does not introduce a new Capivara region, and the positive
-integers do not form an ordered physical scale.</p>
+<p>Zero marks the background in the FITS file. Positive integers
+identify Capivara regions.</p>
 </div>
 <div class="section level2">
 <h2 id="preserve-wcs">Preserve WCS<a class="anchor" aria-label="anchor" href="#preserve-wcs"></a>
@@ -123,10 +122,8 @@ integers do not form an ordered physical scale.</p>
 <span>  header <span class="op">=</span> <span class="va">seg</span><span class="op">$</span><span class="va">header</span>,</span>
 <span>  c1 <span class="op">=</span> <span class="st">"Capivara map: 0=background; positive integers=region identifiers"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Verify the output orientation and WCS against the original cube in
-the target viewer. FITS libraries can expose axis ordering differently
-from plotting code, so visual agreement alone is not a substitute for
-checking coordinate metadata.</p>
+<p>Check the output orientation and WCS against the original cube. FITS
+libraries may expose axis ordering differently from plotting code.</p>
 </div>
 <div class="section level2">
 <h2 id="regional-spectra">Regional spectra<a class="anchor" aria-label="anchor" href="#regional-spectra"></a>
@@ -139,10 +136,9 @@ checking coordinate metadata.</p>
 <span>  <span class="st">"capivara_sum_spectra.csv"</span>,</span>
 <span>  row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The region column links every table row to the same positive
-identifier in the FITS map. Preserve the wavelength coordinate, input
-cube identifier, support settings, backend parameters, and output paths
-alongside these files.</p>
+<p>The <code>region</code> column links each table row to the same
+identifier in the FITS map. Save the wavelength coordinate and
+segmentation parameters with the files.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

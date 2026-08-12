@@ -1,9 +1,7 @@
-# Getting Started
+# Get Started
 
-Capivara assigns eligible spaxels in an integral-field spectroscopy
-(IFS) cube to categorical regions with coherent spectra. Support
-construction, region assignment, and regional spectral products are
-distinct steps.
+Capivara groups spaxels with coherent spectra and returns their summed
+regional spectra.
 
 ## Install
 
@@ -13,17 +11,14 @@ remotes::install_github("RafaelSdeSouza/capivara", upgrade = "never")
 library(capivara)
 ```
 
-The minimal example below uses the exact Ward backend and does not
-require `torch`, Python, a GPU, survey downloads, or a local data file.
+The example below uses the exact Ward backend and the standard package
+dependencies.
 
 ## Simulate a cube
 
-This cube is generated only to exercise the package API. Its toy spatial
-model mixes a bulge, disc, compact nucleus, and two star-forming knots.
-The four input profiles include simplified Hβ, \[O III\], Mg b, Na D,
-Hα, and \[N II\] features. It is not an observation and must not be
-interpreted as scientific evidence. The displayed seed makes the example
-deterministic.
+This fixed-seed simulation mixes a bulge, disc, compact nucleus, and two
+star-forming knots. The four input profiles include Hβ, \[O III\], Mg b,
+Na D, Hα, and \[N II\] features.
 
 ``` r
 set.seed(241021962)
@@ -82,10 +77,8 @@ for (i in seq_len(n_row)) {
 }
 ```
 
-The elliptical logical matrix is the spatial support: `TRUE` identifies
-eligible spaxels. Setting the cube to `NA` outside that support ensures
-those positions remain unassigned. A support mask does not itself assign
-region labels.
+The elliptical logical matrix is the spatial support. `TRUE` marks
+spaxels to segment; positions outside it remain `NA`.
 
 ## Segment the cube
 
@@ -266,9 +259,8 @@ is
 F_{k,\lambda} = \sum_{p \in k} F_{p,\lambda}.
 ```
 
-Use `sum_spectra` when total regional flux is the required science
-product. `median_spectra` and `mean_spectra` are diagnostic summaries
-unless a specific downstream method requires them.
+Use `sum_spectra` for total regional flux. `median_spectra` and
+`mean_spectra` describe spectral shape.
 
 ## Use real data
 
@@ -276,10 +268,8 @@ unless a specific downstream method requires them.
 segmentation maps, with each categorical region shown in a distinct
 colour](../reference/figures/mosaic_segmented_sagui.png)
 
-Real MaNGA examples showing inputs and categorical region maps. Colours
-identify region labels only. The image-provenance table records the
-target information that could be verified locally and marks the
-generator mapping as incomplete.
+Real MaNGA galaxies and their Capivara region maps. Colours identify
+regions and do not represent an ordered quantity.
 
 For an observed cube, read the FITS object with
 [`FITSio::readFITS()`](https://rdrr.io/pkg/FITSio/man/readFITS.html) and
@@ -291,6 +281,6 @@ The [backend
 guide](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md)
 explains that choice; the [support
 guide](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md)
-covers data-driven support masks; and the [FITS export
-guide](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
-preserves label and WCS conventions.
+covers data-driven masks; and [FITS and
+DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
+shows how to save the map with its WCS.

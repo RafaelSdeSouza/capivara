@@ -1,4 +1,4 @@
-# Choosing a Segmentation Backend
+# Segmentation Backends
 
 Capivara exposes an exact Ward backend and a sparse-graph Ward backend.
 They return compatible region maps and regional-product inputs, but they
@@ -21,9 +21,7 @@ seg <- segment(
 )
 ```
 
-Use the exact backend when the supported footprint is small enough for
-the available memory and the all-pairs Ward construction is part of the
-intended analysis.
+Use the exact backend when its all-pairs distance matrix fits in memory.
 
 ## Sparse Ward
 
@@ -44,11 +42,9 @@ seg <- segment_large(
 seg$backend_info
 ```
 
-`knn_k` controls graph density. It is an analysis parameter, not a
-hidden performance toggle: record it with the input cube, support
-definition, random seed where applicable, and output path. `auto_k` may
-increase graph density to obtain a connected graph; inspect and retain
-`backend_info` when using it.
+`knn_k` controls graph density. With `auto_k = TRUE`, Capivara may
+increase it to connect the graph; the value used is returned in
+`backend_info`.
 
 ## Select spectral channels
 
@@ -68,10 +64,9 @@ seg_window <- segment_large(
 full_regional_spectra <- summarize_cluster_spectra(seg_window)$sum_spectra
 ```
 
-`feature_wavelength_range` selects clustering features. In contrast,
-when `target_snr` is used, `wavelength_range` selects the channels used
-by the S/N screen. The two intervals answer different questions and
-should not be treated as aliases.
+`feature_wavelength_range` selects the clustering channels.
+`wavelength_range` selects the channels used by the S/N screen. The two
+parameters are not aliases.
 
 ## Choose the component count
 
@@ -89,6 +84,5 @@ choice <- choose_ncomp_by_snr(
 )
 ```
 
-The target, variance treatment, candidate grid, and wavelength interval
-are part of the scientific configuration and should accompany the
-result.
+The result depends on the target, variance cube, candidate grid, and
+wavelength interval.

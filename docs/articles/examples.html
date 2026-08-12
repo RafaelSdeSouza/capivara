@@ -35,17 +35,17 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-user-guide" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">User guide</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-user-guide">
-<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Choosing a segmentation backend</a></li>
+<li><a class="dropdown-item" href="../articles/choosing-segmentation-backend.html">Segmentation backends</a></li>
     <li><a class="dropdown-item" href="../articles/support-masks.html">Support masks</a></li>
-    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Flux-preserving spectral products</a></li>
-    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9 export</a></li>
+    <li><a class="dropdown-item" href="../articles/flux-preserving-products.html">Regional spectra</a></li>
+    <li><a class="dropdown-item" href="../articles/fits-ds9-export.html">FITS and DS9</a></li>
     <li><a class="dropdown-item" href="../articles/kinematic-analysis.html">Kinematic analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bisymmetric bar models</a></li>
-    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Reproducing the paper</a></li>
+    <li><a class="dropdown-item" href="../articles/bisymmetric-bar-model.html">Bar model</a></li>
+    <li><a class="dropdown-item" href="../articles/reproducing-paper.html">Paper reproduction</a></li>
   </ul>
 </li>
 <li class="active nav-item"><a class="nav-link" href="../articles/examples.html">Examples</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1093/mnras/staf688">Paper</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/RafaelSdeSouza/capivara">GitHub</a></li>
       </ul>
@@ -83,39 +83,29 @@
 
     
     
-<p>These panels are existing real-data outputs, not outputs of the
-synthetic first-run cube. Their provenance is recorded in
-<code>docs/website_image_provenance.csv</code>; unresolved generator,
-configuration, and machine-readable product mappings are marked there
-rather than inferred from filenames.</p>
+<p>These examples use real MaNGA cubes.</p>
 <div class="section level2">
 <h2 id="manga-segmentation-mosaic">MaNGA segmentation mosaic<a class="anchor" aria-label="anchor" href="#manga-segmentation-mosaic"></a>
 </h2>
 <figure class="science-figure"><img src="../reference/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour"><figcaption>
-Real MaNGA inputs and Capivara categorical region maps. Colours
-distinguish labels and do not encode an ordered quantity. See the
-provenance table for the current reproduction status.
-</figcaption></figure><p>The visual sequence is: IFS cube, eligible spatial support,
-categorical spectral regions, then summed regional spectra. The image
-directly shows the input and region-map stages; regional spectra are
-obtained with <code><a href="../reference/summarize_cluster_spectra.html">summarize_cluster_spectra()</a></code> and are not
-implicitly encoded by the colours.</p>
+Real MaNGA inputs and Capivara region maps. Colours identify regions and
+do not represent an ordered quantity.
+</figcaption></figure><p>The panels show the IFS cube, spatial support, and spectral regions.
+Use <code><a href="../reference/summarize_cluster_spectra.html">summarize_cluster_spectra()</a></code> to obtain the summed
+regional spectra.</p>
 </div>
 <div class="section level2">
 <h2 id="exact-and-sparse-graph-comparison">Exact and sparse-graph comparison<a class="anchor" aria-label="anchor" href="#exact-and-sparse-graph-comparison"></a>
 </h2>
 <figure class="science-figure"><img src="../reference/figures/manga_8443_6102_compare_current.png" alt="MaNGA 8443-6102 comparison of exact and sparse-graph Capivara segmentation with and without starlet support"><figcaption>
-MaNGA 8443-6102: existing comparison of <code><a href="../reference/segment.html">segment()</a></code> and
-<code><a href="../reference/segment_large.html">segment_large()</a></code> with and without starlet support. This
-panel is retained with an explicit incomplete-provenance status until
-its exact generator and configuration are verified.
-</figcaption></figure><p>Use the same scientific configuration record for a new observed
-cube:</p>
+MaNGA 8443-6102 segmented with <code><a href="../reference/segment.html">segment()</a></code> and
+<code><a href="../reference/segment_large.html">segment_large()</a></code>, with and without starlet support.
+</figcaption></figure><p>For a new observed cube:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rafaelsdesouza.com.br/capivara/">capivara</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">FITSio</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">cube</span> <span class="op">&lt;-</span> <span class="fu">FITSio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/FITSio/man/readFITS.html" class="external-link">readFITS</a></span><span class="op">(</span><span class="st">"/path/to/verified-input-cube.fits"</span><span class="op">)</span></span>
+<span><span class="va">cube</span> <span class="op">&lt;-</span> <span class="fu">FITSio</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/FITSio/man/readFITS.html" class="external-link">readFITS</a></span><span class="op">(</span><span class="st">"/path/to/input_cube.fits"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">seg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/segment_large.html">segment_large</a></span><span class="op">(</span></span>
 <span>  input <span class="op">=</span> <span class="va">cube</span>,</span>
@@ -131,19 +121,15 @@ cube:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">regional_spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarize_cluster_spectra.html">summarize_cluster_spectra</a></span><span class="op">(</span><span class="va">seg</span><span class="op">)</span><span class="op">$</span><span class="va">sum_spectra</span></span></code></pre></div>
-<p>The path is intentionally a user-supplied placeholder. The executable
-<a href="getting-started.html">Getting started</a> guide contains the
-self-contained first run with no hidden file dependency.</p>
+<p>Replace the path with a local FITS cube. The <a href="getting-started.html">Get Started</a> guide provides a runnable
+simulation.</p>
 </div>
 <div class="section level2">
 <h2 id="kinematic-and-model-specific-examples">Kinematic and model-specific examples<a class="anchor" aria-label="anchor" href="#kinematic-and-model-specific-examples"></a>
 </h2>
-<p>The <a href="kinematic-analysis.html">Kinematic analysis</a> guide
-separates line-map segmentation from an axisymmetric disc comparison.
-The <a href="bisymmetric-bar-model.html">Bisymmetric bar models</a>
-guide applies only when independent evidence supports a bar hypothesis;
-neither example changes the interpretation of ordinary spectral-region
-labels.</p>
+<p>The <a href="kinematic-analysis.html">Kinematic Analysis</a> guide
+covers line maps and an axisymmetric disc model. The <a href="bisymmetric-bar-model.html">Bar Model</a> guide adds bisymmetric
+terms for a known barred galaxy.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

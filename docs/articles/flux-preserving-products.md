@@ -1,7 +1,7 @@
-# Flux-Preserving Spectral Products
+# Regional Spectra
 
-The segmentation map is categorical. The corresponding summed regional
-spectra are the flux-preserving products for downstream fitting.
+The segmentation map is categorical. Summing the spaxels in each region
+gives the flux-preserving spectrum used for fitting.
 
 ## Regional summaries
 
@@ -27,13 +27,11 @@ F_{k,\lambda}^{\mathrm{sum}} = \sum_{p \in k} F_{p,\lambda}.
 ```
 
 When a variance cube is supplied, the regional variance is the sum of
-valid input variances multiplied by `variance_inflation`. That factor is
-an explicit way to carry a chosen covariance correction; Capivara does
-not infer spatial covariance from the flux cube.
+valid input variances multiplied by `variance_inflation`. Capivara does
+not estimate spatial covariance from the flux cube.
 
-The returned means and medians are useful diagnostic spectra. They do
-not preserve the total regional flux and should not be substituted for
-summed spectra without a downstream reason.
+Means and medians describe spectral shape; only the summed spectra
+preserve the total regional flux.
 
 ## Representative cubes
 
@@ -57,8 +55,6 @@ fills a region with a representative spectrum.
 [`reconstruct_flux_preserving_cube()`](https://rafaelsdesouza.com.br/capivara/reference/reconstruct_flux_preserving_cube.md)
 distributes each summed regional spectrum over its assigned spaxels so
 summing the reconstruction over the region recovers the regional total.
-These are different products; retain the function and options used when
-exporting either one.
 
 ## Map–table correspondence
 
