@@ -41,6 +41,7 @@ jobs:
             any::xml2
             any::knitr
             any::rmarkdown
+            any::rsconnect
             local::.
           needs: website
 
