@@ -35,23 +35,26 @@ navbar:
     articles:
       text: User guide
       menu:
-      - text: Choosing a segmentation backend
+      - text: Segmentation backends
         href: articles/choosing-segmentation-backend.html
       - text: Support masks
         href: articles/support-masks.html
-      - text: Flux-preserving spectral products
+      - text: Regional spectra
         href: articles/flux-preserving-products.html
-      - text: FITS and DS9 export
+      - text: FITS and DS9
         href: articles/fits-ds9-export.html
       - text: Kinematic analysis
         href: articles/kinematic-analysis.html
-      - text: Bisymmetric bar models
+      - text: Bar model
         href: articles/bisymmetric-bar-model.html
-      - text: Reproducing the paper
+      - text: Paper reproduction
         href: articles/reproducing-paper.html
     examples:
       text: Examples
       href: articles/examples.html
+    reference:
+      text: Functions
+      href: reference/index.html
     paper:
       text: Paper
       href: https://doi.org/10.1093/mnras/staf688
@@ -60,7 +63,7 @@ navbar:
       href: https://github.com/RafaelSdeSouza/capivara
 
 articles:
-- title: Start here
+- title: Start
   navbar: ~
   contents:
   - getting-started
@@ -73,7 +76,7 @@ articles:
   - fits-ds9-export
   - kinematic-analysis
   - bisymmetric-bar-model
-- title: Examples and reproduction
+- title: Examples
   navbar: ~
   contents:
   - examples

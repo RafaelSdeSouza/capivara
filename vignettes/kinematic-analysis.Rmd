@@ -18,14 +18,14 @@ Capivara separates three questions that are often mixed together:
 2. Is an axisymmetric rotating disc an adequate comparison model?
 3. Is there evidence for a more specific perturbation, such as a bar?
 
-The first two are useful for both barred and unbarred galaxies. A bar model is
-therefore not a default setting.
+The first two apply to both barred and unbarred galaxies. The bar model is
+optional.
 
 ## 1. Kinematic-aware segmentation
 
-`segment_kinematics()` makes the native line maps and clusters flux, velocity,
-dispersion, and profile-shape information. It does not run ordinary
-full-spectrum segmentation, which answers a different question.
+`segment_kinematics()` makes line maps and clusters flux, velocity, dispersion,
+and profile-shape information. Full-spectrum segmentation is handled by
+`segment()` and `segment_large()`.
 
 ```{r kinematic-segmentation, eval = FALSE}
 library(capivara)
@@ -41,9 +41,8 @@ segments <- segment_kinematics(
 )
 ```
 
-Choose `segmentation_mode = "path_signature"` when the path-signature feature
-representation is part of the science question. It additionally writes that
-segmentation; it does not replace the native kinematic maps.
+Choose `segmentation_mode = "path_signature"` to add a path-signature
+segmentation. The native kinematic maps are still returned.
 
 `support_mode = "starlet"` is the conservative default and retains the
 white-light galaxy footprint. For emission-line work in a field with appreciable
@@ -54,9 +53,8 @@ lower it if faint extended line emission is scientifically important.
 
 ## 2. Axisymmetric disc comparison
 
-The default model is an axisymmetric disc. It produces an observed velocity
-map, disc model, residual map, and circular-speed profile without making any
-claim that the galaxy hosts a bar.
+The default axisymmetric model returns the observed velocity map, disc model,
+residual map, and circular-speed profile.
 
 ```{r axisymmetric-model, eval = FALSE}
 result <- run_kinematic_analysis(
@@ -73,8 +71,8 @@ result <- run_kinematic_analysis(
 plot(result, which = "model")
 ```
 
-For a MaNGA LOGCUBE, leave `redshift = NA_real_` to resolve it from the local
-metadata/header. For another IFU cube, provide the redshift explicitly.
+For a MaNGA LOGCUBE, leave `redshift = NA_real_` to read it from the local
+metadata or header. For another IFU cube, provide the redshift.
 
 ## 3. Model modules
 
@@ -88,6 +86,6 @@ kinematic_models()
 
 The bar-specific workflow is documented separately in `vignette("bisymmetric-bar-model", package = "capivara")`.
 
-Return to the [spectral-segmentation first run](getting-started.html), or inspect
-the [result-led examples](examples.html). Kinematic labels remain categorical;
-the velocity and dispersion maps are separate measured or modelled quantities.
+Return to [Get Started](getting-started.html), or view the [MaNGA
+examples](examples.html). Region labels are categorical; velocity and
+dispersion are separate quantities.

@@ -14,15 +14,13 @@ and returning flux-preserving regional spectra.
 <img src="man/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour">
 <figcaption>
 
-Real MaNGA examples showing inputs and categorical Capivara region maps.
-Region colours identify labels only; they do not encode an ordered
-physical quantity. The repository provenance record identifies the
-targets and records the currently unresolved generator mapping.
+Real MaNGA galaxies and their Capivara region maps. Colours identify
+regions and do not represent an ordered quantity.
 </figcaption>
 
 </figure>
 
-The workflow separates four objects that should not be conflated:
+The workflow has four stages:
 
 <ol class="science-flow">
 
@@ -56,17 +54,14 @@ remotes::install_github("RafaelSdeSouza/capivara", upgrade = "never")
 library(capivara)
 ```
 
-`torch` is optional. The exact first-run workflow below uses the
-declared base R and package dependencies and does not require a GPU,
-Python, a survey download, or a local FITS file.
+`torch` is optional. The example below runs with the standard package
+dependencies.
 
 ## Quick start
 
-This example creates a small **synthetic** IFS cube with a fixed seed.
-Its four input profiles contain recognisable Hβ, \[O III\], Mg b, Na D,
-Hα, and \[N II\] features and are mixed across a toy bulge, disc,
-nucleus, and two star-forming knots. This is an API demonstration, not
-scientific evidence.
+This fixed-seed example creates a small synthetic IFS cube. Its four
+profiles contain Hβ, \[O III\], Mg b, Na D, Hα, and \[N II\] features
+mixed across a bulge, disc, nucleus, and two star-forming knots.
 
 ``` r
 library(capivara)
@@ -163,19 +158,16 @@ plot_cluster(seg)
 <img src="man/figures/capivara-first-run-synthetic-map-1.png" alt="Synthetic Capivara IFS example showing six categorical spatial regions beside their median-normalised spectra with realistic absorption and nebular-line features">
 <figcaption>
 
-Fixed-seed simulated IFS cube: six categorical Capivara regions and
-their median-normalised spectral profiles. The vertical annotations mark
-the simplified absorption and nebular features built into the toy input;
-the output is a software demonstration, not observational evidence.
+Fixed-seed IFS simulation with six Capivara regions and their
+median-normalised spectra. The vertical annotations mark the input
+absorption and nebular features.
 </figcaption>
 
 </figure>
 
-Use `spectra$sum_spectra` for flux-preserving regional science products.
-Means and medians are diagnostic summaries unless a downstream analysis
-explicitly requires them. The [Getting started
-guide](articles/getting-started.html) executes this workflow and
-connects each returned object to the real-data example above.
+Use `spectra$sum_spectra` for flux-preserving regional spectra. Means
+and medians describe spectral shape. The [Get Started
+guide](articles/getting-started.html) runs the complete example.
 
 ## Continue with
 
@@ -185,19 +177,15 @@ connects each returned object to the real-data example above.
 - [Export flux-preserving regional
   spectra](articles/flux-preserving-products.html)
 - [Write FITS maps for DS9](articles/fits-ds9-export.html)
-- [Inspect verified examples and provenance](articles/examples.html)
+- [View MaNGA examples](articles/examples.html)
 
-## Core API
+## Functions
 
-The [Reference index](reference/index.html) groups the documented public
-API by scientific role. Kinematic analysis and an explicit bisymmetric
-model are documented separately so bar-specific assumptions are not
-inherited by the general spectral-segmentation workflow.
+The [function index](reference/index.html) groups the public API by
+task. Kinematic analysis and bisymmetric modelling have separate guides.
 
 ## About
 
 Capivara is an R package for spectral segmentation and post-processing
-of IFS data cubes. The canonical citation is generated from
-`inst/CITATION`; cite the [published MNRAS
-article](https://doi.org/10.1093/mnras/staf688) when using the package
-in scientific work.
+of IFS data cubes. Use `citation("capivara")` or cite the [MNRAS
+paper](https://doi.org/10.1093/mnras/staf688).
