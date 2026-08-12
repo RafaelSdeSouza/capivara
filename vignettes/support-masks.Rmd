@@ -1,0 +1,99 @@
+---
+title: "Support Masks"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Support Masks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+A support mask identifies the spatial elements eligible for segmentation. It
+does not assign region labels. Capivara can use an explicit missing-data
+footprint, a white-light starlet support, or an adaptive multi-band support.
+
+## Starlet support
+
+Both segmentation backends accept the same starlet controls:
+
+```{r starlet, eval=FALSE}
+seg <- segment_large(
+  input = cube,
+  Ncomp = 25,
+  use_starlet_mask = TRUE,
+  support_method = "starlet",
+  starlet_J = 5,
+  starlet_scales = 2:5,
+  include_coarse = FALSE,
+  denoise_k = 0,
+  starlet_mode = "soft",
+  positive_only = TRUE,
+  mask_mode = "na",
+  knn_k = 100
+)
+```
+
+The cube is collapsed to a white-light image, decomposed across starlet scales,
+and reconstructed from the selected scales. `include_coarse` controls the
+coarse plane; `denoise_k` is expressed in MAD units; and `positive_only`
+excludes negative reconstructed values. Record every setting because a support
+change alters which spaxels can receive a label.
+
+Inspect the support independently when the footprint is scientifically
+important:
+
+```{r inspect-starlet, eval=FALSE}
+support_result <- build_starlet_mask(
+  cube,
+  starlet_J = 5,
+  starlet_scales = 2:5,
+  include_coarse = FALSE,
+  denoise_k = 0,
+  mode = "soft",
+  positive_only = TRUE
+)
+
+support_result$mask
+```
+
+## Adaptive support
+
+The adaptive builder can combine per-band evidence and optional transforms.
+
+```{r adaptive, eval=FALSE}
+adaptive <- build_adaptive_support(
+  cube,
+  transform = "asinh",
+  sky_method = "border",
+  border_fraction = 0.1,
+  z_threshold = 3,
+  min_band_persistence = 2
+)
+
+seg <- segment(
+  cube,
+  Ncomp = 15,
+  use_starlet_mask = TRUE,
+  support_method = "adaptive",
+  support_args = list(
+    transform = "asinh",
+    sky_method = "border",
+    z_threshold = 3,
+    min_band_persistence = 2
+  )
+)
+```
+
+Transform choice, sky estimator, persistence requirement, and thresholds must
+be retained with the segmentation provenance. Do not describe an excluded
+spaxel as a separate physical region.
+
+## Missing and background values
+
+With `mask_mode = "na"`, excluded cube values and returned map locations are
+missing. A FITS export may convert those map values to zero for display, while
+positive integers retain the Capivara region identifiers. This conversion is a
+file convention; it must not be applied to the science cube silently.

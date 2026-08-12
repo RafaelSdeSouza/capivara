@@ -1,0 +1,49 @@
+Capivara Phase B preflight
+Date: 2026-08-12
+
+Repository: /Users/rd23aag/Documents/GitHub/capivara
+Branch: main
+HEAD: 48bff61aa8359d67f90d7f4ae265ddb1b0d521cc
+Remote: https://github.com/RafaelSdeSouza/capivara.git
+
+Pre-existing working-tree changes (recorded before Phase B):
+ M NAMESPACE
+ M R/kinematics_plot_capivara_kinematics.R
+ M Rplots.pdf
+?? R/segment_emission_lines.R
+?? inst/tutorials/run_centa_magnum_emission_line_modes.R
+?? inst/tutorials/run_centa_magnum_no_mask.R
+?? inst/tutorials/run_centa_magnum_no_mask_preview.R
+?? inst/tutorials/run_centa_magnum_starlet_comparison.R
+?? inst/tutorials/run_centa_magnum_whole_vs_emission_windows.R
+?? inst/tutorials/run_emission_line_segmentation.R
+?? inst/tutorials/run_full_manga_science_workflow.R
+
+The NAMESPACE diff adds emission_lines and segment_emission_lines. The
+kinematics plotting diff changes internal line labelling, starlet-support
+outlines, and bar-axis plotting. Phase B does not edit those files or advertise
+the pending emission-line exports. Rplots.pdf and all listed tutorial scripts
+are also preserved.
+
+No Phase B target file had a pre-existing diff.
+
+Publication configuration before Phase B:
+- .github/workflows/publish.yml rendered Quarto and published to gh-pages with
+  contents:write.
+- .github/workflows/render-readme.yml rendered README.qmd, committed README.md,
+  and pushed from Actions.
+- _quarto.yml published Home, Release Notes, and About.
+- _pkgdown.yml existed but was not used by the publication workflow.
+- Local branch configuration includes main and an existing gh-pages tracking
+  branch; the default working branch is main.
+
+Local toolchain recorded before editing:
+- R 4.5.2 (aarch64-apple-darwin20)
+- pkgdown 2.2.0
+- Quarto 1.8.27
+- Pandoc 3.6.3
+- rmarkdown 2.30
+- knitr 1.51
+- xml2 1.5.2
+- devtools 2.5.0
+- roxygen2 7.3.3

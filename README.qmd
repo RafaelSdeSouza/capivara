@@ -1,292 +1,287 @@
 ---
 format: gfm
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
-# Capivara <img align="right" src="images/logo_capivara.png" width="110" alt="Capivara logo">
+# Capivara <img align="right" src="man/figures/logo_capivara.png" width="72" alt="Capivara package logo">
 
-[![arXiv](https://img.shields.io/badge/arXiv-astro--ph%2F2404.18165-%23ED9145?labelColor=%23ED9145&color=%2321609D)](https://arxiv.org/abs/2410.21962)
-[![GitHub](https://img.shields.io/github/license/RafaelSdeSouza/capivara)](https://github.com/RafaelSdeSouza/capivara/blob/main/LICENSE)
-[![Coverage Status](https://img.shields.io/codecov/c/github/RafaelSdeSouza/capivara)](https://codecov.io/gh/RafaelSdeSouza/capivara)
-[![Last Commit](https://img.shields.io/github/last-commit/RafaelSdeSouza/capivara)](https://github.com/RafaelSdeSouza/capivara/commits)
+Capivara performs spectral segmentation of integral-field spectroscopy (IFS)
+cubes, assigning eligible spaxels to regions with coherent spectra and
+returning flux-preserving regional spectra.
 
-Spectral segmentation and morphology-aware decomposition for astronomical data
-cubes.
+[Peer-reviewed paper](https://doi.org/10.1093/mnras/staf688) ·
+[arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
 
-Capivara defines spatial regions directly from IFU spectra. It keeps the core
-workflow intentionally focused: build a scientifically meaningful support mask,
-cluster spectra into coherent regions, and export flux-preserving regional
-spectra for downstream analysis.
+<figure class="science-figure">
+<img src="man/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour">
+<figcaption>Real MaNGA examples showing inputs and categorical Capivara region maps. Region colours identify labels only; they do not encode an ordered physical quantity. The repository provenance record identifies the targets and records the currently unresolved generator mapping.</figcaption>
+</figure>
 
-## Website
+The workflow separates four objects that should not be conflated:
 
-The package website is the main documentation entry point:
+<ol class="science-flow">
+<li>IFS cube</li>
+<li>spatial support</li>
+<li>spectral regions</li>
+<li>regional spectra</li>
+</ol>
 
-- [Capivara website](https://rafaelsdesouza.github.io/capivara/)
-
-## Installation
+## Installation {#installation}
 
 ```r
 install.packages("remotes")
-remotes::install_github("RafaelSdeSouza/capivara")
+remotes::install_github("RafaelSdeSouza/capivara", upgrade = "never")
 library(capivara)
 ```
 
-Optional GPU acceleration:
+`torch` is optional. The exact first-run workflow below uses the declared base
+R and package dependencies and does not require a GPU, Python, a survey
+download, or a local FITS file.
 
-```r
-install.packages("torch")
-torch::install_torch()
-```
+## Quick start {#quick-start}
 
-`torch` is optional. Capivara falls back to base R distance calculations when
-it is not installed.
+This example creates a small **synthetic** IFS cube with a fixed seed. Its four
+input profiles contain recognisable Hβ, [O III], Mg b, Na D, Hα, and [N II]
+features and are mixed across a toy bulge, disc, nucleus, and two star-forming
+knots. This is an API demonstration, not scientific evidence.
 
-## Minimal workflow
-
-```r
+```{r synthetic-cube}
 library(capivara)
-library(FITSio)
 
-x <- FITSio::readFITS("manga-8140-12703-LOGCUBE.fits")
+set.seed(241021962)
+n_row <- 24L
+n_col <- 24L
+n_wave <- 96L
+wavelength <- seq(4800, 6800, length.out = n_wave)
+gaussian <- function(centre, width) {
+  exp(-0.5 * ((wavelength - centre) / width)^2)
+}
 
-seg <- segment_large(
-  input = x,
-  Ncomp = 25,
-  use_starlet_mask = TRUE,
-  starlet_J = 5,
-  starlet_scales = 2:5,
-  knn_k = 100
+row_id <- row(matrix(0, n_row, n_col))
+col_id <- col(matrix(0, n_row, n_col))
+x <- (col_id - 12.5) / 10
+y <- (row_id - 12.5) / 8
+radius <- sqrt(x^2 + y^2)
+support <- radius <= 1
+
+profiles <- rbind(
+  bulge = 1.12 + 0.00005 * (wavelength - 5800) -
+    0.18 * gaussian(5175, 38) - 0.07 * gaussian(5892, 28) +
+    0.05 * gaussian(6563, 24),
+  disc = 0.86 - 0.00003 * (wavelength - 5800) +
+    0.13 * gaussian(4861, 23) + 0.12 * gaussian(5007, 24) +
+    0.34 * gaussian(6563, 26) + 0.10 * gaussian(6583, 18),
+  knot = 0.72 + 0.28 * gaussian(4861, 21) +
+    0.46 * gaussian(5007, 22) + 0.85 * gaussian(6563, 23) +
+    0.18 * gaussian(6583, 16),
+  nucleus = 0.98 + 0.15 * gaussian(4861, 22) +
+    0.42 * gaussian(5007, 23) + 0.48 * gaussian(6563, 24) +
+    0.42 * gaussian(6583, 17)
 )
 
-print(seg$backend_info)
-print(table(seg$cluster_map, useNA = "ifany"))
+w_bulge <- exp(-0.5 * (radius / 0.25)^2)
+w_nucleus <- exp(-0.5 * (radius / 0.10)^2)
+w_knots <-
+  exp(-((x - 0.48)^2 + (y + 0.16)^2) / (2 * 0.12^2)) +
+  exp(-((x + 0.40)^2 + (y - 0.28)^2) / (2 * 0.14^2))
+w_disc <- 1 - w_bulge
+w_disc[w_disc < 0.12] <- 0.12
 
-plot_cluster(seg)
+cube <- array(NA_real_, dim = c(n_row, n_col, n_wave))
+for (i in seq_len(n_row)) {
+  for (j in seq_len(n_col)) {
+    if (support[i, j]) {
+      weights <- c(w_bulge[i, j], w_disc[i, j],
+                   w_knots[i, j], w_nucleus[i, j])
+      weights <- weights / sum(weights)
+      brightness <- 0.45 + 0.9 * exp(-1.7 * radius[i, j]) +
+        0.35 * w_knots[i, j]
+      profile <- drop(weights %*% profiles)
+      cube[i, j, ] <- brightness * profile + rnorm(n_wave, 0, 0.008)
+    }
+  }
+}
 
+seg <- segment(
+  input = list(imDat = cube),
+  Ncomp = 6,
+  use_starlet_mask = FALSE
+)
 spectra <- summarize_cluster_spectra(seg)
 
-sum_spectra <- spectra$sum_spectra
-median_spectra <- spectra$median_spectra
-print(head(sum_spectra))
-
-write.csv(sum_spectra, "capivara_sum_spectra.csv", row.names = FALSE)
-saveRDS(seg, "capivara_segmentation.rds")
-```
-
-Use the summed spectra for flux-preserving science products and the median
-spectra for robust visual inspection. `use_starlet_mask = TRUE` turns on the
-foreground-support mask; `use_starlet_mask = FALSE` runs on all valid spaxels.
-There is no separate starlet segmentation entry point.
-
-By default, `feature_wavelength_range = NULL`, so the segmentation uses all
-available wavelength channels. To segment only on a spectral window, for example
-around a chosen emission-line complex, pass a two-element wavelength interval.
-The binning is learned from that window, but the returned `original_cube`
-remains the full cube, so `summarize_cluster_spectra()` still exports full
-flux-preserving spectra.
-
-```r
-# Example only: choose the interval for your cube's wavelength frame.
-line_window <- c(lambda_min, lambda_max)
-
-seg_ha <- segment_large(
-  input = x,
-  Ncomp = 25,
-  use_starlet_mask = TRUE,
-  knn_k = 100,
-  feature_wavelength_range = line_window
+regional_products <- data.frame(
+  region = spectra$cluster_ids,
+  n_spaxels = unname(spectra$n_spaxels),
+  summed_flux = round(rowSums(spectra$sum_spectra), 1)
 )
-
-ha_spectra <- summarize_cluster_spectra(seg_ha)$sum_spectra
+knitr::kable(regional_products)
 ```
 
-When using `target_snr`, `wavelength_range` has a different role: it selects
-the spectral interval used to evaluate the SNR screen. This keeps line-focused
-segmentation and SNR quality control independent.
-
-## Plotting and saving the segmentation map
-
-Both `segment()` and `segment_large()` return the spatial binning scheme in
-`seg$cluster_map`. This is a 2-D matrix with the same spatial footprint as the
-input cube. Pixels outside the support mask are stored as `NA`; for DS9 and most
-FITS-based workflows it is usually clearer to write those pixels as `0` and keep
-the Capivara regions as positive integer labels.
+The integer values are categorical region identifiers. `NA` in
+`seg$cluster_map` means that the spaxel was outside the eligible support. The
+table reports the number of assigned spaxels and the wavelength-integrated sum
+of each regional spectrum.
 
 ```r
 plot_cluster(seg)
+```
 
-cluster_map <- seg$cluster_map
+```{r synthetic-map, include=FALSE, fig.path="man/figures/capivara-first-run-", fig.width=12, fig.height=5.2, dpi=180}
+region_palette <- c(
+  "#203a5f", "#2f6f9f", "#58a4b0",
+  "#f0c45c", "#e58938", "#b94b3b"
+)
+map_data <- data.frame(
+  x = rep(seq_len(n_col), each = n_row),
+  y = rep(seq_len(n_row), times = n_col),
+  region = factor(as.vector(seg$cluster_map))
+)
+support_data <- transform(map_data, in_support = as.numeric(support))
 
-# DS9-friendly convention:
-#   0  = outside the Capivara support / unassigned background
-#   >0 = Capivara region id
-cluster_map_fits <- cluster_map
-cluster_map_fits[is.na(cluster_map_fits)] <- 0L
-storage.mode(cluster_map_fits) <- "integer"
+map_plot <- ggplot2::ggplot(
+  subset(map_data, !is.na(region)),
+  ggplot2::aes(x, y, fill = region)
+) +
+  ggplot2::geom_blank(
+    data = map_data,
+    ggplot2::aes(x = x, y = y),
+    inherit.aes = FALSE
+  ) +
+  ggplot2::geom_raster() +
+  ggplot2::geom_contour(
+    data = support_data,
+    ggplot2::aes(x = x, y = y, z = in_support),
+    breaks = 0.5,
+    colour = "#14233a",
+    linewidth = 0.55,
+    inherit.aes = FALSE
+  ) +
+  ggplot2::scale_fill_manual(values = region_palette, guide = "none") +
+  ggplot2::scale_x_continuous(expand = c(0, 0)) +
+  ggplot2::scale_y_reverse(expand = c(0, 0)) +
+  ggplot2::coord_equal() +
+  ggplot2::labs(
+    title = "Simulated line-rich IFS cube",
+    subtitle = "Six categorical spectral regions"
+  ) +
+  ggplot2::theme_void(base_size = 12) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      colour = "#203a5f", face = "bold", size = 15
+    ),
+    plot.subtitle = ggplot2::element_text(colour = "#667587", size = 10.5),
+    panel.border = ggplot2::element_rect(
+      colour = "#14233a", fill = NA, linewidth = 0.55
+    ),
+    plot.margin = ggplot2::margin(12, 14, 12, 8)
+  )
 
-FITSio::writeFITSim(
-  cluster_map_fits,
-  file = "capivara_segmentation_map.fits",
-  c1 = "Capivara segmentation map: 0=background, positive integers=regions"
+median_scaled <- sweep(
+  spectra$median_spectra,
+  1,
+  apply(spectra$median_spectra, 1, median),
+  "/"
+)
+spectral_data <- data.frame(wavelength, t(median_scaled), check.names = FALSE)
+names(spectral_data)[-1] <- paste("Region", spectra$cluster_ids)
+spectral_data <- tidyr::pivot_longer(
+  spectral_data,
+  -wavelength,
+  names_to = "region",
+  values_to = "relative_flux"
+)
+
+line_labels <- data.frame(
+  wavelength = c(4861, 5007, 5175, 5892, 6573),
+  label = c("Hβ", "[O III]", "Mg b", "Na D", "Hα + [N II]")
+)
+line_labels$y <- max(spectral_data$relative_flux) + 0.055
+
+spectral_plot <- ggplot2::ggplot(
+  spectral_data,
+  ggplot2::aes(wavelength, relative_flux, colour = region)
+) +
+  ggplot2::geom_vline(
+    xintercept = c(4861, 5007, 5175, 5892, 6563, 6583),
+    colour = "#d8dee5",
+    linewidth = 0.45
+  ) +
+  ggplot2::geom_line(linewidth = 0.9, alpha = 0.96) +
+  ggplot2::geom_text(
+    data = line_labels,
+    ggplot2::aes(wavelength, y, label = label),
+    inherit.aes = FALSE,
+    angle = 90,
+    hjust = 0,
+    colour = "#667587",
+    size = 3.25
+  ) +
+  ggplot2::scale_colour_manual(values = region_palette) +
+  ggplot2::coord_cartesian(
+    ylim = c(min(spectral_data$relative_flux) - 0.025, line_labels$y[1] + 0.10),
+    clip = "off"
+  ) +
+  ggplot2::labs(
+    title = "Regional spectral profiles",
+    subtitle = "Median-normalised for shape comparison",
+    x = "Wavelength [Å]",
+    y = "Relative flux",
+    colour = NULL
+  ) +
+  ggplot2::theme_classic(base_size = 12) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(
+      colour = "#203a5f", face = "bold", size = 15
+    ),
+    plot.subtitle = ggplot2::element_text(colour = "#667587", size = 10.5),
+    axis.title = ggplot2::element_text(colour = "#14233a", face = "bold"),
+    axis.text = ggplot2::element_text(colour = "#3f4d5b"),
+    axis.line = ggplot2::element_line(colour = "#14233a", linewidth = 0.55),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.key.width = grid::unit(1.4, "lines"),
+    plot.margin = ggplot2::margin(12, 20, 12, 10)
+  )
+
+patchwork::wrap_plots(
+  map_plot,
+  spectral_plot,
+  widths = c(0.78, 1.75)
 )
 ```
 
-If you want to preserve the spatial WCS from the original cube, reuse the first
-two axes from the input FITS object when they are available:
+<figure class="science-figure">
+<img src="man/figures/capivara-first-run-synthetic-map-1.png" alt="Synthetic Capivara IFS example showing six categorical spatial regions beside their median-normalised spectra with realistic absorption and nebular-line features">
+<figcaption>Fixed-seed simulated IFS cube: six categorical Capivara regions and their median-normalised spectral profiles. The vertical annotations mark the simplified absorption and nebular features built into the toy input; the output is a software demonstration, not observational evidence.</figcaption>
+</figure>
 
-```r
-spatial_ax <- NA
-if (!is.null(seg$axDat) && is.data.frame(seg$axDat) && nrow(seg$axDat) >= 2) {
-  spatial_ax <- seg$axDat[1:2, , drop = FALSE]
-}
+Use `spectra$sum_spectra` for flux-preserving regional science products.
+Means and medians are diagnostic summaries unless a downstream analysis
+explicitly requires them. The [Getting started
+guide](articles/getting-started.html) executes this workflow and connects each
+returned object to the real-data example above.
 
-FITSio::writeFITSim(
-  cluster_map_fits,
-  file = "capivara_segmentation_map_wcs.fits",
-  axDat = spatial_ax,
-  header = seg$header,
-  c1 = "Capivara segmentation map: 0=background, positive integers=regions"
-)
-```
+## Continue with
 
-The saved FITS image contains the bin number at each spatial pixel. It is the
-same binning scheme used by `summarize_cluster_spectra()`, so region `k` in the
-FITS map corresponds to row/bin `k` in the exported summed or median spectra.
+- [Choose the exact or sparse-graph backend](articles/choosing-segmentation-backend.html)
+- [Construct and interpret support masks](articles/support-masks.html)
+- [Export flux-preserving regional spectra](articles/flux-preserving-products.html)
+- [Write FITS maps for DS9](articles/fits-ds9-export.html)
+- [Inspect verified examples and provenance](articles/examples.html)
 
-## Large cubes
+## Core API {#core-api}
 
-The standard Ward workflow is exact, but it stores all pairwise distances. For
-large cubes, memory grows quadratically with the number of valid pixels.
+The [Reference index](reference/index.html) groups the documented public API by
+scientific role. Kinematic analysis and an explicit bisymmetric model are
+documented separately so bar-specific assumptions are not inherited by the
+general spectral-segmentation workflow.
 
-```r
-estimate_segment_memory(x)
-```
+## About {#about}
 
-When the exact backend is too expensive in RAM, use the sparse-Ward backend:
-
-```r
-seg <- segment_large(
-  input = x,
-  Ncomp = 50,
-  use_starlet_mask = TRUE,
-  knn_k = 100
-)
-```
-
-`segment_large()` mirrors the output structure of `segment()` while avoiding the
-full all-pairs distance matrix. Its default validity screen follows Sagui's
-sparse-Ward backend for coherent kNN graphs. Increasing `knn_k` makes the graph
-denser and usually closer to exact Ward; `knn_k = 100` is a good visual/science
-starting point for MaNGA- or JPAS-style examples.
-
-## Starlet support masks
-
-Capivara can build a Sagui-style white-light starlet support before clustering.
-The mask is computed on the full spatial footprint and then applied back to the
-cube.
-
-```r
-seg <- segment_large(
-  input = x,
-  Ncomp = 25,
-  use_starlet_mask = TRUE,
-  starlet_J = 5,
-  starlet_scales = 2:5,
-  include_coarse = FALSE,
-  denoise_k = 0,
-  positive_only = TRUE,
-  mask_mode = "na",
-  knn_k = 100
-)
-```
-
-## Core API
-
-Capivara keeps the public segmentation API small:
-
-- `segment()` is the standard exact Ward segmentation.
-- `segment_large()` is the memory-safe sparse-Ward segmentation.
-- `use_starlet_mask = TRUE/FALSE` controls whether either backend applies a
-  starlet foreground support before clustering.
-- `estimate_segment_memory()` estimates the exact Ward memory lower bound.
-- `summarize_cluster_spectra()` exports region spectra.
-- `reconstruct_cluster_cube()` builds representative reconstructed cubes.
-- `reconstruct_flux_preserving_cube()` builds flux-preserving model cubes for
-  fitting workflows.
-
-## Companion packages
-
-Capivara is the segmentation layer. Companion packages can consume the same
-region maps and summed spectra:
-
-- [`capivaraPPXF`](https://github.com/RafaelSdeSouza/capivaraPPXF): pPXF-based
-  stellar populations, stellar/gas kinematics, emission-line measurements, and
-  BPT-style diagnostics.
-- [`sagui`](https://github.com/RafaelSdeSouza/sagui): photometric segmentation
-  and regional SED extraction.
-- [`saguiSED`](https://github.com/RafaelSdeSouza/saguiSED): SED fitting for
-  Sagui regional photometry.
-
-This separation keeps Capivara installable and focused while still allowing a
-complete analysis workflow.
-
-## Visual example
-
-This panel shows the exact and scalable segmentation APIs with and without the
-starlet support mask.
-
-<img src="images/examples/manga_8443_6102_compare_current.png" width="960" alt="MaNGA 8443-6102 comparison of segment and segment_large with and without starlet masking">
-
-## Citation
-
-If you use Capivara in your research, please cite:
-
-```bibtex
-@article{desouza2025capivara,
-  author = {de Souza, Rafael S. and Dahmer-Hahn, Luis G. and Shen, Shiyin and Chies-Santos, Ana L. and Chen, Mi and Rahna, P. T. and Ye, Renhao and Tahmasebzade, Behzad},
-  title = {CAPIVARA: a spectral-based segmentation method for IFU data cubes},
-  journal = {Monthly Notices of the Royal Astronomical Society},
-  year = {2025},
-  volume = {539},
-  number = {4},
-  pages = {3166--3179},
-  doi = {10.1093/mnras/staf688}
-}
-```
-
-Related methods used by Capivara examples:
-
-```bibtex
-@article{desouza2026sagui,
-  author = {de Souza, Rafael S. and Wille, Andressa and Shenoy, Shravya and Patil, Aarya A. and Krone-Martins, Alberto and Chies-Santos, Ana L. and Boehm, Celine and Rosa, Reinaldo R. and Pessi, Thallis and Ishida, Emille E. O. and Dage, Kristen C. and Nakazono, Lilianne and Darc, Phelipe and Durgesh, Rupesh},
-  title = {SAGUI: SED-based Segmentation of Multi-band Galaxy Images -- Application to JADES in GOODS-South},
-  journal = {Monthly Notices of the Royal Astronomical Society},
-  year = {2026},
-  doi = {10.1093/mnras/stag1062},
-  eprint = {2604.18812},
-  archivePrefix = {arXiv},
-  primaryClass = {astro-ph.GA},
-  url = {https://doi.org/10.1093/mnras/stag1062}
-}
-
-@misc{desouza2026pathsignatures,
-  author = {de Souza, Rafael S. and Bunk, Severin},
-  title = {The Hidden Geometry of Astrophysical Spectra: Path-Signatures of Line Profiles},
-  year = {2026},
-  eprint = {2606.27432},
-  archivePrefix = {arXiv},
-  primaryClass = {astro-ph.IM},
-  url = {https://arxiv.org/abs/2606.27432}
-}
-```
-
-## Scope
-
-Capivara focuses on:
-
-- IFU/hyperspectral segmentation
-- starlet-based support masks
-- exact and sparse-Ward spectral clustering
-- missing-data-safe cube handling
-- flux-preserving regional spectra
-- clean handoff to fitting packages such as `capivaraPPXF`
+Capivara is an R package for spectral segmentation and post-processing of IFS
+data cubes. The canonical citation is generated from `inst/CITATION`; cite the
+[published MNRAS article](https://doi.org/10.1093/mnras/staf688) when using the
+package in scientific work.

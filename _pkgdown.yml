@@ -1,53 +1,127 @@
 url: https://rafaelsdesouza.github.io/capivara/
+destination: docs
 
 template:
   bootstrap: 5
-  bootswatch: flatly
+  light-switch: true
+  bslib:
+    bg: "#ffffff"
+    fg: "#14233a"
+    primary: "#245c96"
+    secondary: "#607086"
+    border-radius: "0.2rem"
+    btn-border-radius: "0.2rem"
+    link-color: "#245c96"
+  includes:
+    in_header: |
+      <meta name="theme-color" content="#14233a">
+
+home:
+  title: Capivara | Spectral segmentation of IFS cubes
+  description: >
+    Spectral segmentation of integral-field spectroscopy cubes with explicit
+    spatial support and flux-preserving regional spectra.
+  sidebar:
+    structure: [links, license, citation, authors, dev]
 
 navbar:
   structure:
-    left: [intro, reference, articles, news]
-    right: [github]
-
-reference:
-  - title: Core Segmentation
-    desc: Main user-facing segmentation functions.
-    contents:
-      - segment
-      - segment_large
-      - choose_ncomp_by_snr
-      - estimate_segment_memory
-  - title: Support Masks
-    desc: Foreground support builders used before segmentation.
-    contents:
-      - build_starlet_mask
-      - build_adaptive_support
-  - title: Spectral Summaries and Reconstruction
-    desc: Flux-preserving products for downstream spectral fitting.
-    contents:
-      - summarize_cluster_spectra
-      - reconstruct_cluster_cube
-      - reconstruct_flux_preserving_cube
-  - title: Plotting
-    desc: Lightweight plotting helpers.
-    contents:
-      - plot_cluster
-      - plot_cluster_spectra
-  - title: Kinematic Analysis
-    desc: Native line maps and the neutral kinematic workflow.
-    contents:
-      - segment_kinematics
-      - run_kinematic_analysis
-      - kinematic_models
-      - kinematic_panels
-  - title: Bar Modelling
-    desc: Explicit bisymmetric modelling for galaxies with an imaging-based bar angle.
-    contents:
-      - run_manga_bar_model
+    left: [intro, articles, examples, reference, paper, github]
+    right: [search, lightswitch]
+  components:
+    intro:
+      text: Get started
+      href: articles/getting-started.html
+    articles:
+      text: User guide
+      menu:
+      - text: Choosing a segmentation backend
+        href: articles/choosing-segmentation-backend.html
+      - text: Support masks
+        href: articles/support-masks.html
+      - text: Flux-preserving spectral products
+        href: articles/flux-preserving-products.html
+      - text: FITS and DS9 export
+        href: articles/fits-ds9-export.html
+      - text: Kinematic analysis
+        href: articles/kinematic-analysis.html
+      - text: Bisymmetric bar models
+        href: articles/bisymmetric-bar-model.html
+      - text: Reproducing the paper
+        href: articles/reproducing-paper.html
+    examples:
+      text: Examples
+      href: articles/examples.html
+    paper:
+      text: Paper
+      href: https://doi.org/10.1093/mnras/staf688
+    github:
+      text: GitHub
+      href: https://github.com/RafaelSdeSouza/capivara
 
 articles:
-  - title: Workflows
-    navbar: Workflows
-    contents:
-      - kinematic-analysis
-      - bisymmetric-bar-model
+- title: Start here
+  navbar: ~
+  contents:
+  - getting-started
+- title: User guide
+  navbar: ~
+  contents:
+  - choosing-segmentation-backend
+  - support-masks
+  - flux-preserving-products
+  - fits-ds9-export
+  - kinematic-analysis
+  - bisymmetric-bar-model
+- title: Examples and reproduction
+  navbar: ~
+  contents:
+  - examples
+  - reproducing-paper
+
+reference:
+- title: Core spectral segmentation
+  desc: Exact and sparse-graph segmentation, component selection, and memory planning.
+  contents:
+  - segment
+  - segment_large
+  - choose_ncomp_by_snr
+  - estimate_segment_memory
+- title: Support construction
+  desc: Foreground support builders used before assigning region labels.
+  contents:
+  - build_starlet_mask
+  - build_adaptive_support
+- title: Flux-preserving spectra and reconstruction
+  desc: Regional spectra and reconstructed cubes for downstream analysis.
+  contents:
+  - summarize_cluster_spectra
+  - reconstruct_cluster_cube
+  - reconstruct_flux_preserving_cube
+- title: Segmentation plotting
+  desc: Discrete region maps and regional spectral displays.
+  contents:
+  - plot_cluster
+  - plot_cluster_spectra
+- title: Kinematics
+  desc: Native line maps, kinematic segmentation, model discovery, and reusable panels.
+  contents:
+  - segment_kinematics
+  - run_kinematic_analysis
+  - kinematic_models
+  - kinematic_panels
+- title: Bisymmetric modelling
+  desc: Explicit modelling for galaxies with independent evidence of a bar.
+  contents:
+  - run_manga_bar_model
+- title: Package
+  contents:
+  - capivara-package
+
+footer:
+  structure:
+    left: developed_by
+    right: built_with
+
+development:
+  mode: auto

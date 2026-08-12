@@ -1,0 +1,253 @@
+:root {
+  --cap-navy: #14233a;
+  --cap-blue: #245c96;
+  --cap-orange: #c7672d;
+  --cap-rule: #dce3ea;
+  --cap-muted: #607086;
+  --cap-soft: #f5f8fb;
+}
+
+body {
+  color: var(--cap-navy);
+  font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.68;
+}
+
+.navbar {
+  background: #fff !important;
+  border-bottom: 1px solid var(--cap-rule);
+  box-shadow: none;
+  min-height: 4rem;
+}
+
+.navbar-brand {
+  color: var(--cap-navy) !important;
+  font-size: 1.28rem;
+  font-weight: 720;
+}
+
+.navbar-nav .nav-link {
+  color: #344a63 !important;
+  font-size: 0.94rem;
+  font-weight: 560;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus,
+a:hover {
+  color: var(--cap-orange) !important;
+}
+
+a:focus-visible,
+button:focus-visible,
+.form-control:focus-visible,
+input:focus-visible,
+.nav-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cap-orange) 70%, white);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--cap-navy);
+  font-weight: 690;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3.15rem);
+}
+
+h2 {
+  border-bottom: 1px solid var(--cap-rule);
+  font-size: 1.62rem;
+  margin-top: 2.8rem;
+  padding-bottom: 0.5rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+  margin-top: 2rem;
+}
+
+.template-home .page-header {
+  border-bottom: 0;
+  margin: 1.4rem 0 0.4rem;
+  padding-bottom: 0;
+}
+
+.template-home .contents > p:first-of-type {
+  color: #425970;
+  font-size: 1.16rem;
+  line-height: 1.62;
+  max-width: 54rem;
+}
+
+.contents p,
+.contents li {
+  max-width: 76ch;
+}
+
+.science-figure {
+  border-bottom: 1px solid var(--cap-rule);
+  border-top: 1px solid var(--cap-rule);
+  margin: 1.5rem 0 2rem;
+  padding: 0.8rem 0;
+}
+
+.science-figure img,
+.contents img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.science-figure figcaption {
+  color: var(--cap-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-top: 0.65rem;
+  max-width: 76ch;
+}
+
+.science-flow {
+  border-bottom: 1px solid var(--cap-rule);
+  border-top: 1px solid var(--cap-rule);
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  margin: 1.4rem 0 2rem;
+  padding: 0;
+}
+
+.science-flow li {
+  color: var(--cap-navy);
+  font-size: 0.94rem;
+  font-weight: 650;
+  padding: 0.9rem 1rem;
+  position: relative;
+}
+
+.science-flow li + li {
+  border-left: 1px solid var(--cap-rule);
+}
+
+pre,
+.table-responsive {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+pre {
+  background: var(--cap-soft);
+  border: 1px solid var(--cap-rule);
+  border-radius: 3px;
+  color: #1d2f42;
+  padding: 1rem 1.1rem;
+}
+
+code {
+  color: #315b86;
+}
+
+.sourceCode pre code {
+  color: #1d2f42;
+}
+
+.alert,
+.callout {
+  background: var(--cap-soft);
+  border: 0;
+  border-left: 4px solid var(--cap-blue);
+  border-radius: 2px;
+}
+
+.table {
+  border-color: var(--cap-rule);
+}
+
+.table thead th {
+  border-bottom-width: 1px;
+  color: var(--cap-navy);
+  font-weight: 650;
+}
+
+.sidebar .nav-link,
+.page-header .doi,
+.text-muted,
+figcaption {
+  color: var(--cap-muted) !important;
+}
+
+.toc-active .nav-link.active {
+  border-left-color: var(--cap-orange);
+  color: var(--cap-orange) !important;
+}
+
+footer {
+  border-top: 1px solid var(--cap-rule);
+  color: var(--cap-muted);
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+}
+
+[data-bs-theme="dark"] body {
+  --cap-navy: #edf4fb;
+  --cap-rule: #35465a;
+  --cap-muted: #acbbca;
+  --cap-soft: #1b2939;
+  background: #111b29;
+}
+
+[data-bs-theme="dark"] .navbar {
+  background: #111b29 !important;
+}
+
+[data-bs-theme="dark"] .navbar-nav .nav-link,
+[data-bs-theme="dark"] .navbar-brand,
+[data-bs-theme="dark"] h1,
+[data-bs-theme="dark"] h2,
+[data-bs-theme="dark"] h3,
+[data-bs-theme="dark"] h4 {
+  color: #edf4fb !important;
+}
+
+[data-bs-theme="dark"] pre {
+  color: #edf4fb;
+}
+
+[data-bs-theme="dark"] .sourceCode pre code {
+  color: #edf4fb;
+}
+
+@media (max-width: 767px) {
+  body {
+    font-size: 0.98rem;
+  }
+
+  h1 {
+    font-size: 2.05rem;
+  }
+
+  .navbar {
+    min-height: 3.6rem;
+  }
+
+  .science-flow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .science-flow li:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid var(--cap-rule);
+  }
+
+  .science-flow li:nth-child(4) {
+    border-top: 1px solid var(--cap-rule);
+  }
+}

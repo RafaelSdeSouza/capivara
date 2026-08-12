@@ -15,3 +15,9 @@
 ^.*\.Rcheck$
 ^Rplots\.pdf$
 ^extensions/capivaraKinematics/examples/.*\.(png|rds)$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+^tools$
+^README\.qmd$
+^README_files$

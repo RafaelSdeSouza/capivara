@@ -50,6 +50,23 @@
   fallback
 }
 
+.capivara_native_line_label <- function(result, fallback = "Emission-line") {
+  label <- tryCatch(result$native$line$name, error = function(e) NULL)
+  if (is.null(label) || !length(label) || !is.character(label) ||
+      is.na(label[[1]]) || !nzchar(label[[1]])) {
+    return(fallback)
+  }
+  label[[1]]
+}
+
+.capivara_native_starlet_support <- function(result, dims, fallback) {
+  support <- tryCatch(result$native$support_starlet, error = function(e) NULL)
+  if (is.matrix(support) && identical(dim(support), dims)) {
+    return(is.finite(support) & support)
+  }
+  fallback
+}
+
 .capivara_add_outline <- function(plot, mask, display_orientation = "transpose",
                                   colour = "#45D6D0", linetype = "solid",
                                   linewidth = 0.55) {
@@ -87,7 +104,8 @@
   out
 }
 
-.capivara_bar_axis_line <- function(result, radius_quantile = 0.72) {
+.capivara_bar_axis_line <- function(result, radius_quantile = 0.82,
+                                    support_mask = NULL) {
   spaxels <- result$spaxels
   geometry <- result$geometry
   phi <- tryCatch(result$bar_geometry$phi_b_rad, error = function(e) NA_real_)
@@ -95,8 +113,18 @@
   if (!is.finite(phi) || !all(required %in% names(spaxels))) {
     return(data.frame(x = numeric(), y = numeric()))
   }
-  ok <- spaxels$valid & is.finite(spaxels$R)
-  r_max <- stats::quantile(spaxels$R[ok], radius_quantile, na.rm = TRUE)
+  if (is.matrix(support_mask) && identical(dim(support_mask), result$dims)) {
+    support_index <- which(support_mask, arr.ind = TRUE)
+    projected <- deproject_coordinates(
+      x = support_index[, 2],
+      y = support_index[, 1],
+      geometry = geometry
+    )
+    radii <- projected$R[is.finite(projected$R)]
+  } else {
+    radii <- spaxels$R[spaxels$valid & is.finite(spaxels$R)]
+  }
+  r_max <- stats::quantile(radii, radius_quantile, na.rm = TRUE)
   if (!is.finite(r_max) || r_max <= 0) {
     return(data.frame(x = numeric(), y = numeric()))
   }
@@ -119,8 +147,9 @@
   data.frame(x = x, y = y)
 }
 
-.capivara_add_bar_axis <- function(plot, result, display_orientation = "transpose") {
-  axis <- .capivara_bar_axis_line(result)
+.capivara_add_bar_axis <- function(plot, result, display_orientation = "transpose",
+                                   support_mask = NULL) {
+  axis <- .capivara_bar_axis_line(result, support_mask = support_mask)
   if (!nrow(axis)) {
     return(plot)
   }
@@ -276,6 +305,9 @@
   }
   white_light <- .capivara_native_white_light(result, flux)
   valid_footprint <- to_mat(as.numeric(result$spaxels$valid))
+  starlet_footprint <- .capivara_native_starlet_support(
+    result, dims, valid_footprint > 0
+  )
   flux[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_real_
   observed <- to_mat(result$spaxels$velocity)
   model <- to_mat(result$spaxels$v_axisym_model)
@@ -314,7 +346,7 @@
     footprint = .capivara_map_plot(
       .capivara_asinh_stretch(white_light), "White light (asinh)", NULL,
       legend_position = "none", display_orientation = display_orientation,
-      white_light = TRUE, outline = valid_footprint > 0
+      white_light = TRUE, outline = starlet_footprint
     ),
     velocity = .capivara_map_plot(
       observed, "Emission-line velocity", "km/s", diverging = TRUE,
@@ -374,7 +406,11 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
     flux <- matrix(as.numeric(result$spaxels$valid), dims[1], dims[2])
   }
   valid_footprint <- to_mat(as.numeric(result$spaxels$valid))
+  starlet_footprint <- .capivara_native_starlet_support(
+    result, dims, valid_footprint > 0
+  )
   white_light <- .capivara_native_white_light(result, flux)
+  line_label <- .capivara_native_line_label(result)
   flux[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_real_
   observed <- to_mat(result$spaxels$velocity)
   bar_model <- to_mat(result$spaxels$v_bar_model)
@@ -430,10 +466,10 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
     footprint = .capivara_map_plot(
       .capivara_asinh_stretch(white_light), "White light (asinh)", NULL,
       legend_position = "none", display_orientation = display_orientation,
-      white_light = TRUE, outline = valid_footprint > 0
+      white_light = TRUE, outline = starlet_footprint
     ),
     velocity = .capivara_map_plot(
-      observed, "Halpha Velocity", "km/s", diverging = TRUE,
+      observed, paste(line_label, "Velocity"), "km/s", diverging = TRUE,
       limits = vel_lim, display_orientation = display_orientation
     ),
     bisymmetric_model = .capivara_map_plot(
@@ -507,6 +543,9 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
   }
 
   valid_footprint <- to_mat(as.numeric(result$spaxels$valid))
+  starlet_footprint <- .capivara_native_starlet_support(
+    result, dims, valid_footprint > 0
+  )
   mask_to_valid <- function(mat) {
     mat[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_real_
     mat
@@ -536,17 +575,20 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
   }
   surface <- mask_to_valid(surface)
   white_light <- .capivara_native_white_light(result, surface)
+  line_label <- .capivara_native_line_label(result)
   kinematic_segments <- result$segmentation_map
   if (is.null(kinematic_segments) || !identical(dim(kinematic_segments), dims)) {
     kinematic_segments <- matrix(NA_integer_, dims[1], dims[2])
   }
   kinematic_segments[!is.finite(valid_footprint) | valid_footprint <= 0] <- NA_integer_
   bar_context <- .capivara_map_plot(
-    .capivara_asinh_stretch(white_light), "White light, support, bar prior", NULL,
+    .capivara_asinh_stretch(white_light), "White light, starlet support, bar prior", NULL,
     legend_position = "none", display_orientation = display_orientation,
-    white_light = TRUE, outline = valid_footprint > 0
+    white_light = TRUE, outline = starlet_footprint
   )
-  bar_context <- .capivara_add_bar_axis(bar_context, result, display_orientation)
+  bar_context <- .capivara_add_bar_axis(
+    bar_context, result, display_orientation, support_mask = starlet_footprint
+  )
 
   vabs <- stats::quantile(abs(c(observed, model, vt)), 0.995, na.rm = TRUE)
   vel_lim <- c(-vabs, vabs)
@@ -564,15 +606,15 @@ plot_capivara_component_decomposition <- function(result, png_file = NULL, pdf_f
       legend_position = "none", display_orientation = display_orientation
     ),
     velocity = .capivara_map_plot(
-      observed, "Halpha Velocity", "km/s", diverging = TRUE,
+      observed, paste(line_label, "Velocity"), "km/s", diverging = TRUE,
       limits = vel_lim, display_orientation = display_orientation
     ),
     dispersion = .capivara_map_plot(
-      sigma, "Halpha Dispersion", "km/s", limits = sigma_lim,
+      sigma, paste(line_label, "Dispersion"), "km/s", limits = sigma_lim,
       display_orientation = display_orientation
     ),
     surface_brightness = .capivara_map_plot(
-      log10(pmax(surface, 0) + 1e-4), "Halpha Surface Brightness", "log flux",
+      log10(pmax(surface, 0) + 1e-4), paste(line_label, "Surface Brightness"), "log flux",
       limits = log10(pmax(surface_lim, 0) + 1e-4),
       display_orientation = display_orientation
     ),

@@ -1,0 +1,17 @@
+pandoc: 3.6.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  bisymmetric-bar-model: bisymmetric-bar-model.html
+  choosing-segmentation-backend: choosing-segmentation-backend.html
+  examples: examples.html
+  fits-ds9-export: fits-ds9-export.html
+  flux-preserving-products: flux-preserving-products.html
+  getting-started: getting-started.html
+  kinematic-analysis: kinematic-analysis.html
+  reproducing-paper: reproducing-paper.html
+  support-masks: support-masks.html
+last_built: 2026-08-12T14:33Z
+urls:
+  reference: https://rafaelsdesouza.github.io/capivara/reference
+  article: https://rafaelsdesouza.github.io/capivara/articles

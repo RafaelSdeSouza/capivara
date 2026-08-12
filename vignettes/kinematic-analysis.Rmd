@@ -87,3 +87,7 @@ kinematic_models()
 ```
 
 The bar-specific workflow is documented separately in `vignette("bisymmetric-bar-model", package = "capivara")`.
+
+Return to the [spectral-segmentation first run](getting-started.html), or inspect
+the [result-led examples](examples.html). Kinematic labels remain categorical;
+the velocity and dispersion maps are separate measured or modelled quantities.

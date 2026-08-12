@@ -16,6 +16,9 @@ Description: The 'capivara' package provides tools for spectral segmentation
     variance-aware cluster summaries, and signal-to-noise-guided component
     selection for astronomy workflows.
 License: MIT + file LICENSE
+URL: https://rafaelsdesouza.github.io/capivara/,
+    https://github.com/RafaelSdeSouza/capivara
+BugReports: https://github.com/RafaelSdeSouza/capivara/issues
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3

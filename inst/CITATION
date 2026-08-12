@@ -1,0 +1,26 @@
+citHeader("To cite capivara in publications, use:")
+
+bibentry(
+  bibtype = "Article",
+  title = "capivara: a spectral-based segmentation method for IFU data cubes",
+  author = c(
+    person("Rafael S.", "de Souza"),
+    person("Luis G.", "Dahmer-Hahn"),
+    person("Shiyin", "Shen"),
+    person("Ana L.", "Chies-Santos"),
+    person("Mi", "Chen"),
+    person("P. T.", "Rahna"),
+    person("Paula", "Coelho"),
+    person("Rogério", "Riffel"),
+    person("Renhao", "Ye"),
+    person("Behzad", "Tahmasebzadeh")
+  ),
+  journal = "Monthly Notices of the Royal Astronomical Society",
+  year = "2025",
+  volume = "539",
+  number = "4",
+  pages = "3166--3179",
+  doi = "10.1093/mnras/staf688",
+  url = "https://doi.org/10.1093/mnras/staf688",
+  note = "arXiv:2410.21962"
+)
