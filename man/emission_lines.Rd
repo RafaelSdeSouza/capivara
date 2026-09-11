@@ -4,7 +4,11 @@
 \alias{emission_lines}
 \title{List built-in emission lines for Capivara line-sensitive segmentation}
 \usage{
-emission_lines()
+emission_lines(wavelength_medium = c("air", "vacuum"))
+}
+\arguments{
+\item{wavelength_medium}{Laboratory wavelength convention: `air` (legacy
+table) or `vacuum` (MaNGA).}
 }
 \value{
 A data frame with line names, labels, rest wavelengths, and families.

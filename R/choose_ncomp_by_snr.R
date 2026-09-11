@@ -67,7 +67,8 @@
 #'   all valid counts are tested from the maximum down to 1.
 #' @param wavelength_range Optional numeric vector of length 2 selecting the
 #'   wavelength interval used to compute SNR.
-#' @param redshift Numeric redshift placeholder kept for API compatibility.
+#' @param redshift Systemic redshift retained in wavelength provenance.
+#'   The SNR `wavelength_range` always uses native input coordinates.
 #' @param scale_fn Row-wise scaling function used during segmentation.
 #' @param snr_stat Either integrated SNR across the chosen window or the median
 #'   per-wavelength SNR inside that window.
@@ -83,7 +84,7 @@ choose_ncomp_by_snr <- function(input,
                                 var_cube = NULL,
                                 k_values = NULL,
                                 wavelength_range = NULL,
-                                redshift = 0,
+                                redshift = NA_real_,
                                 scale_fn = median_scale,
                                 snr_stat = c("integrated", "median_per_wavelength"),
                                 variance_inflation = 1,
@@ -177,6 +178,7 @@ choose_ncomp_by_snr <- function(input,
     cluster_snr = best_cluster_snr,
     snr_grid = snr_grid,
     hclust = details$hclust,
-    original_cube = cubedat
+    original_cube = cubedat,
+    wavelength_provenance = .subset_cubedat_wavelength_range(cubedat, redshift = redshift)$provenance
   )
 }

@@ -27,7 +27,7 @@ test_that("native FITS catalogue labels the actual array channels", {
         (identical(ex[[2]],as.name("maps")) || startsWith(paste(deparse(ex[[2]]),collapse=""),"names(maps)"))) eval(ex,e)
   }
   expect_equal(names(e$maps),c("starlet_support","kinematic_support","capivara_segment",
-    "halpha_log_flux","halpha_velocity_centered","halpha_sigma","halpha_asymmetry",
+    "halpha_log_flux","halpha_velocity_systemic","halpha_sigma","halpha_asymmetry",
     "halpha_h3_proxy","halpha_h4_proxy","kinematic_aware_segment"))
   expect_equal(unname(vapply(e$maps,function(x)x[1],numeric(1))),as.numeric(1:10))
 })

@@ -23,6 +23,9 @@ segment_emission_lines(
   valid_mode = c("finite", "signal", "sagui"),
   max_pixels = 30000,
   seed = 1L,
+  wavelength_frame = NULL,
+  wavelength_medium = NULL,
+  systemic_redshift_source = "explicit argument",
   ...
 )
 }
@@ -74,6 +77,13 @@ region. This keeps no-mask emission-line segmentation usable on large IFUs.
 Use `Inf` to force the full graph.}
 
 \item{seed}{Random seed used only when `max_pixels` triggers sampling.}
+
+\item{wavelength_frame}{Input wavelength frame, `observed` or `rest`;
+may be supplied in input metadata. Selection uses native channels.}
+
+\item{wavelength_medium}{`air` or `vacuum`; must match input metadata.}
+
+\item{systemic_redshift_source}{Provenance of the supplied systemic redshift.}
 
 \item{...}{Additional arguments passed to [segment_large()].}
 }

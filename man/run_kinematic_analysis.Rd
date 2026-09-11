@@ -76,3 +76,7 @@ module. The default model is an axisymmetric disc because it is applicable
 to both barred and unbarred galaxies. Full-spectrum segmentation is a
 separate analysis and is run with [segment()] or [segment_large()].
 }
+\details{
+Model controls also accept `wavelength_frame`, `wavelength_medium`,
+  and `profile_centering_mode`, with the same meanings as in [segment_kinematics()].
+}

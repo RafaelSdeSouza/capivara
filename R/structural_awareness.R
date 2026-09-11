@@ -1785,6 +1785,8 @@ segment_structures <- function(input,
     repeats = as.integer(feature_repeats)
   )
   # This is a feature array, not a spectral cube with an augmented wavelength axis.
+  augmented$wavelength_frame <- NULL
+  augmented$wavelength_medium <- NULL
   augmented$wavelength <- NULL
   augmented$axDat <- NULL
   augmented$hdr <- NULL
@@ -1799,6 +1801,8 @@ segment_structures <- function(input,
     ...
   )
 
+  out$feature_axis_provenance <- out$wavelength_provenance
+  out$wavelength_provenance <- .subset_cubedat_wavelength_range(input)$provenance
   out$original_cube <- .as_cubedat(input)
   out$axDat <- out$original_cube$axDat
   out$header <- out$original_cube$hdr

@@ -111,6 +111,7 @@ summarize_cluster_spectra <- function(cluster_result,
 
   out <- list(
     wavelength = wavelengths,
+    wavelength_provenance = cluster_result$wavelength_provenance,
     cluster_ids = cluster_ids,
     n_spaxels = stats::setNames(n_spaxels, cluster_ids),
     finite_counts = finite_counts,

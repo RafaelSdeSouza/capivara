@@ -42,7 +42,7 @@ test_that("emission segmentation excludes absent spectra and retains wavelength 
   x <- list(imDat=a,axDat=data.frame(ctype=c("x","y","WAVE"),crpix=c(1,1,1),
            crval=c(1,1,6500),cdelt=c(1,1,.6),len=c(2,3,201)))
   for (limit in c(Inf,4)) {
-    z <- segment_emission_lines(x,0,lines="halpha",Ncomp=2,knn_k=3,max_pixels=limit)
+    z <- segment_emission_lines(x,0,wavelength_frame="observed",wavelength_medium="air",lines="halpha",Ncomp=2,knn_k=3,max_pixels=limit)
     expect_true(is.na(z$cluster_map[1,1]))
     expect_equal(z$axDat,x$axDat)
   }

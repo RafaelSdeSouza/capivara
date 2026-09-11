@@ -59,7 +59,11 @@
                                              starlet_scales,
                                              include_coarse_starlet,
                                              support_mode,
-                                             line_flux_sigma) {
+                                             line_flux_sigma,
+                                             wavelength_frame = "observed",
+                                             wavelength_medium = "vacuum",
+                                             systemic_redshift_source = "explicit argument",
+                                             profile_centering_mode = "systemic") {
   inherited <- .capivara_clear_workflow_env()
   on.exit(.capivara_restore_env(names(inherited), inherited), add = TRUE)
   prefix <- gsub("[^A-Za-z0-9]+", "_", tolower(object_id))
@@ -69,6 +73,10 @@
     CAPIVARA_CUBE_PATH = cube_path,
     CAPIVARA_OUTPUT_DIR = output_dir,
     CAPIVARA_REDSHIFT = as.character(redshift),
+    CAPIVARA_REDSHIFT_SOURCE = systemic_redshift_source,
+    CAPIVARA_WAVELENGTH_FRAME = wavelength_frame,
+    CAPIVARA_WAVELENGTH_MEDIUM = wavelength_medium,
+    CAPIVARA_PROFILE_CENTERING_MODE = profile_centering_mode,
     CAPIVARA_LINE = emission_line,
     CAPIVARA_OUTPUT_PREFIX = prefix,
     CAPIVARA_KNN = as.character(knn_k),
@@ -132,6 +140,16 @@
 #'   footprint with a robust emission-line-flux threshold before fitting.
 #' @param line_flux_sigma Border-noise threshold, in robust sigma units, when
 #'   `support_mode = "line_flux"`.
+#' @param wavelength_frame Native spectral axis frame, `observed` (MaNGA DRP)
+#'   or `rest`. A rest-frame input is not redshifted a second time.
+#' @param wavelength_medium Wavelength convention of both axis and laboratory
+#'   line catalogue: `vacuum` (MaNGA DRP) or `air`.
+#' @param profile_centering_mode `systemic` retains the systemic-relative velocity
+#'   coordinate; `local_centroid` subtracts each positive-profile centroid for
+#'   the path representation only. The extraction window remains systemic.
+#'   Conventional velocity maps always retain systemic velocities. Path signatures
+#'   depend on increments and are translation invariant for the same samples;
+#'   retain the separate centroid feature when bulk velocity is required.
 #' @param show_plots Print the compact kinematic panel.
 #' @return A `capivara_kinematic_segmentation` object containing native maps,
 #'   support, kinematic segmentation, optional path segmentation, and paths.
@@ -149,7 +167,13 @@ segment_kinematics <- function(cube_path,
                                include_coarse_starlet = FALSE,
                                support_mode = c("starlet", "line_flux"),
                                line_flux_sigma = 3,
-                               show_plots = interactive()) {
+                               show_plots = interactive(),
+                               wavelength_frame = "observed",
+                               wavelength_medium = "vacuum",
+                               profile_centering_mode = c("systemic", "local_centroid")) {
+  wavelength_frame <- match.arg(wavelength_frame, c("observed", "rest"))
+  wavelength_medium <- match.arg(wavelength_medium, c("vacuum", "air"))
+  profile_centering_mode <- match.arg(profile_centering_mode)
   segmentation_mode <- match.arg(segmentation_mode)
   support_mode <- match.arg(support_mode)
   cube_path <- normalizePath(cube_path, mustWork = TRUE)
@@ -178,7 +202,10 @@ segment_kinematics <- function(cube_path,
     starlet_scales = starlet_scales,
     include_coarse_starlet = include_coarse_starlet,
     support_mode = support_mode,
-    line_flux_sigma = line_flux_sigma
+    line_flux_sigma = line_flux_sigma,
+    wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+    systemic_redshift_source = z_info$source,
+    profile_centering_mode = profile_centering_mode
   )
 
   out <- list(
@@ -189,6 +216,8 @@ segment_kinematics <- function(cube_path,
     native_rds = native_run$native_rds,
     native = native_run$native,
     panel = native_run$panel,
+    frame_provenance = native_run$native$frame_provenance,
+    wavelength_provenance = native_run$native$wavelength_provenance,
     segmentation_mode = segmentation_mode,
     segmentation = if (identical(segmentation_mode, "path_signature")) {
       native_run$native$path_signature
@@ -208,6 +237,9 @@ segment_kinematics <- function(cube_path,
     starlet_scales = "2:5",
     include_coarse_starlet = FALSE,
     display_orientation = "rot90_cw",
+    wavelength_frame = "observed",
+    wavelength_medium = "vacuum",
+    profile_centering_mode = "systemic",
     disc_pa_image_deg = NA_real_,
     disc_inc_deg = NA_real_,
     phi_bar_disc_deg = NA_real_,
@@ -251,6 +283,9 @@ segment_kinematics <- function(cube_path,
   }
   out <- utils::modifyList(defaults, control)
   out$analysis_mode <- match.arg(out$analysis_mode, c("science", "preview"))
+  out$wavelength_frame <- match.arg(out$wavelength_frame, c("observed", "rest"))
+  out$wavelength_medium <- match.arg(out$wavelength_medium, c("vacuum", "air"))
+  out$profile_centering_mode <- match.arg(out$profile_centering_mode, c("systemic", "local_centroid"))
   out
 }
 
@@ -309,7 +344,11 @@ segment_kinematics <- function(cube_path,
     starlet_scales = control$starlet_scales,
     include_coarse_starlet = control$include_coarse_starlet,
     support_mode = support_mode,
-    line_flux_sigma = line_flux_sigma
+    line_flux_sigma = line_flux_sigma,
+    systemic_redshift_source = z_info$source,
+    wavelength_frame = control$wavelength_frame,
+    wavelength_medium = control$wavelength_medium,
+    profile_centering_mode = control$profile_centering_mode
   )
   model_prefix <- paste(native_run$prefix, emission_line, model, sep = "_")
   model_runner <- .capivara_workflow_file("native_bisymmetric_workflow.R", repo_root)
@@ -414,6 +453,8 @@ segment_kinematics <- function(cube_path,
 #'   robust emission-line-flux threshold.
 #' @param line_flux_sigma Border-noise threshold, in robust sigma units, for
 #'   `"line_flux"` support.
+#' @details Model controls also accept `wavelength_frame`, `wavelength_medium`,
+#'   and `profile_centering_mode`, with the same meanings as in [segment_kinematics()].
 #' @param model_control Named list of model controls. Scientific mode (default)
 #'   requires `disc_inc_deg`. `disc_pa_image_deg` is an image-frame disc PA;
 #'   if omitted it is estimated from the velocity gradient and labelled.

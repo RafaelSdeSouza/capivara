@@ -174,7 +174,7 @@
 #'
 #' @param input A FITS-like object with `imDat`, or a raw 3D array.
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
-#' @param redshift Kept for API compatibility with `segment()`.
+#' @param redshift Systemic redshift. Required explicitly for rest-frame selection.
 #' @param scale_fn Optional row-wise spectral scaling function. Defaults to
 #'   \code{median_scale()}, matching \code{\link{segment}}.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
@@ -186,9 +186,17 @@
 #'   \code{target_snr} is supplied. For this scalable backend, the default grid
 #'   is capped at 50 clusters.
 #' @param wavelength_range Optional wavelength interval used to compute SNR when
-#'   \code{target_snr} is supplied.
+#'   \code{target_snr} is supplied. This SNR interval is always in native
+#'   input coordinates, independently of `feature_wavelength_frame`.
+#' @param wavelength_frame Frame of the input wavelength axis: `observed` or
+#'   `rest`. May instead be supplied as `input$wavelength_frame`.
+#' @param feature_wavelength_frame Frame of the requested feature interval:
+#'   `observed` or `rest`. Required when bounds are supplied. Rest selection
+#'   requires an explicit valid redshift, including for a rest-frame input.
 #' @param feature_wavelength_range Optional wavelength interval used to select
-#'   the spectral channels used for clustering. The returned
+#'   the spectral channels used for clustering. Selection includes native
+#'   channels inside the closed interval; no resampling is performed.
+#'   `wavelength_provenance` records frames, redshift, actual bounds and indices.
 #'   \code{original_cube} remains the full input cube so downstream summed
 #'   spectra are still flux-preserving across the full spectral axis.
 #' @param snr_stat Either integrated SNR or median per-wavelength SNR when
@@ -238,7 +246,7 @@
 #' @export
 segment_large <- function(input,
                           Ncomp = 15,
-                          redshift = 0,
+                          redshift = NA_real_,
                           scale_fn = median_scale,
                           target_snr = NULL,
                           var_cube = NULL,
@@ -266,7 +274,9 @@ segment_large <- function(input,
                           mask = NULL,
                           valid_mode = c("sagui", "signal", "finite"),
                           return_details = FALSE,
-                          verbose = FALSE) {
+                          verbose = FALSE,
+                          wavelength_frame = NULL,
+                          feature_wavelength_frame = NULL) {
   feature_scale <- match.arg(feature_scale)
   valid_mode <- match.arg(valid_mode)
   snr_stat <- match.arg(snr_stat)
@@ -296,7 +306,10 @@ segment_large <- function(input,
   full_cubedat <- .as_cubedat(starlet_prep$input)
   feature_subset <- .subset_cubedat_wavelength_range(
     full_cubedat,
-    feature_wavelength_range = feature_wavelength_range
+    feature_wavelength_range = feature_wavelength_range,
+    wavelength_frame = wavelength_frame,
+    feature_wavelength_frame = feature_wavelength_frame,
+    redshift = redshift
   )
   cubedat <- feature_subset$cubedat
   cube <- cubedat$imDat
@@ -355,7 +368,7 @@ segment_large <- function(input,
     stop("No valid pixels after filtering.")
   }
 
-  if (!is.null(Ncomp) && length(valid_indices) < Ncomp) {
+  if (is.null(target_snr) && !is.null(Ncomp) && length(valid_indices) < Ncomp) {
     stop("`Ncomp` is larger than the number of valid pixels.")
   }
 
@@ -416,10 +429,7 @@ segment_large <- function(input,
       var_input <- if (is.null(feature_wavelength_range)) {
         .as_cubedat(var_cube)
       } else {
-        .subset_cubedat_wavelength_range(
-          var_cube,
-          feature_wavelength_range = feature_wavelength_range
-        )$cubedat
+        .subset_variance_channels(var_cube, full_cubedat, feature_subset$wave_idx)
       }
       if (!identical(dim(var_input$imDat), dim(cubedat$imDat))) {
         stop("`var_cube` must have the same dimensions as the input cube.")
@@ -520,6 +530,8 @@ segment_large <- function(input,
       valid_pixels = length(valid_indices)
     )
   )
+
+  out$wavelength_provenance <- feature_subset$provenance
 
   if (!is.null(feature_wavelength_range)) {
     out$feature_wavelength_range <- feature_wavelength_range

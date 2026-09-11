@@ -14,7 +14,7 @@
 #'
 #' @param input A FITS object representing the input data cube. Typically, this is an IFU data cube.
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
-#' @param redshift Numeric redshift placeholder kept for API compatibility.
+#' @param redshift Systemic redshift. Required explicitly for rest-frame selection.
 #' @param scale_fn A function used to scale each row of the 2D representation of the data cube.
 #'   Defaults to \code{\link[base]{scale}}. If you have a custom scaling function, pass it here.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
@@ -25,9 +25,17 @@
 #' @param k_values Optional candidate cluster counts tested when
 #'   \code{target_snr} is supplied.
 #' @param wavelength_range Optional wavelength interval used to compute SNR when
-#'   \code{target_snr} is supplied.
+#'   \code{target_snr} is supplied. This SNR interval is always in native
+#'   input coordinates, independently of `feature_wavelength_frame`.
+#' @param wavelength_frame Frame of the input wavelength axis: `observed` or
+#'   `rest`. May instead be supplied as `input$wavelength_frame`.
+#' @param feature_wavelength_frame Frame of the requested feature interval:
+#'   `observed` or `rest`. Required when bounds are supplied. Rest selection
+#'   requires an explicit valid redshift, including for a rest-frame input.
 #' @param feature_wavelength_range Optional wavelength interval used to select
-#'   the spectral channels used for clustering. The returned
+#'   the spectral channels used for clustering. Selection includes native
+#'   channels inside the closed interval; no resampling is performed.
+#'   `wavelength_provenance` records frames, redshift, actual bounds and indices.
 #'   \code{original_cube} remains the full input cube so downstream summed
 #'   spectra are still flux-preserving across the full spectral axis.
 #' @param snr_stat Either integrated SNR or median per-wavelength SNR when
@@ -98,7 +106,7 @@
 #' @export
 segment <- function(input,
                     Ncomp = 15,
-                    redshift = 0,
+                    redshift = NA_real_,
                     scale_fn = median_scale,
                     target_snr = NULL,
                     var_cube = NULL,
@@ -117,7 +125,9 @@ segment <- function(input,
                     denoise_k = 0,
                     starlet_mode = c("soft", "hard"),
                     positive_only = TRUE,
-                    mask_mode = c("na", "zero")) {
+                    mask_mode = c("na", "zero"),
+                    wavelength_frame = NULL,
+                    feature_wavelength_frame = NULL) {
   starlet_mode <- match.arg(starlet_mode)
   mask_mode <- match.arg(mask_mode)
   support_method <- match.arg(support_method)
@@ -139,15 +149,15 @@ segment <- function(input,
   full_input <- .as_cubedat(starlet_prep$input)
   feature_subset <- .subset_cubedat_wavelength_range(
     full_input,
-    feature_wavelength_range = feature_wavelength_range
+    feature_wavelength_range = feature_wavelength_range,
+    wavelength_frame = wavelength_frame,
+    feature_wavelength_frame = feature_wavelength_frame,
+    redshift = redshift
   )
   input <- feature_subset$cubedat
 
   if (!is.null(var_cube) && !is.null(feature_wavelength_range)) {
-    var_cube <- .subset_cubedat_wavelength_range(
-      var_cube,
-      feature_wavelength_range = feature_wavelength_range
-    )$cubedat
+    var_cube <- .subset_variance_channels(var_cube, full_input, feature_subset$wave_idx)
   }
 
   if (!is.null(target_snr)) {
@@ -187,6 +197,8 @@ segment <- function(input,
   out$original_cube <- full_input
   out$header <- full_input$hdr
   out$axDat <- full_input$axDat
+
+  out$wavelength_provenance <- feature_subset$provenance
 
   if (!is.null(feature_wavelength_range)) {
     out$feature_wavelength_range <- feature_wavelength_range
