@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch
 P=Path(__file__).resolve().parents[3];O=P/'results/science_baseline_freeze_v3';F=O/'figures'
 plt.rcParams.update({'font.size':9,'axes.spines.top':False,'axes.spines.right':False,'savefig.dpi':170})
 def read(path):return list(csv.DictReader(open(O/path)))
@@ -45,14 +47,22 @@ for folder in sorted((O/'sandra_pilot').iterdir()):
  other=[int(x['region_id']) for x in rows if not x['fit_status'].startswith('SUCCESS')]
  selected.append(other[0] if other else int(ranked[-1]['region_id']))
  fig=plt.figure(figsize=(11,6),layout='constrained');grid=fig.add_gridspec(2,3,width_ratios=[1,1.25,1.25]);ax=fig.add_subplot(grid[:,0])
- ax.imshow(m,origin='lower',cmap='tab20',vmin=.5,vmax=20.5,interpolation='nearest')
+ # A fixed spectral partition is not a galaxy-membership mask. Keep rejected
+ # inherited regions visible in grey, without giving them galaxy-region colours.
+ # Numerical fitting support still does not certify a stellar population fit.
+ supported=np.isin(m,[int(x['region_id']) for x in success])
+ ax.imshow(np.where(np.isfinite(m)&~supported,1.,np.nan),origin='lower',
+   cmap=ListedColormap(['#e3e3e3']),vmin=0,vmax=1,interpolation='nearest')
+ ax.imshow(np.where(supported,m,np.nan),origin='lower',cmap='tab20',vmin=.5,vmax=20.5,interpolation='nearest')
  for region in range(1,19):
-  y,x=np.where(m==region)
+  y,x=np.where((m==region)&supported)
   if len(x):
    ax.contour(m==region,levels=[.5],colors='white',linewidths=.3)
    centre=np.argmin((x-np.median(x))**2+(y-np.median(y))**2)
    ax.text(x[centre],y[centre],str(region),ha='center',va='center',fontsize=6,color='black')
- ax.set(xlabel='Native x pixel',ylabel='Native y pixel',title=id)
+ ax.set(xlabel='Native x pixel',ylabel='Native y pixel',title=id+'\nRegions with fitting support')
+ ax.legend(handles=[Patch(facecolor='#e3e3e3',label='Insufficient wavelength support')],
+   loc='upper center',bbox_to_anchor=(.5,-.16),frameon=False,fontsize=7)
  for j,region in enumerate(selected):
   saved=pickle.load(open(folder/f'region_{region:02d}.pkl','rb'));r=saved['regional'];fit=saved['fit'];p=saved['product']
   ax=fig.add_subplot(grid[j,1]);k=(r['native_wavelength']>3800)&(r['native_wavelength']<7500)

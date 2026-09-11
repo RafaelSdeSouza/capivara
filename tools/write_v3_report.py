@@ -10,6 +10,9 @@ def table(rows,cols):
  return '\n'.join(out)
 pins=json.loads((O/'manifests/source_pins.json').read_text())
 pilot=read('sandra_pilot/pilot_summary.csv');recovery=read('synthetic/stratified_recovery.csv')
+support=read('sandra_pilot/support_audit/summary.csv')
+for x in support:
+ x['rejected_valid_percent']=f"{100*float(x['valid_sample_fraction_insufficient_support']):.1f}"
 strata=[x for x in recovery if x['stratum'] in ['snr_in','sigma']]
 for x in strata:
  for key in ['log_age_bias','log_age_scatter','metal_bias','metal_scatter','velocity_bias','velocity_scatter','sigma_bias','sigma_scatter']:x[key]=f'{float(x[key]):.3f}'
@@ -24,6 +27,7 @@ for name in ['homogenized','median_scalar','rms_variable']:
 final=dict(REGIONAL_RESOLUTION_CONTRACT='CONDITIONAL',VARIANCE_CONTRACT='FAILED',
  STELLAR_POPULATION_RECOVERY='CONDITIONAL_TESTED_EMILES_DOMAIN',SANDRA_STELLAR_POPULATION_PILOT='NOT_READY',
  controlled_variance_subgate='DIAGONAL_APPROXIMATION_VALIDATED_UNDER_INDEPENDENT_NATIVE_NOISE',
+ spatial_galaxy_support='NOT_VALIDATED',
  source_pins=pins,scope='Five frozen pilots, 90 regions. No population catalogue entries certified; no Sandra-46 production run.')
 (O/'manifests/freeze_decisions.json').write_text(json.dumps(final,indent=2))
 text=fr'''# SCIENCE BASELINE FREEZE V3
@@ -46,6 +50,22 @@ The immutable runtime baseline is CAPIVARA 0.4.2.9000 at `4e6263af3fd0bfc556d4a2
 Before source changes, the V1/V2 reports, validation scripts and retained evidence were read. The audit parsed 1,118 serialized, table or text objects, decoded 368 PNGs, verified all 347 final V2 artifact hashes and the source/report hashes, and recorded a before/after ledger for all 2,091 files in both evidence trees. V2 tests reproduced 471 CAPIVARA and 52 backend expectations, with one intentional backend skip. Exact V2 source archives and a separate baseline installation are retained under `baseline_archives/` and `baseline_library/`. Neither historical evidence directory was regenerated. Development uses the isolated `fix/science-baseline-v3` branches.
 
 The five native inputs and the saved V2 rest-frame partition maps define 18 regions per object. No segmentation, bar detector, morphology, SpectroPath, hierarchical analysis or environment calculation was rerun. The V2 observed/rest, vacuum/air and systemic-relative coordinate contracts remain unchanged. Native gas moments and SpectroPath widths remain observed widths with no instrumental correction. The existing joint stellar-plus-gas native-LSF rejection is unchanged.
+
+## Inherited spatial support is not a galaxy boundary
+
+The outer ring in the 8602-12705 partition follows the IFU footprint. The native quality flags identify low-coverage spectra along this ring; it must not be interpreted as galaxy structure. The V2 comparison deliberately held the flux-based detector support fixed and introduced no new MASK/IVAR selection before clustering (`tools/validate_wavelength_frames.R`). That restriction isolated the observed-versus-rest comparison, but also carried contaminated edge support into both partitions. The four physical-coordinate checks did not validate galaxy membership.
+
+A separate read-only audit compares the full native continuum image, native quality flags and all 90 inherited region identities. It uses the requested 5050--5500 Angstrom rest-vacuum interval; exact selected native and rest limits are retained for every pilot. For 8602-12705 these are 5211--5675 Angstrom observed vacuum and 5050.170257899--5499.849590016 Angstrom rest vacuum. A continuum sample is eligible only for finite FLUX, finite positive IVAR and MASK==0. The median continuum image uses those samples without filling missing pixels. This broad-band diagnostic is not a calibrated surface-brightness or membership threshold.
+
+In 8602-12705, regions 9--15 and 17 contain 515 spaxels with 100% eligible continuum samples and numerical fitting support. Regions 1--8, 16 and 18 contain 629 spaxels and have no usable full-region fitting spectrum. Across these rejected regions, 44.7% of the continuum samples carry both DONOTUSE and LOWCOV; the region-specific fractions range from 16.6% to 100%. Region 4 joins central-adjacent continuum to defective outer coverage, so rejecting its entire fixed aperture also discards some plausible galaxy light. Neither retaining every flux-selected spaxel nor discarding every rejected region supplies a validated outer galaxy boundary. [SDSS pixel-mask definitions](https://www.sdss4.org/dr14/algorithms/bitmasks/).
+
+{table(support,{'galaxy_id':'Galaxy','inherited_spaxels':'Inherited spaxels','fitting_support_spaxels':'Spaxels in numerically fitted regions','insufficient_support_spaxels':'Spaxels in rejected regions','rejected_valid_percent':'Eligible continuum samples in rejected regions [%]'})}
+
+![Continuum and spatial-support audit for 8602-12705]({O}/figures/8602-12705_support_audit.png)
+
+*From left: median eligible native flux density in the stated continuum interval, in native $10^{{-17}}$ erg s$^{{-1}}$ cm$^{{-2}}$ Angstrom$^{{-1}}$ spaxel$^{{-1}}$ units; fraction of samples flagged DONOTUSE; the unchanged categorical V2 partition; and the regions with numerical fitting support. Grey in the final panel denotes insufficient wavelength support. White in the continuum panel denotes unavailable eligible flux; zero DONOTUSE fraction alone does not imply galaxy membership. Colours encode region identity, not a population parameter. All population fits remain QC-rejected.*
+
+The five spectroscopy figures now reserve region colours for numerical fitting support and show insufficient-support regions in grey. The audit panels and machine-readable tables retain every original label. This is a display and support diagnosis, not a repaired segmentation. **Galaxy support remains NOT_VALIDATED.** A subsequent spatial atlas requires an explicit galaxy-support selection that combines native eligibility with continuum/background evidence, separates foreground or disconnected sources, and tests its effect on the faint outskirts before reclustering. No spatial-atlas readiness is issued by V3.
 
 ## The two regional spectra
 
@@ -135,13 +155,13 @@ All fitting attempts use the frozen rest-frame partitions. Numerical-success cou
 
 Bound hits affect 17.8% of all regions and 25.8% of numerical fits; insufficient support affects 31.1% of regions. There are no remaining numerical exceptions in the final pilot. Population certification is 0/90. Interior fits still fail the residual/noise-calibration gate, and some also place most luminosity weight on a template-grid edge. Catalogue age, metallicity, stellar velocity and dispersion columns are therefore missing; the raw fit values are explicitly retained as diagnostics. No placeholder uncertainties are assigned.
 
-Safe outputs of this freeze are the fixed region identities and maps, native measured sums with their validity/count information, the separate controlled spectra, LSF and wavelength provenance, transformation operators/covariance under their stated assumptions, and fit/QC records. Stellar ages, metallicities, velocities, intrinsic dispersions, SFH detail, mass-weighted ages, masses, M/L and extinction are **not certified for the Sandra catalogue**. No intrinsic gas dispersion or deprojected dynamics is inferred.
+Safe outputs of this freeze are the region identities and maps as archival partitions, native measured sums with their validity/count information, the separate controlled spectra, LSF and wavelength provenance, transformation operators/covariance under their stated assumptions, and fit/QC records. The maps do not certify galaxy membership or morphological structure. Stellar ages, metallicities, velocities, intrinsic dispersions, SFH detail, mass-weighted ages, masses, M/L and extinction are **not certified for the Sandra catalogue**. No intrinsic gas dispersion or deprojected dynamics is inferred.
 
 ![Pilot diagnostics]({O}/figures/pilot_diagnostics.png)
 
 *All numerical pilot fits, including bound hits, are shown as QC-rejected diagnostics. Grey crosses are not certified population measurements. Fractions use all 18 regions per object; no-fit counts include insufficient support. The chi-square threshold is displayed under the stated independent-native-noise assumption.*
 
-Each of the five `figures/*_spectroscopy.png` figures shows the categorical fixed partition with region identifiers/boundaries, a representative successful numerical fit, an insufficient-support region where present, native and controlled spectra, the stellar model and residuals on accepted pixels. Emission features outside the stellar masks remain visible in the data but do not enter the displayed residual sample.
+Each of the five `figures/*_spectroscopy.png` figures shows supported fixed regions with categorical identifiers/boundaries and rejected support in grey, a representative successful numerical fit, an insufficient-support region where present, native and controlled spectra, the stellar model and residuals on accepted pixels. The companion `figures/*_support_audit.png` figures retain all original region colours alongside the continuum and native quality maps. Emission features outside the stellar masks remain visible in the data but do not enter the displayed residual sample.
 
 ## API, source and verification
 
@@ -159,7 +179,7 @@ The final CAPIVARA testthat run passes 481 expectations; capivaraPPXF passes 55,
 
 The fitting runtime is Python 3.9, pPXF 9.4.5, NumPy 1.26.4 and SciPy 1.13.1; R is 4.5.2 on arm64 macOS. Independent FITS/figure/response tools use the separately recorded Python 3.12 environment. A NumPy deprecation warning inside the pinned pPXF `log_rebin` implementation appears in the standalone unittest log; it does not change the current calculation and is retained rather than hidden. Initial package-check failures caused by omitting the normal dependency library were corrected. Offline repository-index diagnostics do not change the final clean check status. Exact environments, seeds, archive/input hashes and source/install comparisons are retained.
 
-Before the 46-object run, the spatial correlation tables and their wavelength mapping must be incorporated into a validated regional covariance calculation, including its interaction with different spaxel convolution operators. The fitting aperture must be specified for regions with permanently unusable contributors. Only after those changes should the residual/model adequacy, parameter bounds, template-family sensitivity and uncertainty calibration be reconsidered. V3 performs no Sandra-46 production, environment comparison, morphology revision, merge or push.
+Before the 46-object run, galaxy support must be distinguished from the instrumental footprint, and the spatial correlation tables and their wavelength mapping must be incorporated into a validated regional covariance calculation, including its interaction with different spaxel convolution operators. The fitting aperture must be specified for regions with permanently unusable contributors. Only after those changes should the residual/model adequacy, parameter bounds, template-family sensitivity and uncertainty calibration be reconsidered. V3 performs no Sandra-46 production, environment comparison, morphology revision, merge or push.
 
 Evidence root: `{O}`. The final manifest records code/report pins, versions, all input and template hashes, validation artifacts and the unchanged V1/V2 ledger. `synthetic/configuration.json`, `synthetic/domain_gates.csv`, `variance/native_spatial_correlation_bands.csv`, `sandra_pilot/all_regions.csv` and `manifests/freeze_decisions.json` provide the machine-readable decisions. **Stop after V3; no population-baseline readiness flag is issued.**
 '''
