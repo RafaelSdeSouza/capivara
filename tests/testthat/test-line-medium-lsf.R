@@ -105,7 +105,10 @@ test_that("native reader excludes derived DISP and verifies HDU identity", {
 })
 
 test_that("air frame changes pass through vacuum before applying redshift", {
-  vac <- frame_cube(); air <- vac
+  wave <- seq(4300,9300,by=17)
+  vac <- list(imDat=array(1,c(2,3,length(wave))),wavelength=wave,
+              wavelength_frame="observed",wavelength_medium="vacuum")
+  air <- vac
   air$wavelength <- convert_wavelength_medium(vac$wavelength,"vacuum","air")
   air$wavelength_medium <- "air"
   bounds <- c(4800,7400)
