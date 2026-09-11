@@ -10,12 +10,14 @@
 
 cube_path <- Sys.getenv(
   "CAPIVARA_CUBE_PATH",
-  unset = "/Users/rd23aag/Documents/GitHub/HUB_2026/Cecilia/CenA/CentA_magnum.fits"
+  unset = ""
 )
+if (!nzchar(cube_path)) stop("Set the explicit cube-path environment variable before running this tutorial.")
 output_dir <- Sys.getenv(
   "CAPIVARA_OUTPUT_DIR",
   unset = file.path(dirname(cube_path), "capivara_outputs", "CentA_magnum", "starlet_vs_plain_emission_n80")
 )
+if (!nzchar(output_dir)) stop("Set CAPIVARA_OUTPUT_DIR explicitly.")
 
 n_segments <- as.integer(Sys.getenv("CAPIVARA_NCOMP", unset = "80"))
 knn_k <- as.integer(Sys.getenv("CAPIVARA_KNN", unset = "50"))
@@ -47,8 +49,8 @@ suppressPackageStartupMessages({
   library(pkgload)
 })
 
-capivara_repo <- Sys.getenv("CAPIVARA_REPO", unset = "/Users/rd23aag/Documents/GitHub/capivara")
-pkgload::load_all(capivara_repo, quiet = TRUE)
+capivara_repo <- Sys.getenv("CAPIVARA_REPO", unset = "")
+if (nzchar(capivara_repo)) pkgload::load_all(capivara_repo, quiet = TRUE) else library(capivara)
 
 if (!file.exists(cube_path)) {
   stop("Cube not found: ", cube_path, call. = FALSE)

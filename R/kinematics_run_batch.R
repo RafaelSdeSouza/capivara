@@ -6,7 +6,7 @@
 #' @noRd
 run_batch_barred_manga <- function(batch_table_file,
                                    output_root = "outputs") {
-  .capivara_require(c("readr", "purrr"))
+  .capivara_require("readr")
   batch <- readr::read_csv(batch_table_file, show_col_types = FALSE)
   .capivara_dir_create(output_root)
 
@@ -18,11 +18,13 @@ run_batch_barred_manga <- function(batch_table_file,
     row$geometry <- list(
       x0 = row$x0 %||% NULL,
       y0 = row$y0 %||% NULL,
+      pa_image_deg = row$pa_image_deg %||% NULL,
       pa_deg = row$pa_deg %||% NULL,
       inc_deg = row$inc_deg %||% NULL,
       vsys = row$vsys %||% NULL
     )
     row$bar <- list(
+      phi_bar_disc_deg = row$phi_bar_disc_deg %||% NULL,
       bar_pa_deg = row$bar_pa_deg %||% NULL,
       bar_radius_pix = row$bar_radius_pix %||% NULL
     )

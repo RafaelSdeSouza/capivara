@@ -11,7 +11,11 @@ compute_residual_diagnostics <- function(spaxels,
                                          plateifu = NA_character_,
                                          fit_parameters = NULL,
                                          fit_status = NA_character_,
-                                         geometry_status = NA_character_) {
+                                         geometry_status = NA_character_,
+                                         bar_support_available = NULL) {
+  if (is.null(bar_support_available)) {
+    bar_support_available <- any(tolower(spaxels$seg_class) == "bar", na.rm = TRUE)
+  }
   valid <- spaxels$valid & is.finite(spaxels$v_resid)
   df <- spaxels[valid, , drop = FALSE]
   classes <- sort(unique(df$seg_class))
@@ -46,17 +50,20 @@ compute_residual_diagnostics <- function(spaxels,
     plateifu = plateifu,
     N_valid = nrow(df),
     N_disc = N_class("disc"),
-    N_bar = N_class("bar"),
+    N_bar = if (bar_support_available) N_class("bar") else NA_integer_,
     N_ring = N_class("ring"),
     N_nucleus = N_class("nucleus"),
     vsys = par$vsys[1],
     vmax = par$vmax[1],
     Rt = par$Rt[1],
-    A_bar = metric("bar", "A_resid"),
+    A_bar = if (bar_support_available) metric("bar", "A_resid") else NA_real_,
     RMS_disc = metric("disc", "rms_resid"),
-    RMS_bar = metric("bar", "rms_resid"),
-    Q_kin = metric("bar", "rms_resid") / metric("disc", "rms_resid"),
-    f_bar = if (is.finite(total_power) && total_power > 0) bar_power / total_power else NA_real_,
+    RMS_bar = if (bar_support_available) metric("bar", "rms_resid") else NA_real_,
+    Q_kin = if (bar_support_available && is.finite(metric("disc", "rms_resid")) &&
+      metric("disc", "rms_resid") > 0) metric("bar", "rms_resid") / metric("disc", "rms_resid") else NA_real_,
+    f_bar = if (bar_support_available && nrow(bar) > 0L && is.finite(total_power) && total_power > 0) bar_power / total_power else NA_real_,
+    bar_diagnostic_qc = if (!bar_support_available) "bar_support_not_supplied" else
+      if (!nrow(bar)) "no_valid_spaxels_in_supplied_bar_support" else "defined_on_supplied_support",
     fit_status = fit_status,
     geometry_status = geometry_status,
     stringsAsFactors = FALSE

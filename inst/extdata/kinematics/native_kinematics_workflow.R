@@ -19,7 +19,7 @@ cube_path <- if (!use_env_inputs && length(args) >= 1) {
   args[[1]]
 } else {
   env_cube_path <- Sys.getenv("CAPIVARA_CUBE_PATH", unset = "")
-  if (nzchar(env_cube_path)) env_cube_path else "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/bar_merger/manga-10218-12703-LOGCUBE.fits"
+  if (nzchar(env_cube_path)) env_cube_path else stop("Supply a cube path explicitly.", call. = FALSE)
 }
 out_dir <- if (!use_env_inputs && length(args) >= 2) {
   args[[2]]
@@ -273,7 +273,7 @@ plot_seg <- function(mat, path, title = NULL, n = NULL) {
 }
 
 read_wave <- function(path, fits) {
-  wave <- tryCatch(as.numeric(FITSio::readFITS(path, hdu = 6)$imDat), error = function(e) NULL)
+  wave <- tryCatch(as.numeric(.capivara_read_fits(path, hdu = 6)$imDat), error = function(e) NULL)
   if (!is.null(wave) && length(wave) == dim(fits$imDat)[3]) {
     return(wave)
   }
@@ -665,7 +665,7 @@ message(sprintf(
   redshift,
   line$rest_wave * (1 + redshift)
 ))
-fits <- FITSio::readFITS(cube_path, hdu = 1)
+fits <- .capivara_read_fits(cube_path, hdu = 1)
 wave <- read_wave(cube_path, fits)
 cube <- fits$imDat
 
@@ -894,7 +894,7 @@ maps <- list(
   setNames(list(kin$h4_proxy), paste0(line$slug, "_h4_proxy"))[[1]],
   kinematic_aware_segment = kin_seg$cluster_map
 )
-names(maps)[3:8] <- c(
+names(maps)[4:9] <- c(
   paste0(line$slug, "_log_flux"),
   paste0(line$slug, "_velocity_centered"),
   paste0(line$slug, "_sigma"),
@@ -912,7 +912,9 @@ map_stack <- array(NA_real_, dim = c(dim(cube)[1], dim(cube)[2], length(maps)))
 for (k in seq_along(maps)) {
   map_stack[, , k] <- maps[[k]]
 }
-try(FITSio::writeFITSim(map_stack, file.path(out_dir, paste0(file_prefix, "_capivara_kinematic_maps.fits")), type = "double"), silent = TRUE)
+stopifnot(length(names(maps)) == length(maps), !anyNA(names(maps)),
+          all(nzchar(names(maps))), !anyDuplicated(names(maps)))
+FITSio::writeFITSim(map_stack, file.path(out_dir, paste0(file_prefix, "_capivara_kinematic_maps.fits")), type = "double")
 utils::write.csv(
   data.frame(
     channel = seq_len(dim(map_stack)[3]),

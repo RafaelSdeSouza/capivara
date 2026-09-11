@@ -26,7 +26,7 @@ read_capivara_output <- function(segmentation_file, segment_table_file) {
   } else {
     fits_path <- .fits_temp_unzip(segmentation_file)
     on.exit(if (!identical(fits_path, segmentation_file)) unlink(fits_path), add = TRUE)
-    segmentation_map <- FITSio::readFITS(fits_path, hdu = 1, maxLines = 20000)$imDat
+    segmentation_map <- .capivara_read_fits(fits_path, hdu = 1, maxLines = 20000)$imDat
   }
 
   segmentation_map <- matrix(as.integer(round(segmentation_map)), nrow = nrow(segmentation_map))

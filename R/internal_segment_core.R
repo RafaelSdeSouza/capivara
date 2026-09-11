@@ -16,6 +16,13 @@
 }
 
 .wavelength_axis <- function(cubedat, n_wave) {
+  if (!is.null(cubedat$wavelength)) {
+    wave <- cubedat$wavelength
+    if (length(wave) != n_wave || any(!is.finite(wave)) || any(diff(wave) <= 0)) {
+      stop("wavelength must contain one increasing finite coordinate per spectral channel.")
+    }
+    return(wave)
+  }
   if (!is.null(cubedat$axDat)) {
     wavelengths <- tryCatch(
       FITSio::axVec(3, cubedat$axDat),
@@ -79,6 +86,7 @@
 
   out <- cubedat
   out$imDat <- cube[, , wave_idx, drop = FALSE]
+  out$wavelength <- wavelengths[wave_idx]
 
   if (!is.null(out$axDat) && is.data.frame(out$axDat) && nrow(out$axDat) >= 3L) {
     if ("crval" %in% names(out$axDat)) {

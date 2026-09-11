@@ -149,6 +149,7 @@
 
   mat <- matrix(cube, nrow = dims[1] * dims[2], ncol = dims[3])
   features <- list()
+  measured_valid <- rep(FALSE, nrow(mat))
   feature_info <- data.frame()
 
   for (i in seq_len(nrow(tab))) {
@@ -163,6 +164,7 @@
     if (length(line_idx) < 2L) next
 
     line_flux <- mat[, line_idx, drop = FALSE]
+    measured_valid <- measured_valid | rowSums(is.finite(line_flux)) >= 2L
     if (isTRUE(continuum_subtract)) {
       continuum <- if (length(cont_idx)) {
         .capivara_safe_row_median(mat[, cont_idx, drop = FALSE])
@@ -262,6 +264,7 @@
     feature_info = feature_info,
     line_table = tab,
     wavelengths = wavelengths,
+    measured_valid = measured_valid,
     original_cube = cubedat
   )
 }
@@ -372,23 +375,27 @@ segment_emission_lines <- function(input,
       is.finite(row_energy) & row_energy > 0 &
       is.finite(row_mad) & row_mad > 0
   }
+  valid <- valid & features$measured_valid
   valid_indices <- which(valid)
   if (!length(valid_indices)) {
     stop("No valid pixels after emission-line feature construction.", call. = FALSE)
   }
 
+  # Match the pre-existing unsampled row scaling in both computational paths.
+  feature_mat <- .sparse_ward_scale_features(feature_mat, scale_fn = NULL)
+  features$cube$imDat <- array(feature_mat, dim(features$cube$imDat))
   sampled <- is.finite(max_pixels) && length(valid_indices) > max_pixels
   if (!sampled) {
     out <- segment_large(
       features$cube,
       Ncomp = Ncomp,
       use_starlet_mask = FALSE,
-      mask = NULL,
+      mask = matrix(valid, n_row, n_col),
       valid_mode = valid_mode,
       knn_k = knn_k,
       spatial_weight = spatial_weight,
       feature_scale = "none",
-      scale_fn = NULL,
+      scale_fn = identity,
       ...
     )
   } else {
@@ -468,6 +475,8 @@ segment_emission_lines <- function(input,
   }
 
   out$original_cube <- features$original_cube
+  out$axDat <- features$original_cube$axDat
+  out$header <- features$original_cube$hdr
   out$emission_line_features <- list(
     mode = feature_mode,
     redshift = redshift,

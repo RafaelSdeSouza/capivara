@@ -51,10 +51,17 @@ robust emission-line-flux threshold.}
 \item{line_flux_sigma}{Border-noise threshold, in robust sigma units, for
 `"line_flux"` support.}
 
-\item{model_control}{Named list of model controls. For a bar model,
-`bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
-estimates it from the inner white-light elongation. See
-[kinematic_models()] for available modules.}
+\item{model_control}{Named list of model controls. Scientific mode (default)
+requires `disc_inc_deg`. `disc_pa_image_deg` is an image-frame disc PA;
+if omitted it is estimated from the velocity gradient and labelled.
+A bar model also requires `phi_bar_disc_deg` or `bar_geometry`: a list
+with `vetted=TRUE`, `source`, and `pa_image_deg` or
+`phi_bar_disc_deg`, plus an optional native-grid logical `bar_mask`.
+Image angles run from +row toward +column modulo 180 degrees.
+`analysis_mode="preview"` explicitly permits a labelled placeholder
+inclination and automatic white-light bar axis. Preview outputs are not
+scientifically usable. An angular wedge is preview-only, not a measured
+bar mask. See [kinematic_models()] for available models.}
 
 \item{show_plots}{Print figures as they are generated.}
 }

@@ -127,7 +127,7 @@ read_manga_cube_metadata <- function(cube_path) {
   mangaid <- NA_character_
   redshift <- NA_real_
   if (file.exists(cube_path) && requireNamespace("FITSio", quietly = TRUE)) {
-    hdr <- tryCatch(FITSio::readFITS(cube_path, hdu = 1L, maxLines = 1)$hdr, error = function(e) NULL)
+    hdr <- tryCatch(.capivara_read_fits_header(cube_path), error = function(e) NULL)
     if (!is.null(hdr)) {
       plateifu <- infer_manga_plateifu(.manga_header_value(hdr, "PLATEIFU", plateifu))
       mangaid <- trimws(.manga_header_value(hdr, "MANGAID", NA_character_))

@@ -103,6 +103,10 @@
 run_one_galaxy <- function(config_file) {
   .capivara_require(c("readr", "yaml", "ggplot2", "patchwork"))
   config <- .capivara_read_config(config_file)
+  analysis_mode <- match.arg(.capivara_cfg(config,"analysis_mode","science"),c("science","preview"))
+  if (isTRUE(.capivara_cfg(config,"allow_placeholder_inclination",FALSE)) && analysis_mode != "preview") {
+    stop("Placeholder inclination requires explicit analysis_mode='preview'.")
+  }
 
   plateifu <- as.character(.capivara_cfg(config, "plateifu", "unknown"))
   output_dir <- .capivara_cfg(config, "output_dir", file.path("outputs", plateifu))
@@ -135,7 +139,7 @@ run_one_galaxy <- function(config_file) {
   geometry <- estimate_disc_geometry(
     spaxels,
     geometry = geometry_config,
-    allow_placeholder_inclination = isTRUE(.capivara_cfg(config, "allow_placeholder_inclination", FALSE)),
+    allow_placeholder_inclination = analysis_mode == "preview",
     placeholder_inc_deg = as.numeric(.capivara_cfg(config, "placeholder_inc_deg", 60))
   )
   dep <- deproject_coordinates(spaxels$x, spaxels$y, geometry)
@@ -163,10 +167,13 @@ run_one_galaxy <- function(config_file) {
   spaxels <- axisym$spaxels
 
   bar_cfg <- .capivara_cfg(config, "bar", list())
-  bar_geometry <- estimate_bar_geometry(
-    spaxels,
-    phi_b_deg = .capivara_nested_cfg(config, "bar", "phi_b_deg", .capivara_nested_cfg(config, "bar", "bar_pa_deg", NULL))
-  )
+  bar_config <- .capivara_cfg(config,"bar",list())
+  if (!is.null(bar_config$bar_pa_deg)) stop("Ambiguous legacy bar_pa_deg; supply phi_bar_disc_deg explicitly.")
+  if (analysis_mode == "science" && is.null(bar_config$phi_bar_disc_deg) && is.null(bar_config$phi_b_deg)) {
+    stop("Scientific bar modelling requires an explicit phi_bar_disc_deg.")
+  }
+  bar_geometry <- estimate_bar_geometry(spaxels,geometry=geometry,
+    phi_bar_disc_deg=bar_config$phi_bar_disc_deg,phi_b_deg=bar_config$phi_b_deg)
   fit <- fit_bisymmetric_model(
     spaxels,
     geometry,

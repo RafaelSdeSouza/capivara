@@ -10,17 +10,19 @@ suppressPackageStartupMessages({
   library(pkgload)
 })
 
-capivara_repo <- Sys.getenv("CAPIVARA_REPO", unset = "/Users/rd23aag/Documents/GitHub/capivara")
-pkgload::load_all(capivara_repo, quiet = TRUE)
+capivara_repo <- Sys.getenv("CAPIVARA_REPO", unset = "")
+if (nzchar(capivara_repo)) pkgload::load_all(capivara_repo, quiet = TRUE) else library(capivara)
 
 cube_path <- Sys.getenv(
   "CAPIVARA_CUBE_PATH",
-  unset = "/Users/rd23aag/Documents/GitHub/HUB_2026/Cecilia/CenA/CentA_magnum.fits"
+  unset = ""
 )
+if (!nzchar(cube_path)) stop("Set the explicit cube-path environment variable before running this tutorial.")
 output_dir <- Sys.getenv(
   "CAPIVARA_OUTPUT_DIR",
-  unset = "/Users/rd23aag/Documents/GitHub/HUB_2026/Cecilia/CenA/capivara_outputs/CentA_magnum/emission_line_modes_n50"
+  unset = ""
 )
+if (!nzchar(output_dir)) stop("Set CAPIVARA_OUTPUT_DIR explicitly.")
 
 redshift <- as.numeric(Sys.getenv("CAPIVARA_REDSHIFT", unset = "0.00183"))
 n_segments <- as.integer(Sys.getenv("CAPIVARA_NCOMP", unset = "50"))

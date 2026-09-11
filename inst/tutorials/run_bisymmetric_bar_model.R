@@ -2,13 +2,13 @@
 
 # Capivara bisymmetric bar model: one known barred galaxy
 #
-# Edit only this block, then click Source in RStudio. By default Capivara
-# derives the bar-angle prior from white light; it never substitutes the disc PA.
+# This explicit preview derives a white-light bar-angle prior and uses a
+# placeholder inclination. Neither is a validated dynamical measurement.
 
-cube_path <- "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/normal_bar/manga-8078-12703-LOGCUBE.fits"
+cube_path <- Sys.getenv("CAPIVARA_CUBE_PATH", unset = "")
 redshift <- NA_real_
 emission_line <- "halpha"
-bar_phi_deg <- NA_real_ # Automatic from white light; set a measured in-plane angle to override.
+phi_bar_disc_deg <- NA_real_ # Automatic from white light; set a measured in-plane angle to override.
 
 output_dir <- file.path(
   dirname(cube_path),
@@ -16,6 +16,7 @@ output_dir <- file.path(
   tools::file_path_sans_ext(basename(cube_path)),
   "bisymmetric_bar"
 )
+if (!nzchar(cube_path)) stop("Set the explicit cube-path environment variable before running this tutorial.")
 
 # Nothing below this line needs editing.
 
@@ -29,10 +30,11 @@ result <- run_manga_bar_model(
   redshift = redshift,
   emission_line = emission_line,
   segmentation_mode = "kinematic",
-  bar_phi_deg = bar_phi_deg,
+  phi_bar_disc_deg = phi_bar_disc_deg,
   output_dir = output_dir,
   knn_k = 50,
   n_segments = 25,
+  model_control = list(analysis_mode = "preview"),
   show_plots = TRUE
 )
 

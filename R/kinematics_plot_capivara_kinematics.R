@@ -97,7 +97,7 @@
     flip_x = data.frame(x = nc + 1 - x, y = y),
     flip_y = data.frame(x = x, y = nr + 1 - y),
     rot90_cw = data.frame(x = nr + 1 - y, y = x),
-    rot90_ccw = data.frame(x = y, y = nr + 1 - x),
+    rot90_ccw = data.frame(x = y, y = nc + 1 - x),
     rot180 = data.frame(x = nc + 1 - x, y = nr + 1 - y),
     stop("Unsupported display orientation: ", orientation, call. = FALSE)
   )
@@ -108,7 +108,7 @@
                                     support_mask = NULL) {
   spaxels <- result$spaxels
   geometry <- result$geometry
-  phi <- tryCatch(result$bar_geometry$phi_b_rad, error = function(e) NA_real_)
+  phi <- tryCatch(result$bar_geometry$phi_bar_disc_rad, error = function(e) NA_real_)
   required <- c("valid", "R")
   if (!is.finite(phi) || !all(required %in% names(spaxels))) {
     return(data.frame(x = numeric(), y = numeric()))
@@ -135,14 +135,14 @@
     # Invert the legacy projected-polar transformation for theta = phi_b.
     X <- radius * cos(phi)
     Y <- radius * sin(phi) * cos(geometry$inc_rad)
-    x <- geometry$x0 - sin(geometry$pa_rad) * X - cos(geometry$pa_rad) * Y
-    y <- geometry$y0 + cos(geometry$pa_rad) * X - sin(geometry$pa_rad) * Y
+    x <- geometry$x0 - sin(geometry$pa_image_rad) * X - cos(geometry$pa_image_rad) * Y
+    y <- geometry$y0 + cos(geometry$pa_image_rad) * X - sin(geometry$pa_image_rad) * Y
   } else {
     # Invert the NIRVANA projected-polar transformation for theta = phi_b.
     X <- radius * cos(phi)
     Y <- -radius * sin(phi) * cos(geometry$inc_rad)
-    x <- geometry$x0 + sin(geometry$pa_rad) * X - cos(geometry$pa_rad) * Y
-    y <- geometry$y0 + cos(geometry$pa_rad) * X + sin(geometry$pa_rad) * Y
+    x <- geometry$x0 + sin(geometry$pa_image_rad) * X - cos(geometry$pa_image_rad) * Y
+    y <- geometry$y0 + cos(geometry$pa_image_rad) * X + sin(geometry$pa_image_rad) * Y
   }
   data.frame(x = x, y = y)
 }
@@ -331,7 +331,7 @@
   summary <- result$diagnostics$summary[1, , drop = FALSE]
   param_text <- paste0(
     "i: ", round(result$geometry$inc_deg, 1), " deg.\n",
-    "phi: ", round(result$geometry$pa_deg, 1), " deg.\n",
+    "phi: ", round(result$geometry$pa_image_deg, 1), " deg.\n",
     "v_sys: ", round(result$fit$parameters$vsys[1], 1), " km/s\n",
     "RMS residual: ", round(summary$RMS_disc[1], 1), " km/s\n",
     "fit: ", result$fit$fit_status
@@ -449,8 +449,8 @@ plot_capivara_kinematics <- function(result, png_file = NULL, pdf_file = NULL) {
   summary <- result$diagnostics$summary[1, ]
   param_text <- paste0(
     "i: ", round(result$geometry$inc_deg, 1), " deg.\n",
-    "phi: ", round(result$geometry$pa_deg, 1), " deg.\n",
-    "phi_b: ", round(result$bar_geometry$phi_b_deg, 1), " deg.\n",
+    "phi: ", round(result$geometry$pa_image_deg, 1), " deg.\n",
+    "phi_b: ", round(result$bar_geometry$phi_bar_disc_deg, 1), " deg.\n",
     "v_sys: ", round(result$fit$parameters$vsys[1], 1), " km/s\n",
     "mean |V2|: ", round(result$fit$parameters$mean_V2[1], 1), " km/s\n",
     "Q_kin: ", round(summary$Q_kin, 2), "\n",

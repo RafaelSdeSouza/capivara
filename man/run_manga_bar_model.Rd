@@ -18,7 +18,9 @@ run_manga_bar_model(
   support_mode = c("starlet", "line_flux"),
   line_flux_sigma = 3,
   model_control = list(),
-  show_plots = interactive()
+  show_plots = interactive(),
+  phi_bar_disc_deg = NA_real_,
+  bar_geometry = NULL
 )
 }
 \arguments{
@@ -31,8 +33,7 @@ run_manga_bar_model(
 \item{segmentation_mode}{`"kinematic"` for line-map features or
 `"path_signature"` to also compute path-signature regions.}
 
-\item{bar_phi_deg}{Optional manual in-plane bar angle in degrees relative to
-the disc major axis. Leave as `NA` to estimate it from white light.}
+\item{bar_phi_deg}{Deprecated input alias for `phi_bar_disc_deg`.}
 
 \item{output_dir}{Directory for saved products. Defaults beside the cube.}
 
@@ -51,21 +52,34 @@ robust emission-line-flux threshold.}
 \item{line_flux_sigma}{Border-noise threshold, in robust sigma units, for
 `"line_flux"` support.}
 
-\item{model_control}{Named list of model controls. For a bar model,
-`bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
-estimates it from the inner white-light elongation. See
-[kinematic_models()] for available modules.}
+\item{model_control}{Named list of model controls. Scientific mode (default)
+requires `disc_inc_deg`. `disc_pa_image_deg` is an image-frame disc PA;
+if omitted it is estimated from the velocity gradient and labelled.
+A bar model also requires `phi_bar_disc_deg` or `bar_geometry`: a list
+with `vetted=TRUE`, `source`, and `pa_image_deg` or
+`phi_bar_disc_deg`, plus an optional native-grid logical `bar_mask`.
+Image angles run from +row toward +column modulo 180 degrees.
+`analysis_mode="preview"` explicitly permits a labelled placeholder
+inclination and automatic white-light bar axis. Preview outputs are not
+scientifically usable. An angular wedge is preview-only, not a measured
+bar mask. See [kinematic_models()] for available models.}
 
 \item{show_plots}{Print figures as they are generated.}
+
+\item{phi_bar_disc_deg}{In-plane axial bar angle relative to the disc major
+axis, using the signed theta of the selected deprojection convention.}
+
+\item{bar_geometry}{Optional vetted geometry list, as described under
+`model_control`. No second unrelated angle is estimated when supplied.}
 }
 \value{
 A `capivara_kinematic_result` with the bisymmetric model and its
   component decomposition.
 }
 \description{
-This convenience wrapper is intentionally bar-specific. By default it
-derives a photometric in-plane bar-angle prior from the white-light image;
-supplying `bar_phi_deg` overrides that estimate. It never substitutes the
+This convenience wrapper is intentionally bar-specific. Scientific mode
+requires supplied bar geometry or an explicit in-plane bar angle. Automatic
+white-light estimation is limited to explicit preview mode. It never substitutes the
 disc position angle for a bar angle. For an ordinary rotation model, use
 [run_kinematic_analysis()] with its axisymmetric default.
 }

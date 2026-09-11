@@ -9,12 +9,14 @@
 
 cube_path <- Sys.getenv(
   "CAPIVARA_CUBE_PATH",
-  unset = "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/normal_bar/manga-8602-12705-LOGCUBE.fits"
+  unset = ""
 )
+if (!nzchar(cube_path)) stop("Set the explicit cube-path environment variable before running this tutorial.")
 output_dir <- Sys.getenv(
   "CAPIVARA_OUTPUT_DIR",
   unset = file.path(dirname(cube_path), "capivara_outputs", "manga8602_12705_full_analysis")
 )
+if (!nzchar(output_dir)) stop("Set CAPIVARA_OUTPUT_DIR explicitly.")
 
 redshift <- 0.0318            # Use the measured MaNGA redshift for this target.
 emission_line <- "oiii5007"  # This cube has broader usable [O III] support than H-alpha.
@@ -29,21 +31,21 @@ clean_starlet_support <- TRUE  # Removes detached starlet islands, keeps the mai
 # entire barred region while excluding detached starlet islands and blank sky.
 bar_knn_k <- 50
 bar_n_segments <- 25
-bar_phi_deg <- NA_real_       # NA estimates a photometric prior from white light.
+phi_bar_disc_deg <- NA_real_       # NA estimates a photometric prior from white light.
 kinematic_support_mode <- "starlet"
 line_flux_sigma <- 1.5        # Used only when `kinematic_support_mode = "line_flux"`.
 
 # Set this to the local capivaraPPXF checkout. It is an optional companion
 # package because pPXF itself has a separate licence.
-ppxf_repo <- "/Users/rd23aag/Documents/GitHub/capivaraPPXF"
-sps_file <- "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/outputs/capivara_ppxf_manga_smoke/sps_models/spectra_emiles_9.0.npz"
+ppxf_repo <- Sys.getenv("CAPIVARA_PPXF_REPO", unset = "")
+sps_file <- Sys.getenv("CAPIVARA_SPS_FILE", unset = "")
 
 # ---- Setup ------------------------------------------------------------------
 
 if (!file.exists(cube_path)) {
   stop("Cube not found: ", cube_path, call. = FALSE)
 }
-if (!dir.exists(ppxf_repo)) {
+if (nzchar(ppxf_repo) && !dir.exists(ppxf_repo)) {
   stop("capivaraPPXF checkout not found: ", ppxf_repo, call. = FALSE)
 }
 if (!file.exists(sps_file)) {
@@ -69,13 +71,13 @@ suppressPackageStartupMessages({
 # an installed workflow, `library(capivara)` and `library(capivaraPPXF)` work too.
 capivara_repo <- Sys.getenv(
   "CAPIVARA_REPO",
-  unset = "/Users/rd23aag/Documents/GitHub/capivara"
+  unset = ""
 )
-if (!dir.exists(capivara_repo) || !file.exists(file.path(capivara_repo, "DESCRIPTION"))) {
+if (nzchar(capivara_repo) && (!dir.exists(capivara_repo) || !file.exists(file.path(capivara_repo, "DESCRIPTION")))) {
   stop("Capivara checkout not found: ", capivara_repo, call. = FALSE)
 }
-pkgload::load_all(capivara_repo, quiet = TRUE)
-pkgload::load_all(ppxf_repo, quiet = TRUE)
+if (nzchar(capivara_repo)) pkgload::load_all(capivara_repo, quiet = TRUE) else library(capivara)
+if (nzchar(ppxf_repo)) pkgload::load_all(ppxf_repo, quiet = TRUE) else library(capivaraPPXF)
 
 # Keep the Python plotting cache in a writable temporary directory. This avoids
 # a first-run Matplotlib cache failure on locked-down workstations.
@@ -335,7 +337,7 @@ bar_result <- capivara::run_manga_bar_model(
   redshift = redshift,
   emission_line = emission_line,
   segmentation_mode = "kinematic",
-  bar_phi_deg = bar_phi_deg,
+  phi_bar_disc_deg = phi_bar_disc_deg,
   output_dir = kinematics_dir,
   object_id = object_id,
   knn_k = bar_knn_k,
@@ -343,8 +345,8 @@ bar_result <- capivara::run_manga_bar_model(
   support_mode = kinematic_support_mode,
   line_flux_sigma = line_flux_sigma,
   model_control = list(
-    # Cube arrays are stored as [y, x]; transpose maps them back to sky x/y
-    # without rotating or flipping the cube.
+    analysis_mode = "preview",
+    # This is a display transpose, not a WCS transformation to sky coordinates.
     display_orientation = "transpose",
     use_bar_support_mask = TRUE,
     bar_support_width_deg = 25,
@@ -379,11 +381,12 @@ manifest <- c(
   sprintf("pPXF quality: %s", file.path(ppxf_dir, "ppxf_population_quality_by_segment.csv")),
   sprintf("Bar result: %s", file.path(kinematics_dir, "capivara_bisymmetric_bar_result.rds")),
   sprintf("Kinematic support mode: %s", kinematic_support_mode),
-  sprintf("Display coordinate mapping: transpose ([y, x] cube storage to sky x/y)"),
+  "Kinematics: PREVIEW ONLY; inclination is not constrained",
+  "Display coordinate mapping: transpose of native row/column coordinates, not sky WCS",
   sprintf("Connected starlet footprint: %d spaxels", sum(bar_result$model_result$native$support_starlet, na.rm = TRUE)),
   sprintf("Kinematic support: %d spaxels", sum(bar_result$model_result$spaxels$valid, na.rm = TRUE)),
   sprintf("Bar angle source: %s", bar_result$model_result$bar_geometry$bar_status),
-  sprintf("Bar angle prior (deg): %.3f", bar_result$model_result$bar_geometry$phi_b_deg),
+  sprintf("Bar angle prior (deg): %.3f", bar_result$model_result$bar_geometry$phi_bar_disc_deg),
   sprintf("Mean noncircular amplitude (km/s): %.4f", bar_result$model_result$fit$parameters$mean_V2)
 )
 writeLines(manifest, file.path(output_dir, "README.txt"))

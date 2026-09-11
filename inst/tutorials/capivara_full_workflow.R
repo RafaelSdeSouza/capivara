@@ -8,8 +8,9 @@
 
 cube_path <- Sys.getenv(
   "CAPIVARA_TUTORIAL_CUBE",
-  unset = "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/normal_bar/manga-8078-12703-LOGCUBE.fits"
+  unset = ""
 )
+if (!nzchar(cube_path)) stop("Set the explicit cube-path environment variable before running this tutorial.")
 
 object_id <- tools::file_path_sans_ext(basename(cube_path))
 redshift <- NA_real_        # NA = try local MaNGA metadata/header where possible
@@ -23,7 +24,7 @@ include_coarse_starlet <- FALSE
 
 run_bar_model <- FALSE
 segmentation_mode_for_bar <- "kinematic" # or "path_signature"
-bar_phi_deg <- NA_real_ # automatic from white light; set a measured angle to override
+phi_bar_disc_deg <- NA_real_ # automatic from white light; set a measured angle to override
 
 output_dir <- file.path(dirname(cube_path), "capivara_tutorial_outputs", object_id)
 
@@ -191,7 +192,7 @@ if (isTRUE(run_bar_model)) {
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = max(35, n_segments),
-    model_control = list(bar_phi_deg = bar_phi_deg),
+    model_control = list(analysis_mode = "preview", phi_bar_disc_deg = phi_bar_disc_deg),
     show_plots = FALSE
   )
 

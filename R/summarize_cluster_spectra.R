@@ -19,6 +19,8 @@
 summarize_cluster_spectra <- function(cluster_result,
                                       var_cube = NULL,
                                       variance_inflation = 1) {
+  if (length(variance_inflation) != 1L || !is.finite(variance_inflation) ||
+      variance_inflation <= 0) stop("variance_inflation must be finite and positive.")
   cubedat <- .as_cubedat(cluster_result$original_cube)
   flux_mat <- cube_to_matrix(cubedat)
   cluster_vec <- as.vector(cluster_result$cluster_map)
@@ -28,11 +30,15 @@ summarize_cluster_spectra <- function(cluster_result,
   }
 
   cluster_ids <- sort(unique(cluster_vec[!is.na(cluster_vec)]))
-  wavelengths <- if (!is.null(cubedat$axDat)) {
+  wavelengths <- if (!is.null(cubedat$wavelength)) {
+    cubedat$wavelength
+  } else if (!is.null(cubedat$axDat)) {
     FITSio::axVec(3, cubedat$axDat)
   } else {
     seq_len(ncol(flux_mat))
   }
+  if (length(wavelengths) != ncol(flux_mat) || any(!is.finite(wavelengths)) ||
+      any(diff(wavelengths) <= 0)) stop("Invalid wavelength grid for the retained spectra.")
   wave_names <- as.character(wavelengths)
 
   median_spectra <- matrix(
@@ -62,25 +68,32 @@ summarize_cluster_spectra <- function(cluster_result,
     sum_variance <- median_spectra
     weighted_mean_spectra <- median_spectra
     weighted_mean_variance <- median_spectra
+    variance_counts <- finite_counts
   }
 
   for (i in seq_along(cluster_ids)) {
     cluster_id <- cluster_ids[i]
     idx <- which(cluster_vec == cluster_id)
     X <- flux_mat[idx, , drop = FALSE]
+    X[!is.finite(X)] <- NA_real_
 
     n_spaxels[i] <- length(idx)
     median_spectra[i, ] <- apply(X, 2, stats::median, na.rm = TRUE)
     sum_spectra[i, ] <- colSums(X, na.rm = TRUE)
     finite_counts[i, ] <- colSums(is.finite(X))
+    sum_spectra[i, finite_counts[i, ] == 0] <- NA_real_
     mean_spectra[i, ] <- sum_spectra[i, ] / finite_counts[i, ]
     mean_spectra[i, finite_counts[i, ] == 0] <- NA_real_
 
     if (has_var) {
       V <- var_mat[idx, , drop = FALSE]
-      V[!is.finite(V) | V <= 0] <- NA_real_
+      V[!is.finite(V) | V <= 0 | !is.finite(X)] <- NA_real_
 
       sum_variance[i, ] <- variance_inflation * colSums(V, na.rm = TRUE)
+      variance_counts[i, ] <- colSums(is.finite(V))
+      # A sum retaining measured flux cannot have a partial, understated error.
+      incomplete <- finite_counts[i, ] == 0 | variance_counts[i, ] != finite_counts[i, ]
+      sum_variance[i, incomplete] <- NA_real_
 
       w <- 1 / V
       w[!is.finite(w)] <- 0
@@ -109,6 +122,7 @@ summarize_cluster_spectra <- function(cluster_result,
   if (has_var) {
     out <- c(out, list(
       sum_variance = sum_variance,
+      variance_counts = variance_counts,
       weighted_mean_spectra = weighted_mean_spectra,
       weighted_mean_variance = weighted_mean_variance
     ))

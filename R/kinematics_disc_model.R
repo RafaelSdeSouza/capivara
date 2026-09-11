@@ -137,20 +137,29 @@ disc_velocity_model <- function(par, R, theta, inc_rad) {
 #' Estimate the in-plane bar angle for a bisymmetric model
 #'
 #' @param spaxels Spaxel table after deprojection.
-#' @param phi_b_deg Optional supplied in-plane bar angle relative to the major axis.
+#' @param phi_bar_disc_deg Optional supplied in-plane bar angle relative to the major axis.
 #' @param white_light Optional collapsed white-light image. When supplied with
 #'   `geometry`, its central elongated light distribution provides an automatic
 #'   photometric bar-angle prior.
 #' @param geometry Disc geometry used to deproject the photometric angle.
-#' @return A list with `phi_b_rad`, `phi_b_deg`, and status.
+#' @return A list with `phi_bar_disc_rad`, `phi_bar_disc_deg`, and status.
 #' @noRd
 estimate_bar_geometry <- function(spaxels,
-                                  phi_b_deg = NULL,
+                                  phi_bar_disc_deg = NULL,
                                   white_light = NULL,
-                                  geometry = NULL) {
-  if (!is.null(phi_b_deg) && length(phi_b_deg) == 1L && is.finite(phi_b_deg)) {
-    phi <- as.numeric(phi_b_deg) * pi / 180
-    return(list(phi_b_rad = phi, phi_b_deg = as.numeric(phi_b_deg), bar_status = "bar_angle_supplied"))
+                                  geometry = NULL,
+                                  phi_b_deg = NULL) {
+  if (!is.null(phi_b_deg)) {
+    warning("phi_b_deg is deprecated; use phi_bar_disc_deg.", call. = FALSE)
+    if (!is.null(phi_bar_disc_deg) &&
+        abs(.capivara_axial_angle(phi_bar_disc_deg - phi_b_deg)) > 1e-8) {
+      stop("Conflicting in-plane bar angles.")
+    }
+    phi_bar_disc_deg <- phi_b_deg
+  }
+  if (!is.null(phi_bar_disc_deg) && length(phi_bar_disc_deg) == 1L && is.finite(phi_bar_disc_deg)) {
+    phi <- as.numeric(phi_bar_disc_deg) * pi / 180
+    return(list(phi_bar_disc_rad = phi, phi_bar_disc_deg = as.numeric(phi_bar_disc_deg), bar_status = "bar_angle_supplied"))
   }
 
   if (is.matrix(white_light) && is.list(geometry)) {
@@ -169,9 +178,10 @@ estimate_bar_geometry <- function(spaxels,
   xy <- scale(xy, center = TRUE, scale = FALSE)
   eig <- eigen(stats::cov(xy), symmetric = TRUE)
   axis <- eig$vectors[, 1]
-  phi <- atan2(axis[2], axis[1])
+  convention <- if (is.null(geometry$coordinate_convention)) "nirvana" else geometry$coordinate_convention
+  phi <- atan2(if (convention == "nirvana") -axis[2] else axis[2], axis[1])
   phi <- ((phi + pi / 2) %% pi) - pi / 2
-  list(phi_b_rad = phi, phi_b_deg = phi * 180 / pi, bar_status = "bar_angle_estimated_from_capivara_bar_support")
+  list(phi_bar_disc_rad = phi, phi_bar_disc_deg = phi * 180 / pi, bar_status = "bar_angle_estimated_from_capivara_bar_support")
 }
 
 .capivara_white_light_bar_axis <- function(white_light,
@@ -179,9 +189,9 @@ estimate_bar_geometry <- function(spaxels,
                                            inner_radius_fraction = 0.55,
                                            brightness_quantile = 0.65,
                                            min_pixels = 20L) {
-  required_geometry <- c("x0", "y0", "pa_rad", "inc_rad", "coordinate_convention")
+  required_geometry <- c("x0", "y0", "pa_image_rad", "inc_rad", "coordinate_convention")
   if (!all(required_geometry %in% names(geometry)) ||
-      !all(is.finite(unlist(geometry[c("x0", "y0", "pa_rad", "inc_rad")]))) ||
+      !all(is.finite(unlist(geometry[c("x0", "y0", "pa_image_rad", "inc_rad")]))) ||
       !any(is.finite(white_light))) {
     return(NULL)
   }
@@ -246,10 +256,12 @@ estimate_bar_geometry <- function(spaxels,
   phi <- ((phi + pi / 2) %% pi) - pi / 2
 
   list(
-    phi_b_rad = phi,
-    phi_b_deg = phi * 180 / pi,
+    phi_bar_disc_rad = phi,
+    phi_bar_disc_deg = phi * 180 / pi,
     bar_status = "bar_angle_estimated_from_inner_white_light",
-    photometric_axis_ratio = sqrt(eig$values[[1L]] / eig$values[[2L]]),
+    pa_image_deg = (atan2(projected_axis[1L], projected_axis[2L])*180/pi) %% 180,
+    pa_sky_deg = NA_real_,
+    photometric_axis_ratio = sqrt(eig$values[[2L]] / eig$values[[1L]]),
     photometric_n_pixels = sum(selected),
     photometric_inner_radius = inner_radius_fraction * r95,
     photometric_brightness_quantile = brightness_quantile
@@ -331,7 +343,7 @@ fit_bisymmetric_model <- function(spaxels,
   knots <- .capivara_velocity_knots(dat, n_rings)
   basis <- .capivara_piecewise_basis(dat$R, knots)
   inc <- sin(geometry$inc_rad)
-  phi <- bar_geometry$phi_b_rad
+  phi <- bar_geometry$phi_bar_disc_rad
   theta <- dat$theta
   vt <- basis * (inc * cos(theta))
   v2t <- basis * (-inc * cos(2 * (theta - phi)) * cos(theta))
@@ -415,7 +427,7 @@ fit_bisymmetric_model <- function(spaxels,
       vsys = vsys,
       vmax = vmax,
       Rt = NA_real_,
-      phi_b_deg = bar_geometry$phi_b_deg,
+      phi_bar_disc_deg = bar_geometry$phi_bar_disc_deg,
       mean_V2 = mean_v2,
       V2_over_Vt = v2_ratio,
       stringsAsFactors = FALSE

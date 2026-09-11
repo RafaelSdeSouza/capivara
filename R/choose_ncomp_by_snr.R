@@ -9,12 +9,22 @@
   vapply(sort(unique(clusters)), function(cluster_id) {
     idx <- which(clusters == cluster_id)
 
-    bin_flux <- colSums(flux_mat[idx, wave_idx, drop = FALSE], na.rm = TRUE)
-    bin_var <- variance_inflation * colSums(var_mat[idx, wave_idx, drop = FALSE], na.rm = TRUE)
+    X <- flux_mat[idx, wave_idx, drop = FALSE]
+    V <- var_mat[idx, wave_idx, drop = FALSE]
+    measured <- is.finite(X)
+    usable <- measured & is.finite(V) & V > 0
+    # Retain all measured flux, but never report a partial variance for it.
+    X[!measured] <- 0
+    V[!usable] <- 0
+    complete <- colSums(measured) > 0 & colSums(measured) == colSums(usable)
+    bin_flux <- colSums(X)
+    bin_var <- variance_inflation * colSums(V)
+    bin_flux[!complete] <- bin_var[!complete] <- NA_real_
     bin_snr <- bin_flux / sqrt(bin_var)
     bin_snr[!is.finite(bin_snr)] <- NA_real_
 
     if (snr_stat == "integrated") {
+      if (any(colSums(measured) > 0 & !complete)) return(NA_real_)
       total_flux <- sum(bin_flux, na.rm = TRUE)
       total_var <- sum(bin_var, na.rm = TRUE)
       if (!is.finite(total_var) || total_var <= 0) {
