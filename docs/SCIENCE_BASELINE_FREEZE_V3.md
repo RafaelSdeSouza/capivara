@@ -1,32 +1,4 @@
-"""Write the V3 scientific decisions from retained evidence and exact source pins."""
-from pathlib import Path
-import csv,json,subprocess
-import numpy as np
-P=Path(__file__).resolve().parents[3];O=P/'results/science_baseline_freeze_v3';D=Path(__file__).resolve().parents[1]/'docs/SCIENCE_BASELINE_FREEZE_V3.md'
-def read(p):return list(csv.DictReader(open(O/p)))
-def table(rows,cols):
- out=['| '+' | '.join(cols.values())+' |','| '+' | '.join('---' for _ in cols)+' |']
- for row in rows:out.append('| '+' | '.join(str(row[k]) for k in cols)+' |')
- return '\n'.join(out)
-pins=json.loads((O/'manifests/source_pins.json').read_text())
-pilot=read('sandra_pilot/pilot_summary.csv');recovery=read('synthetic/stratified_recovery.csv')
-strata=[x for x in recovery if x['stratum'] in ['snr_in','sigma']]
-for x in strata:
- for key in ['log_age_bias','log_age_scatter','metal_bias','metal_scatter','velocity_bias','velocity_scatter','sigma_bias','sigma_scatter']:x[key]=f'{float(x[key]):.3f}'
-for x in pilot:
- for k in ['median_snr','median_chi2']:x[k]=f'{float(x[k]):.2f}'
-strategy=[];targets=read('resolution/target_strategies.csv')
-for name in ['local_max','upper_envelope','galaxy_common','five_galaxy_common','robust95_unconstrained','local_max_template_floor']:
- a=[x for x in targets if x['strategy']==name];strategy.append(dict(strategy=name,ratio=f"{np.nanmedian([float(x['median_resolution_ratio']) for x in a]):.6f}",added=f"{np.nanmedian([float(x['median_added_variance']) for x in a]):.6f}",violations=sum(int(x['violating_samples']) for x in a)))
-mixtures=read('synthetic/regional_mixtures.csv');mix=[]
-for name in ['homogenized','median_scalar','rms_variable']:
- a=[x for x in mixtures if x['approximation']==name];mix.append(dict(method=name,n=len(a),bound=sum(x['bound_hit']=='True' for x in a),sigma_bias=f"{np.median([float(x['delta_sigma']) for x in a]):.3f}",sigma_p90=f"{np.quantile([abs(float(x['delta_sigma'])) for x in a],.9):.3f}",age_bias=f"{np.median([float(x['delta_log_age']) for x in a]):.4f}",metal_bias=f"{np.median([float(x['delta_metal']) for x in a]):.4f}"))
-final=dict(REGIONAL_RESOLUTION_CONTRACT='CONDITIONAL',VARIANCE_CONTRACT='FAILED',
- STELLAR_POPULATION_RECOVERY='CONDITIONAL_TESTED_EMILES_DOMAIN',SANDRA_STELLAR_POPULATION_PILOT='NOT_READY',
- controlled_variance_subgate='DIAGONAL_APPROXIMATION_VALIDATED_UNDER_INDEPENDENT_NATIVE_NOISE',
- source_pins=pins,scope='Five frozen pilots, 90 regions. No population catalogue entries certified; no Sandra-46 production run.')
-(O/'manifests/freeze_decisions.json').write_text(json.dumps(final,indent=2))
-text=fr'''# SCIENCE BASELINE FREEZE V3
+# SCIENCE BASELINE FREEZE V3
 
 *Resolution-aware regional spectroscopy and stellar-population inference*
 
@@ -49,11 +21,11 @@ The five native inputs and the saved V2 rest-frame partition maps define 18 regi
 
 ## The two regional spectra
 
-The native product is the finite native FLUX sum, $F_{{R,\mathrm{{native}}}}(\lambda)=\sum_{{p\in R}}F_p(\lambda)$, on the complete 6,732-channel observed-vacuum WAVE vector. It retains native counts and the variance sum conditional on independent contributors; missing contributor variance remains missing. A Gaussian effective FWHM is not assigned to this sum. The maximum relative L1 discrepancy from the frozen V2 sums is $1.951\times10^{{-15}}$ over all 90 regions. Flux units are the native $10^{{-17}}$ erg s$^{{-1}}$ cm$^{{-2}}$ Angstrom$^{{-1}}$ units summed over spaxels.
+The native product is the finite native FLUX sum, $F_{R,\mathrm{native}}(\lambda)=\sum_{p\in R}F_p(\lambda)$, on the complete 6,732-channel observed-vacuum WAVE vector. It retains native counts and the variance sum conditional on independent contributors; missing contributor variance remains missing. A Gaussian effective FWHM is not assigned to this sum. The maximum relative L1 discrepancy from the frozen V2 sums is $1.951\times10^{-15}$ over all 90 regions. Flux units are the native $10^{-17}$ erg s$^{-1}$ cm$^{-2}$ Angstrom$^{-1}$ units summed over spaxels.
 
 For the fitting product, each contributing spaxel is smoothed before summation. The adopted target is the per-region, per-wavelength maximum POST sigma, raised only where necessary to reach the empirical template resolution after the coordinate transformation. Its additional kernel obeys
 
-$$\sigma_{{\mathrm{{conv}},p}}^2(\lambda)=\sigma_{{\mathrm{{target}}}}^2(\lambda)-\sigma_p^2(\lambda).$$
+$$\sigma_{\mathrm{conv},p}^2(\lambda)=\sigma_{\mathrm{target}}^2(\lambda)-\sigma_p^2(\lambda).$$
 
 The implementation uses a column-normalized variable Gaussian operator, truncated at six sigma. Its discrete second moment is calibrated to the requested variance, including subpixel broadening; sigma zero gives exact identity. Column normalization conserves the unmasked integrated flux on a uniform grid. A finite sampled kernel is not itself an exact Gaussian. The independent response experiment, rather than the formula alone, determines the permitted approximation.
 
@@ -77,19 +49,26 @@ Fourteen V2 registry lines receive ±800 km/s stellar-fit masks after explicit c
 
 The table reports the median, across the 90 regions, of the wavelength-median resolving-power ratio relative to the native regional median sigma and the corresponding added variance in Angstrom squared. The five-galaxy/galaxy comparisons use the existing observed grid; equal observed-grid targets across galaxies do not assert equal rest-frame responses.
 
-{table(strategy,{'strategy':'Target strategy','ratio':'Median R ratio','added':'Added variance [Angstrom²]','violations':'Samples below a contributor'})}
+| Target strategy | Median R ratio | Added variance [Angstrom²] | Samples below a contributor |
+| --- | --- | --- | --- |
+| local_max | 0.996996 | 0.008821 | 0 |
+| upper_envelope | 0.995884 | 0.013382 | 0 |
+| galaxy_common | 0.980522 | 0.064653 | 0 |
+| five_galaxy_common | 0.939162 | 0.292146 | 0 |
+| robust95_unconstrained | 0.997473 | 0.007176 | 363771 |
+| local_max_template_floor | 0.996889 | 0.010152 | 0 |
 
 The unconstrained 95th percentile fails the physical inequality. Constraining a robust envelope by the actual maximum removes those violations but adds broadening. The regional maximum plus template floor retains a median resolving-power ratio of 0.996889; a galaxy-wide target gives 0.980522 and the five-object observed-grid target 0.939162. The latter is unnecessary for this experiment and is not adopted. Missing LSF coverage remains recorded rather than used to infer an envelope.
 
 The independent test integrates intrinsic Gaussian lines through a fine-grid variable response, then applies the production operator only to the sampled output. It covers five LSF shapes (constant, smooth, sharp, and one actual profile from each DRP generation), two spatial scale factors, six line centres and intrinsic widths 0.15, 1 and 5 Angstrom: 180 cases. Widths are checked in Angstrom and km/s. The largest fitted-width error is 0.5641%, below the 2% tolerance, with flux conservation to floating-point precision. Missing LSF, edge rejection, exact no-op, target inequalities and both native extension conventions have separate regressions. The line experiment validates this approximation over its tested sampling and response domain; it is not a calibration of the DRP LSF estimates themselves.
 
-![Independent response recovery]({O}/figures/resolution_recovery.png)
+![Independent response recovery](/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/results/science_baseline_freeze_v3/figures/resolution_recovery.png)
 
 *Fractional fitted-width error relative to the independently forward-modeled target. Different symbols at the same wavelength represent spatial response factors and intrinsic widths. The dotted ±2% limits are the declared numerical tolerance.*
 
 ## Variance and covariance
 
-For independent native errors, the retained spectral covariance is the sum of $A_p\,\mathrm{{diag}}(V_p)\,A_p^T$ across contributing spaxels. The rest-air Jacobian, common normalization and log-rebin operator are composed with that covariance before taking its diagonal. Propagating the rebinned diagonal alone would discard correlations already produced by homogenization. No empirical scalar noise vector replaces the input uncertainty.
+For independent native errors, the retained spectral covariance is the sum of $A_p\,\mathrm{diag}(V_p)\,A_p^T$ across contributing spaxels. The rest-air Jacobian, common normalization and log-rebin operator are composed with that covariance before taking its diagonal. Propagating the rebinned diagonal alone would discard correlations already produced by homogenization. No empirical scalar noise vector replaces the input uncertainty.
 
 Twenty thousand noise realizations at each of five convolution widths verify the propagated diagonal: the largest median relative variance discrepancy is 0.1944%. At smoothing widths 0.2, 0.5, 1 and 2 native pixels, lag-one correlations are 0.0416, 0.3100, 0.7786 and 0.9394. Ignoring them understates the error of the summed spectral measurement by factors 1.041, 1.291, 1.872 and 2.632 in these controls. These are measurement-specific factors, not a prescription to rescale all fit errors.
 
@@ -109,11 +88,20 @@ Truth is generated from the same empirical SSP family on an independent fine log
 
 The final run has 803 interior numerical solutions and seven lower-sigma bound hits, all in the low-S/N, low-dispersion regime. For each marginal stratum, the table gives median bias and robust scatter (1.4826 times the median absolute deviation), including bounded solutions. Full age, metallicity and DRP stratification, 90th-percentile errors and every individual trial are retained in CSV.
 
-{table(strata,{'stratum':'Stratum','value':'Value','log_age_bias':'Δlog age','log_age_scatter':'Scatter','metal_bias':'Δ[M/H]','metal_scatter':'Scatter','velocity_bias':'Δv [km/s]','sigma_bias':'Δsigma [km/s]','sigma_scatter':'Scatter'})}
+| Stratum | Value | Δlog age | Scatter | Δ[M/H] | Scatter | Δv [km/s] | Δsigma [km/s] | Scatter |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| snr_in | 10.0 | 0.018 | 0.057 | 0.000 | 0.079 | 0.917 | 1.897 | 16.985 |
+| snr_in | 150.0 | 0.001 | 0.004 | 0.000 | 0.005 | 0.138 | 1.109 | 1.797 |
+| snr_in | 30.0 | 0.002 | 0.019 | 0.000 | 0.023 | 0.081 | 1.443 | 5.395 |
+| snr_in | 300.0 | 0.001 | 0.002 | 0.000 | 0.002 | 0.041 | 0.820 | 1.207 |
+| snr_in | 60.0 | 0.002 | 0.010 | -0.000 | 0.012 | -0.024 | 1.525 | 2.980 |
+| sigma | 20.0 | 0.001 | 0.008 | 0.000 | 0.008 | 0.163 | 5.633 | 5.422 |
+| sigma | 200.0 | 0.002 | 0.009 | -0.000 | 0.010 | -0.028 | 0.343 | 1.809 |
+| sigma | 80.0 | 0.001 | 0.006 | 0.000 | 0.006 | 0.096 | 0.656 | 1.676 |
 
 The conditional acceptance subset is native S/N 30--300, injected sigma 80--200 km/s, the tested 0.1--10 Gyr ages and −0.71 to +0.22 metallicities. Every age, metallicity, DRP, dispersion and S/N marginal within that subset passes the declared bias/scatter tolerances. This does not certify all intermediate SSP mixtures, arbitrary abundance patterns, arbitrary LSF curves or lower dispersions. Three realizations per exact cell are insufficient to calibrate detailed confidence-interval coverage. Sigma 20 km/s remains unsupported: positive-bound effects and residual sampling sensitivity are large relative to the injected value. Catalogue sigma is withheld outside the tested response/SNR regime and for any QC-rejected fit.
 
-![Conditional stellar recovery]({O}/figures/synthetic_recovery.png)
+![Conditional stellar recovery](/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/results/science_baseline_freeze_v3/figures/synthetic_recovery.png)
 
 *Median recovery error and the 16th--84th-percentile interval over the tested ages, metallicities, DRP profiles and realizations at each nominal S/N. Colours distinguish injected stellar dispersions. These are controlled errors relative to known inputs, not uncertainties measured for Sandra.*
 
@@ -121,7 +109,11 @@ The conditional acceptance subset is native S/N 30--300, injected sigma 80--200 
 
 The mixture experiment contains 72 trials per treatment, combining both DRP profiles, young/old starting populations, sigma 20/80/200 km/s, three realizations and identical-population versus mixed-population spaxels. The mixed case combines the starting SSP with 1 and 10 Gyr SSPs with different responses. Population truth uses the common luminosity-normalization band. The median scalar approximation changes the spectral resolution model while retaining the same noisy regional input.
 
-{table(mix,{'method':'Treatment','n':'Trials','bound':'Bound hits','sigma_bias':'Median Δsigma [km/s]','sigma_p90':'90th |Δsigma| [km/s]','age_bias':'Median Δlog age','metal_bias':'Median Δ[M/H]'})}
+| Treatment | Trials | Bound hits | Median Δsigma [km/s] | 90th |Δsigma| [km/s] | Median Δlog age | Median Δ[M/H] |
+| --- | --- | --- | --- | --- | --- | --- |
+| homogenized | 72 | 0 | 1.058 | 5.354 | 0.0022 | -0.0068 |
+| median_scalar | 72 | 24 | -11.400 | 19.990 | 0.0095 | -0.0018 |
+| rms_variable | 72 | 0 | 0.306 | 6.314 | 0.0020 | -0.0081 |
 
 The scalar approximation drives 24 of 72 fits to the lower dispersion bound, whereas the homogenized and wavelength-dependent RMS approximations have no bound hits in this experiment. Homogenization gives a median sigma error of +1.058 km/s; the scalar treatment gives −11.400 km/s. The RMS approximation happens to perform comparably here. It remains an approximation to a response mixture, rather than an exact Gaussian response for arbitrary populations and spaxel weights. The experiment demonstrates a material scalar-resolution error without claiming that homogenization dominates every possible approximation.
 
@@ -131,13 +123,19 @@ A separate 48-fit perturbation experiment adds 4% localized absorption responses
 
 All fitting attempts use the frozen rest-frame partitions. Numerical-success counts below include bound hits. The 28 insufficient-support regions remain in every inventory; they were not dropped or relabelled. Formal S/N and chi-square use the spatially independent native-noise premise and are not calibrated Sandra uncertainties.
 
-{table(pilot,{'galaxy_id':'Galaxy','n_regions':'Regions','n_numerical_success':'Numerical fits','n_bound':'Bound hits','n_insufficient':'Insufficient support','median_snr':'Median formal S/N','median_chi2':'Median chi-square','n_population_usable':'Certified populations'})}
+| Galaxy | Regions | Numerical fits | Bound hits | Insufficient support | Median formal S/N | Median chi-square | Certified populations |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 11004-12701 | 18 | 11 | 6 | 7 | 160.67 | 41.50 | 0 |
+| 11014-3704 | 18 | 12 | 6 | 6 | 165.59 | 28.42 | 0 |
+| 8602-12705 | 18 | 8 | 0 | 10 | 307.40 | 23.10 | 0 |
+| 8932-3701 | 18 | 15 | 4 | 3 | 191.63 | 39.79 | 0 |
+| 9869-9102 | 18 | 16 | 0 | 2 | 243.96 | 21.00 | 0 |
 
 Bound hits affect 17.8% of all regions and 25.8% of numerical fits; insufficient support affects 31.1% of regions. There are no remaining numerical exceptions in the final pilot. Population certification is 0/90. Interior fits still fail the residual/noise-calibration gate, and some also place most luminosity weight on a template-grid edge. Catalogue age, metallicity, stellar velocity and dispersion columns are therefore missing; the raw fit values are explicitly retained as diagnostics. No placeholder uncertainties are assigned.
 
 Safe outputs of this freeze are the fixed region identities and maps, native measured sums with their validity/count information, the separate controlled spectra, LSF and wavelength provenance, transformation operators/covariance under their stated assumptions, and fit/QC records. Stellar ages, metallicities, velocities, intrinsic dispersions, SFH detail, mass-weighted ages, masses, M/L and extinction are **not certified for the Sandra catalogue**. No intrinsic gas dispersion or deprojected dynamics is inferred.
 
-![Pilot diagnostics]({O}/figures/pilot_diagnostics.png)
+![Pilot diagnostics](/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/results/science_baseline_freeze_v3/figures/pilot_diagnostics.png)
 
 *All numerical pilot fits, including bound hits, are shown as QC-rejected diagnostics. Grey crosses are not certified population measurements. Fractions use all 18 regions per object; no-fit counts include insufficient support. The chi-square threshold is displayed under the stated independent-native-noise assumption.*
 
@@ -149,8 +147,8 @@ CAPIVARA exposes `prepare_segment_spectra()` for the physically distinct product
 
 | Component | Version | V3 code commit |
 | --- | --- | --- |
-| CAPIVARA | 0.4.3.9000 | `{pins['capivara']}` |
-| capivaraPPXF | 0.0.3.9000 | `{pins['capivaraPPXF']}` |
+| CAPIVARA | 0.4.3.9000 | `66630e470368cac519d62c0b300bff3ff32ddd5c` |
+| capivaraPPXF | 0.0.3.9000 | `463e443c9128ae822722ccad6b509a453b2a9b04` |
 | SpectroPath, unchanged | 0.1.0 | `e1695030c50c09adf5eebdde56336c2342493c25` |
 
 Changed runtime files are CAPIVARA `R/science_regional_spectra.R` and `inst/python/capivara_resolution.py`, and backend `R/stellar.R` and `inst/python/capivara_stellar.py`, plus their DESCRIPTION, NAMESPACE and generated help entries. Two R regression files and two Python regression scripts cover the added contract. The existing wavelength, medium, PRE/POST, gas guard and one-pixel grid regressions remain active.
@@ -161,7 +159,4 @@ The fitting runtime is Python 3.9, pPXF 9.4.5, NumPy 1.26.4 and SciPy 1.13.1; R 
 
 Before the 46-object run, the spatial correlation tables and their wavelength mapping must be incorporated into a validated regional covariance calculation, including its interaction with different spaxel convolution operators. The fitting aperture must be specified for regions with permanently unusable contributors. Only after those changes should the residual/model adequacy, parameter bounds, template-family sensitivity and uncertainty calibration be reconsidered. V3 performs no Sandra-46 production, environment comparison, morphology revision, merge or push.
 
-Evidence root: `{O}`. The final manifest records code/report pins, versions, all input and template hashes, validation artifacts and the unchanged V1/V2 ledger. `synthetic/configuration.json`, `synthetic/domain_gates.csv`, `variance/native_spatial_correlation_bands.csv`, `sandra_pilot/all_regions.csv` and `manifests/freeze_decisions.json` provide the machine-readable decisions. **Stop after V3; no population-baseline readiness flag is issued.**
-'''
-D.write_text(text)
-print(D)
+Evidence root: `/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/results/science_baseline_freeze_v3`. The final manifest records code/report pins, versions, all input and template hashes, validation artifacts and the unchanged V1/V2 ledger. `synthetic/configuration.json`, `synthetic/domain_gates.csv`, `variance/native_spatial_correlation_bands.csv`, `sandra_pilot/all_regions.csv` and `manifests/freeze_decisions.json` provide the machine-readable decisions. **Stop after V3; no population-baseline readiness flag is issued.**
