@@ -55,7 +55,9 @@
     }
     if (!identical(input_frame, feature_wavelength_frame)) {
       if (!valid_z) stop("Converting between wavelength frames requires a valid `redshift`.", call. = FALSE)
+      if (identical(cubedat$wavelength_medium,"air")) native_range <- convert_wavelength_medium(native_range,"air","vacuum")
       native_range <- if (input_frame == "observed") native_range * (1 + redshift) else native_range / (1 + redshift)
+      if (identical(cubedat$wavelength_medium,"air")) native_range <- convert_wavelength_medium(native_range,"vacuum","air")
     }
   }
   wave_idx <- .wavelength_range_index(cubedat, n_wave, native_range, "feature_wavelength_range")
@@ -63,6 +65,9 @@
   rest_wave <- if (!physical_axis) rep(NA_real_, length(wave_idx)) else if (input_frame == "rest") {
     native_wave
   } else if (input_frame == "observed" && valid_z) native_wave / (1 + redshift) else rep(NA_real_, length(wave_idx))
+  if (physical_axis && input_frame == "observed" && valid_z && identical(cubedat$wavelength_medium,"air")) {
+    rest_wave <- convert_wavelength_medium(convert_wavelength_medium(native_wave,"air","vacuum")/(1+redshift),"vacuum","air")
+  }
   bounds <- function(x) if (all(is.na(x))) c(NA_real_, NA_real_) else range(x)
   nb <- if (physical_axis) bounds(native_wave) else c(NA_real_, NA_real_)
   rb <- bounds(rest_wave)

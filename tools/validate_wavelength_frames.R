@@ -5,7 +5,7 @@ stopifnot(length(args)==3)
 project <- normalizePath(args[1]); output <- normalizePath(args[2]); lib <- normalizePath(args[3])
 .libPaths(c(lib,.libPaths()))
 library(capivara)
-stopifnot(packageVersion('capivara')=='0.4.1.9000')
+stopifnot(packageVersion('capivara')=='0.4.2.9000')
 ns <- asNamespace('capivara'); getf <- function(n)get(n,ns)
 manifest <- as.data.frame(arrow::read_parquet(file.path(project,'catalogues/bars_v1/input_manifest.parquet')))
 manifest <- manifest[which(!is.na(manifest$plateifu)),]

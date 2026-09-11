@@ -7,7 +7,7 @@ use_env_inputs <- tolower(Sys.getenv("CAPIVARA_USE_ENV_INPUTS", unset = "false")
 # Common knobs:
 #   CAPIVARA_REDSHIFT=0.0461
 #   CAPIVARA_LINE=halpha            # aliases include hbeta, oiii5007, nii6583, sii6716
-#   CAPIVARA_LINE_REST=6562.8       # optional override, Angstrom
+#   CAPIVARA_LINE_REST=6564.608     # optional registry-consistent vacuum Angstrom
 #   CAPIVARA_OUTPUT_PREFIX=manga10218
 #   CAPIVARA_KNN=100 CAPIVARA_NCOMP=25
 #   CAPIVARA_PATH_KNN=100 CAPIVARA_PATH_NCOMP=45 CAPIVARA_PATH_SPATIAL_WEIGHT=0.10
@@ -69,76 +69,19 @@ parse_int_seq <- function(x, default) {
   vals[is.finite(vals)]
 }
 
-line_catalog <- data.frame(
-  alias = c(
-    "halpha", "ha", "halpha6563",
-    "hbeta", "hb", "hbeta4861",
-    "oiii5007", "o3", "o3_5007",
-    "oiii4959", "o3_4959",
-    "nii6548", "n2_6548",
-    "nii6583", "n2", "n2_6583",
-    "sii6716", "s2_6716",
-    "sii6731", "s2_6731",
-    "oi6300", "o1", "o1_6300"
-  ),
-  line_name = c(
-    rep("Halpha", 3),
-    rep("Hbeta", 3),
-    rep("[OIII] 5007", 3),
-    rep("[OIII] 4959", 2),
-    rep("[NII] 6548", 2),
-    rep("[NII] 6583", 3),
-    rep("[SII] 6716", 2),
-    rep("[SII] 6731", 2),
-    rep("[OI] 6300", 3)
-  ),
-  slug = c(
-    rep("halpha", 3),
-    rep("hbeta", 3),
-    rep("oiii5007", 3),
-    rep("oiii4959", 2),
-    rep("nii6548", 2),
-    rep("nii6583", 3),
-    rep("sii6716", 2),
-    rep("sii6731", 2),
-    rep("oi6300", 3)
-  ),
-  rest_wave = c(
-    rep(6562.8, 3),
-    rep(4861.33, 3),
-    rep(5006.84, 3),
-    rep(4958.91, 2),
-    rep(6548.05, 2),
-    rep(6583.45, 3),
-    rep(6716.44, 2),
-    rep(6730.82, 2),
-    rep(6300.30, 3)
-  ),
-  stringsAsFactors = FALSE
-)
-
 sanitize_slug <- function(x) {
   x <- tolower(gsub("[^A-Za-z0-9]+", "_", x))
   x <- gsub("^_+|_+$", "", x)
   if (!nzchar(x)) "line" else x
 }
 
-line_spec <- function(line_key, rest_wave_override = NA_real_) {
-  key <- sanitize_slug(line_key)
-  rec <- line_catalog[match(key, line_catalog$alias), ]
-  if (nrow(rec) != 1L || is.na(rec$alias)) {
-    label <- line_key
-    slug <- sanitize_slug(line_key)
-    rest <- rest_wave_override
-  } else {
-    label <- rec$line_name
-    slug <- rec$slug
-    rest <- if (is.finite(rest_wave_override)) rest_wave_override else rec$rest_wave
+line_spec <- function(line_key, rest_wave_override = NA_real_, medium = "vacuum") {
+  rec <- .capivara_match_emission_lines(line_key, medium)
+  if (nrow(rec) != 1L) stop("Choose one registered emission line.")
+  if (is.finite(rest_wave_override) && abs(rest_wave_override-rec$rest_wavelength)>1e-6) {
+    stop("CAPIVARA_LINE_REST disagrees with the referenced line registry/medium.")
   }
-  if (!is.finite(rest) || rest <= 0) {
-    stop("Set a known CAPIVARA_LINE alias or provide CAPIVARA_LINE_REST in Angstrom.")
-  }
-  list(name = label, slug = slug, rest_wave = rest)
+  list(name = rec$label, slug = rec$name, rest_wave = rec$rest_wavelength)
 }
 
 redshift <- env_num(c("CAPIVARA_REDSHIFT", "CAPIVARA_10218_REDSHIFT"), NA_real_)
@@ -151,16 +94,11 @@ run_spectral_segmentation <- env_bool(c("CAPIVARA_RUN_SPECTRAL_SEGMENTATION", "C
 run_path_signatures <- env_bool(c("CAPIVARA_RUN_PATH_SIGNATURES", "CAPIVARA_10218_RUN_PATH_SIGNATURES"), "true")
 line_key <- env_chr(c("CAPIVARA_LINE", "CAPIVARA_EMISSION_LINE", "CAPIVARA_10218_LINE"), "halpha")
 line_rest_override <- env_num(c("CAPIVARA_LINE_REST", "CAPIVARA_10218_LINE_REST", "CAPIVARA_10218_HALPHA_REST"), NA_real_)
-line <- line_spec(line_key, line_rest_override)
 wavelength_frame <- env_chr("CAPIVARA_WAVELENGTH_FRAME", "observed")
 wavelength_medium <- env_chr("CAPIVARA_WAVELENGTH_MEDIUM", "vacuum")
 systemic_redshift_source <- env_chr("CAPIVARA_REDSHIFT_SOURCE", "explicit workflow environment")
 profile_centering_mode <- env_chr("CAPIVARA_PROFILE_CENTERING_MODE", "systemic")
-# The MaNGA native axis is vacuum, while the historical alias table was air.
-if (!is.finite(line_rest_override)) {
-  catalogue <- .capivara_emission_line_table(wavelength_medium)
-  line$rest_wave <- catalogue$rest_wavelength[match(line$slug, catalogue$name)]
-}
+line <- line_spec(line_key, line_rest_override, wavelength_medium)
 line_window_kms <- env_num(c("CAPIVARA_LINE_WINDOW_KMS", "CAPIVARA_10218_LINE_WINDOW_KMS"), "600")
 cont_inner_kms <- env_num(c("CAPIVARA_LINE_CONT_INNER_KMS", "CAPIVARA_10218_LINE_CONT_INNER_KMS"), "800")
 cont_outer_kms <- env_num(c("CAPIVARA_LINE_CONT_OUTER_KMS", "CAPIVARA_10218_LINE_CONT_OUTER_KMS"), "1400")
@@ -486,6 +424,12 @@ if (!is.null(fits$wavelength_medium) && fits$wavelength_medium != wavelength_med
   stop("The requested wavelength_medium conflicts with the native MaNGA metadata.")
 }
 wave <- read_wave(cube_path, fits)
+lsf <- read_manga_lsf(cube_path, fits)
+lsf_provenance <- c(lsf$provenance, list(
+  fitting_method = "native profile moments and SpectroPath descriptors",
+  selected_lsf = "neither: observed profile representation",
+  correction_applied = FALSE, width_interpretation = "observed; includes instrumental and pixel broadening"))
+# Retain both native LSFs at every extracted line sample in the returned product.
 cube <- fits$imDat
 
 message("Building full-frame starlet support...")
@@ -576,6 +520,11 @@ kin_cube[, , 3] <- kin$sigma
 kin_cube[, , 4] <- kin$asymmetry
 kin_cube[, , 5] <- kin$h3_proxy
 kin_cube[, , 6] <- kin$h4_proxy
+kin$frame_provenance$lsf <- lsf_provenance
+kin$lsf_sigma_angstrom_pre <- lsf$lsf_sigma_angstrom_pre[,,kin$line_idx,drop=FALSE]
+kin$lsf_sigma_angstrom_post <- lsf$lsf_sigma_angstrom_post[,,kin$line_idx,drop=FALSE]
+rm(lsf)
+gc()
 kin_input <- list(imDat = kin_cube, hdr = fits$hdr, axDat = NULL)
 
 message("Running kinematic-aware Capivara segmentation...")
@@ -611,6 +560,7 @@ if (run_path_signatures) {
     systemic_redshift_source = systemic_redshift_source,
     profile_centering_mode = profile_centering_mode
   )
+  path_features$frame_provenance$lsf <- lsf_provenance
   path_input <- list(imDat = path_features$feature_cube, hdr = fits$hdr, axDat = NULL)
 
   message("Running path-signature kinematic-aware Capivara segmentation...")

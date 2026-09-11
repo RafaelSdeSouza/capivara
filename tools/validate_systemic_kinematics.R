@@ -1,7 +1,7 @@
 # Public kinematic API smoke test; two fixed pilots, Halpha and [O III] 5007.
 args<-commandArgs(trailingOnly=TRUE);stopifnot(length(args)==3)
 project<-normalizePath(args[1]);output<-normalizePath(args[2]);.libPaths(c(normalizePath(args[3]),.libPaths()))
-library(capivara);stopifnot(packageVersion('capivara')=='0.4.1.9000')
+library(capivara);stopifnot(packageVersion('capivara')=='0.4.2.9000')
 ns<-asNamespace('capivara');getf<-function(n)get(n,ns)
 manifest<-as.data.frame(arrow::read_parquet(file.path(project,'catalogues/bars_v1/input_manifest.parquet')))
 rows<-list();offset_rows<-list();counter<-0

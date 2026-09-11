@@ -19,6 +19,9 @@
     }
     out$wavelength <- as.numeric(wave_hdu$imDat)
     .wavelength_axis(out, dim(out$imDat)[3])
+    if (value("EXTNAME") == "FLUX") out$lsf_source <- list(
+      path = normalizePath(path), drp_version = value("VERSDRP3"),
+      reader = "capivara::read_manga_lsf", representation = "native wavelength-dependent sigma_lambda")
     out$wavelength_frame <- "observed"
     out$wavelength_medium <- "vacuum"
     out$wavelength_frame_source <- "native MaNGA DRP spectral HDU; vacuum heliocentric WAVE"

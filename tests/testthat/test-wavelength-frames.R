@@ -100,7 +100,7 @@ test_that("variance and SNR selection use the same native channel indices", {
 
 test_that("line coordinates and conventional features have the same physical meaning at different z", {
   catalogue <- emission_lines("vacuum")
-  expect_equal(catalogue$rest_wavelength[catalogue$name=="halpha"],6564.632)
+  expect_equal(catalogue$rest_wavelength[catalogue$name=="halpha"],6564.608)
   expect_equal(catalogue$rest_wavelength[catalogue$name=="oiii5007"],5008.240)
   v <- seq(-2200,2200,20)
   profile <- 1 + 10*exp(-.5*((v-140)/70)^2)

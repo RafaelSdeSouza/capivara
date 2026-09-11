@@ -1,7 +1,7 @@
 Package: capivara
 Type: Package
 Title: Decomposition and Analysis of IFU Data Cubes
-Version: 0.4.1.9000
+Version: 0.4.2.9000
 Imports: FITSio, dplyr, fastcluster, ggplot2, gridExtra, matrixStats, patchwork, readr, reshape2, RANN, Rcpp, scales, spectropath, tidyr, viridis, yaml
 LinkingTo: Rcpp
 Suggests: torch, EBImage, imager, knitr, minpack.lm, rmarkdown, testthat (>= 3.0.0)

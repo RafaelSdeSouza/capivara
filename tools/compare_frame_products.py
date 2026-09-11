@@ -29,7 +29,7 @@ for d in sorted((root/'comparisons').iterdir()):
         l1=np.sum(np.abs(fb[good]-fa[good]))/sa if sa else np.nan
         shape=np.sum(np.abs(fb[good]/sb-fa[good]/sa)) if sa and sb else np.nan
         ra,rb=reg['observed'][i],reg['rest'][j]
-        rows.append(dict(observed_region=i+1,rest_region=j+1,overlap_spaxels=int(t[i,j]),
+        rows.append(dict(observed_region=i+1,rest_region=j+1,overlap_spaxels=int(t[i,j]),has_spatial_overlap=bool(t[i,j]>0),
             observed_size=int(ra['n_spaxels']),rest_size=int(rb['n_spaxels']),
             size_delta=int(rb['n_spaxels']-ra['n_spaxels']),region_iou=t[i,j]/(ra['n_spaxels']+rb['n_spaxels']-t[i,j]),
             observed_bar_fraction=ra['bar_fraction'],rest_bar_fraction=rb['bar_fraction'],
@@ -46,12 +46,15 @@ for d in sorted((root/'comparisons').iterdir()):
         max_abs_bar_fraction_change=float(np.max(np.abs(values('bar_fraction_delta')))),
         median_summed_spectrum_relative_L1=float(np.nanmedian(values('summed_spectrum_relative_L1'))),
         max_summed_spectrum_relative_L1=float(np.nanmax(values('summed_spectrum_relative_L1'))),
-        median_unit_L1_spectrum_difference=float(np.nanmedian(values('unit_L1_spectrum_difference')))))
+        median_unit_L1_spectrum_difference=float(np.nanmedian(values('unit_L1_spectrum_difference'))),
+        zero_overlap_pairs=int(sum(r['overlap_spaxels']==0 for r in rows)),
+        median_summed_spectrum_relative_L1_overlapping=float(np.nanmedian([r['summed_spectrum_relative_L1'] for r in rows if r['has_spatial_overlap']])),
+        max_abs_bar_fraction_change_overlapping=float(max(abs(r['bar_fraction_delta']) for r in rows if r['has_spatial_overlap']))))
     matched=np.full_like(maps['rest'],np.nan)
     for i,j in zip(a,b):matched[maps['rest']==j+1]=i+1
     fig,axs=plt.subplots(1,2,figsize=(7,3.4),layout='constrained')
     for ax,m,label in zip(axs,[maps['observed'],matched],['4800–7400 Å observed','4800–7400 Å rest']):
-        ax.imshow(m,origin='lower',interpolation='nearest',cmap='tab20',vmin=.5,vmax=20.5)
+        ax.imshow(m,origin='lower',interpolation='nearest',cmap='tab20',vmin=.5,vmax=20.5,extent=(.5,m.shape[1]+.5,.5,m.shape[0]+.5))
         ax.set(xlabel='Column',ylabel='Row',title=label)
     fig.savefig(figdir/f'{d.name}_partitions.png');plt.close(fig)
     # Full summed spectra for the four largest historical regions. The paired
@@ -68,7 +71,7 @@ for d in sorted((root/'comparisons').iterdir()):
 with (root/'regional_comparison_summary.csv').open('w') as f:
     w=csv.DictWriter(f,fieldnames=list(summary[0]));w.writeheader();w.writerows(summary)
 (root/'regional_metrics_definitions.json').write_text(json.dumps({
-  'correspondence':'One-to-one maximum native-spaxel overlap assignment (SciPy linear_sum_assignment); contingency retained',
+  'correspondence':'One-to-one maximum native-spaxel overlap assignment (SciPy linear_sum_assignment); contingency retained. Zero-overlap forced pairs are explicitly flagged and do not identify the same spatial region.',
   'summed_spectrum_relative_L1':'sum(abs(S_rest-S_observed))/sum(abs(S_observed)) on common finite native wavelengths',
   'unit_L1_spectrum_difference':'L1 distance after each matched sum spectrum is divided by its own L1 norm; dimensionless',
   'spectra':'Full retained native FLUX sums; no new mask or IVAR cut; not fitted or interpolated',

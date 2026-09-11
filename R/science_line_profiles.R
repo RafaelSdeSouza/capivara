@@ -3,10 +3,18 @@
 .systemic_line_coordinate <- function(wave, rest_wave, redshift, wavelength_frame,
                                         line_name, systemic_redshift_source,
                                         velocity_window_kms, profile_centering_mode,
-                                        wavelength_medium) {
+                                        wavelength_medium, input_wavelength_medium = wavelength_medium) {
   wavelength_frame <- match.arg(wavelength_frame, c("observed", "rest"))
   profile_centering_mode <- match.arg(profile_centering_mode, c("systemic", "local_centroid"))
   wavelength_medium <- match.arg(wavelength_medium, c("air", "vacuum"))
+  input_wavelength_medium <- match.arg(input_wavelength_medium, c("air", "vacuum"))
+  if (input_wavelength_medium != wavelength_medium) {
+    stop("Laboratory and input wavelength medium differ; convert explicitly before redshift/velocity calculation.")
+  }
+  registry <- .capivara_match_emission_lines(line_name, wavelength_medium)
+  if (nrow(registry) != 1L || abs(rest_wave - registry$rest_wavelength) > 1e-6) {
+    stop("Laboratory wavelength does not match the line registry in the declared medium (possible air/vacuum mismatch).")
+  }
   if (!.valid_systemic_redshift(redshift)) stop("A finite systemic `redshift` > -1 is required.")
   if (!is.numeric(rest_wave) || length(rest_wave) != 1L || !is.finite(rest_wave) || rest_wave <= 0) {
     stop("A positive finite laboratory `rest_wave` is required.")
@@ -20,11 +28,16 @@
   if (length(systemic_redshift_source) != 1L || is.na(systemic_redshift_source) || !nzchar(systemic_redshift_source)) {
     stop("A nonempty `systemic_redshift_source` is required.")
   }
-  observed_centre <- rest_wave * (1 + redshift)
+  lab_vacuum <- if (wavelength_medium == "air") convert_wavelength_medium(rest_wave, "air", "vacuum") else rest_wave
+  wave_vacuum <- if (wavelength_medium == "air") convert_wavelength_medium(wave, "air", "vacuum") else wave
+  observed_centre <- lab_vacuum * (1 + redshift)
+  if (wavelength_medium == "air") observed_centre <- convert_wavelength_medium(observed_centre, "vacuum", "air")
   native_centre <- if (wavelength_frame == "observed") observed_centre else rest_wave
-  velocity <- 299792.458 * (wave / native_centre - 1)
+  native_vacuum_centre <- if (wavelength_frame == "observed") lab_vacuum*(1+redshift) else lab_vacuum
+  velocity <- 299792.458 * (wave_vacuum / native_vacuum_centre - 1)
   ix <- which(abs(velocity) <= velocity_window_kms)
-  rest <- if (wavelength_frame == "observed") wave / (1 + redshift) else wave
+  rest <- if (wavelength_frame == "observed") wave_vacuum / (1 + redshift) else wave_vacuum
+  if (wavelength_medium == "air") rest <- convert_wavelength_medium(rest,"vacuum","air")
   native_bounds <- if (length(ix)) range(wave[ix]) else c(NA_real_, NA_real_)
   rest_bounds <- if (length(ix)) range(rest[ix]) else c(NA_real_, NA_real_)
   list(velocity = velocity,
@@ -38,6 +51,10 @@
     provenance = list(line_name = line_name, line_rest_wavelength = rest_wave,
       systemic_redshift = redshift, systemic_redshift_source = systemic_redshift_source,
       input_wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+      input_wavelength_medium = input_wavelength_medium, velocity_wavelength_medium = "vacuum",
+      medium_conversion = if (wavelength_medium == "air") "explicit air-to-vacuum before redshift and optical velocity" else "none",
+      line_identifier = registry$name,
+      line_reference = registry$reference, line_registry_version = registry$registry_version,
       observed_line_centre = observed_centre, native_line_centre = native_centre,
       velocity_definition = "optical: c * (lambda_obs / (lambda0 * (1 + z_sys)) - 1); c = 299792.458 km/s",
       velocity_window_kms = c(-velocity_window_kms, velocity_window_kms),

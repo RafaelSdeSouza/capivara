@@ -4,14 +4,15 @@
 \alias{emission_lines}
 \title{List built-in emission lines for Capivara line-sensitive segmentation}
 \usage{
-emission_lines(wavelength_medium = c("air", "vacuum"))
+emission_lines(wavelength_medium = c("vacuum", "air"))
 }
 \arguments{
-\item{wavelength_medium}{Laboratory wavelength convention: `air` (legacy
-table) or `vacuum` (MaNGA).}
+\item{wavelength_medium}{Laboratory wavelength convention: `vacuum` (SDSS DR17 DAP default)
+or `air` (explicit conversion of the same registry).}
 }
 \value{
-A data frame with line names, labels, rest wavelengths, and families.
+A data frame with identifiers, labels, laboratory wavelengths in Angstrom,
+  medium, source reference, registry version, and conversion provenance.
 }
 \description{
 List built-in emission lines for Capivara line-sensitive segmentation

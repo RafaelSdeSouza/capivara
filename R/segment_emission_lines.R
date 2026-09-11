@@ -1,47 +1,14 @@
-.capivara_emission_line_table <- function(wavelength_medium = c("air", "vacuum")) {
-  wavelength_medium <- match.arg(wavelength_medium)
-  tab <- data.frame(
-    name = c(
-      "oii3727", "neiii3869", "hdelta", "hgamma", "hbeta",
-      "oiii4959", "oiii5007", "oi6300", "halpha",
-      "nii6548", "nii6583", "sii6716", "sii6731"
-    ),
-    label = c(
-      "[O II] 3727", "[Ne III] 3869", "Hdelta", "Hgamma", "Hbeta",
-      "[O III] 4959", "[O III] 5007", "[O I] 6300", "Halpha",
-      "[N II] 6548", "[N II] 6583", "[S II] 6716", "[S II] 6731"
-    ),
-    rest_wavelength = c(
-      3727.09, 3868.76, 4101.74, 4340.47, 4861.33,
-      4958.91, 5006.84, 6300.30, 6562.80,
-      6548.05, 6583.45, 6716.44, 6730.82
-    ),
-    family = c(
-      "blue", "blue", "balmer", "balmer", "balmer",
-      "agn", "agn", "agn", "balmer",
-      "agn", "agn", "agn", "agn"
-    ),
-    stringsAsFactors = FALSE
-  )
-  # Vacuum values: SDSS MaNGA DAP line catalogue. Halpha 6564.632 follows
-  # the DR15 convention already used in the Sandra pilot configuration.
-  if (wavelength_medium == "vacuum") tab$rest_wavelength <- c(
-    3728.483, 3869.86, 4102.892, 4341.684, 4862.683,
-    4960.295, 5008.240, 6302.046, 6564.632,
-    6549.860, 6585.270, 6718.294, 6732.674)
-  tab$wavelength_medium <- wavelength_medium
-  tab
-
-}
-
-.capivara_match_emission_lines <- function(lines, wavelength_medium = "air") {
+.capivara_match_emission_lines <- function(lines, wavelength_medium = "vacuum") {
   tab <- .capivara_emission_line_table(wavelength_medium)
   aliases <- c(
-    oii = "oii3727", oii3726 = "oii3727", oii3729 = "oii3727",
+    oii3726 = "oii3726", oii3729 = "oii3729",
     neiii = "neiii3869",
     hd = "hdelta", hdelta4102 = "hdelta",
     hg = "hgamma", hgamma4340 = "hgamma",
     hb = "hbeta", hbeta4861 = "hbeta",
+    o3 = "oiii5007", o35007 = "oiii5007", o34959 = "oiii4959",
+    n2 = "nii6583", n26548 = "nii6548", n26583 = "nii6583",
+    s26716 = "sii6716", s26731 = "sii6731", o1 = "oi6300", o16300 = "oi6300",
     oiii = "oiii5007", oiii5007 = "oiii5007", oiii4959 = "oiii4959",
     oi = "oi6300", oi6300 = "oi6300",
     ha = "halpha", halpha6563 = "halpha",
@@ -52,12 +19,13 @@
   if (length(lines) == 1L && tolower(lines) %in% c("agn", "default")) {
     lines <- c("hbeta", "oiii4959", "oiii5007", "oi6300", "halpha", "nii6548", "nii6583", "sii6716", "sii6731")
   } else if (length(lines) == 1L && tolower(lines) %in% c("strong", "optical")) {
-    lines <- c("oii3727", "hbeta", "oiii5007", "halpha", "nii6583", "sii6716", "sii6731")
+    lines <- c("oii3726", "oii3729", "hbeta", "oiii5007", "halpha", "nii6583", "sii6716", "sii6731")
   }
 
-  keys <- tolower(gsub("[^a-z0-9]+", "", lines))
+  keys <- gsub("[^a-z0-9]+", "", tolower(lines))
   keys <- unname(ifelse(keys %in% names(aliases), aliases[keys], keys))
 
+  if (any(keys %in% c("oii", "oii3727"))) stop("Ambiguous [O II] blend: select oii3726 and/or oii3729 explicitly.")
   unknown <- setdiff(keys, tab$name)
   if (length(unknown)) {
     stop(
@@ -142,7 +110,8 @@
   wavelength_medium <- match.arg(wavelength_medium, c("air", "vacuum"))
   if (!is.null(stored_medium) && stored_medium != wavelength_medium) stop("Conflicting wavelength_medium metadata.")
   tab <- .capivara_match_emission_lines(lines, wavelength_medium)
-  tab$observed_wavelength <- tab$rest_wavelength * (1 + redshift)
+  tab$observed_wavelength <- tab$source_vacuum_wavelength * (1 + redshift)
+  if (wavelength_medium == "air") tab$observed_wavelength <- convert_wavelength_medium(tab$observed_wavelength, "vacuum", "air")
   tab$native_wavelength <- if (wavelength_frame == "observed") tab$observed_wavelength else tab$rest_wavelength
   covered <- tab$native_wavelength >= min(wavelengths, na.rm = TRUE) &
     tab$native_wavelength <= max(wavelengths, na.rm = TRUE)
@@ -175,14 +144,11 @@
   used_channels <- integer()
 
   for (i in seq_len(nrow(tab))) {
-    line_idx <- .capivara_line_window_index(wavelengths, tab$native_wavelength[i], line_window_kms)
-    cont_idx <- .capivara_continuum_window_index(
-      wavelengths,
-      tab$native_wavelength[i],
-      line_window_kms,
-      continuum_inner_kms,
-      continuum_outer_kms
-    )
+    coordinate <- .systemic_line_coordinate(wavelengths, tab$rest_wavelength[i], redshift,
+      wavelength_frame, tab$name[i], systemic_redshift_source, line_window_kms, "systemic", wavelength_medium)
+    line_idx <- which(abs(coordinate$velocity) <= line_window_kms)
+    cont_idx <- which(abs(coordinate$velocity) >= max(line_window_kms,continuum_inner_kms) &
+                      abs(coordinate$velocity) <= continuum_outer_kms)
     if (length(line_idx) < 2L) next
 
     line_flux <- mat[, line_idx, drop = FALSE]
@@ -204,8 +170,6 @@
       resid[!is.finite(resid)] <- 0
     }
 
-    coordinate <- .systemic_line_coordinate(wavelengths, tab$rest_wavelength[i], redshift,
-      wavelength_frame, tab$name[i], systemic_redshift_source, line_window_kms, "systemic", wavelength_medium)
     dv <- coordinate$velocity[line_idx]
     line_provenance[[tab$name[i]]] <- c(coordinate$provenance,
       list(selected_channel_indices = line_idx, continuum_channel_indices = cont_idx))
@@ -301,11 +265,12 @@
 
 #' List built-in emission lines for Capivara line-sensitive segmentation
 #'
-#' @param wavelength_medium Laboratory wavelength convention: `air` (legacy
-#'   table) or `vacuum` (MaNGA).
-#' @return A data frame with line names, labels, rest wavelengths, and families.
+#' @param wavelength_medium Laboratory wavelength convention: `vacuum` (SDSS DR17 DAP default)
+#'   or `air` (explicit conversion of the same registry).
+#' @return A data frame with identifiers, labels, laboratory wavelengths in Angstrom,
+#'   medium, source reference, registry version, and conversion provenance.
 #' @export
-emission_lines <- function(wavelength_medium = c("air", "vacuum")) {
+emission_lines <- function(wavelength_medium = c("vacuum", "air")) {
   .capivara_emission_line_table(match.arg(wavelength_medium))
 }
 
