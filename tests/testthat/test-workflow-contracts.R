@@ -36,7 +36,10 @@ test_that("explicit checkout resolution outranks installed workflow scripts", {
   root <- tempfile(); dir.create(file.path(root,"inst","extdata","kinematics"),recursive=TRUE)
   f <- file.path(root,"inst","extdata","kinematics","test.R"); file.create(f)
   on.exit(unlink(root,recursive=TRUE))
-  expect_equal(.capivara_workflow_file("test.R",root),normalizePath(f))
+  expect_equal(
+    normalizePath(.capivara_workflow_file("test.R",root),winslash="/"),
+    normalizePath(f,winslash="/")
+  )
 })
 
 test_that("workflow environment cleanup is reversible on failure", {
