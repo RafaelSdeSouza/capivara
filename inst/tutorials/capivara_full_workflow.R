@@ -8,8 +8,9 @@
 
 cube_path <- Sys.getenv(
   "CAPIVARA_TUTORIAL_CUBE",
-  unset = "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/normal_bar/manga-8078-12703-LOGCUBE.fits"
+  unset = ""
 )
+if (!nzchar(cube_path)) stop("Set the explicit cube-path environment variable before running this tutorial.")
 
 object_id <- tools::file_path_sans_ext(basename(cube_path))
 redshift <- NA_real_        # NA = try local MaNGA metadata/header where possible
@@ -23,7 +24,7 @@ include_coarse_starlet <- FALSE
 
 run_bar_model <- FALSE
 segmentation_mode_for_bar <- "kinematic" # or "path_signature"
-bar_phi_deg <- NA_real_ # automatic from white light; set a measured angle to override
+phi_bar_disc_deg <- NA_real_ # automatic from white light; set a measured angle to override
 
 output_dir <- file.path(dirname(cube_path), "capivara_tutorial_outputs", object_id)
 
@@ -40,14 +41,10 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-line_rest <- switch(
-  tolower(emission_line),
-  halpha = 6562.80,
-  ha = 6562.80,
-  oiii = 5006.84,
-  o3 = 5006.84,
-  stop("Unknown emission_line. Use 'halpha' or 'oiii'.", call. = FALSE)
-)
+# Laboratory values and references come from the same registry as the public
+# kinematic API. The native MaNGA axis is observed vacuum wavelength.
+line_record <- capivara:::.capivara_match_emission_lines(emission_line, "vacuum")
+line_rest <- line_record$rest_wavelength
 
 save_plot <- function(plot, filename, width = 7.0, height = 5.0) {
   path <- file.path(output_dir, filename)
@@ -56,7 +53,13 @@ save_plot <- function(plot, filename, width = 7.0, height = 5.0) {
 }
 
 message("Reading cube: ", cube_path)
-cube <- FITSio::readFITS(cube_path)
+cube <- capivara:::.capivara_read_fits(cube_path, hdu=1)
+if (!identical(cube$wavelength_frame,"observed") || !identical(cube$wavelength_medium,"vacuum")) {
+  stop("This tutorial requires a verified native MaNGA observed-vacuum cube.")
+}
+redshift_info <- resolve_manga_redshift(cube_path, redshift=redshift)
+redshift <- redshift_info$redshift
+if (!is.finite(redshift) || redshift <= -1) stop("A valid systemic redshift is required.")
 
 # ---- 2. Segment the cube ----------------------------------------------------
 
@@ -114,7 +117,9 @@ utils::write.csv(sum_spectra, file.path(output_dir, "02_segment_summed_spectra.c
 # ---- 4. Quick spectral-fit visualization -----------------------------------
 
 quick_line_fit <- function(wave, flux, lambda0, window = 900, continuum_inner = 1000, continuum_outer = 2200) {
-  vel <- 299792.458 * (wave / lambda0 - 1)
+  coordinate <- capivara:::.systemic_line_coordinate(wave,line_rest,redshift,"observed",
+    line_record$name,redshift_info$source,window,"systemic","vacuum")
+  vel <- coordinate$velocity
   line_idx <- abs(vel) <= window
   cont_idx <- abs(vel) >= continuum_inner & abs(vel) <= continuum_outer
   if (sum(line_idx, na.rm = TRUE) < 5L || sum(cont_idx, na.rm = TRUE) < 5L) return(NULL)
@@ -135,14 +140,12 @@ quick_line_fit <- function(wave, flux, lambda0, window = 900, continuum_inner = 
   )
 }
 
-lambda0 <- line_rest * ifelse(is.finite(redshift), 1 + redshift, 1)
-if (!is.finite(redshift) && grepl("manga-", basename(cube_path), ignore.case = TRUE)) {
-  z_info <- try(resolve_manga_redshift(cube_path, redshift = redshift), silent = TRUE)
-  if (!inherits(z_info, "try-error") && is.finite(z_info$redshift)) {
-    redshift <- z_info$redshift
-    lambda0 <- line_rest * (1 + redshift)
-  }
-}
+lambda0 <- line_rest * (1 + redshift)
+saveRDS(list(line_registry=line_record, line_rest_wavelength=line_rest,
+  wavelength_medium="vacuum",input_wavelength_medium=cube$wavelength_medium,
+  systemic_redshift=redshift,observed_line_centre=lambda0,
+  lsf_source=cube$lsf_source,width_interpretation="observed moments; no LSF correction"),
+  file.path(output_dir,"03_profile_coordinate_provenance.rds"))
 
 fit_rows <- list()
 wide_sum <- spectra$sum_spectra
@@ -165,7 +168,7 @@ if (nrow(fit_df)) {
     theme_classic(base_size = 10) +
     labs(
       title = paste("Quick", emission_line, "fit visualization by segment"),
-      subtitle = "Moment-based Gaussian quicklook; replace this block with pPXF/capivaraPPXF for science fits",
+      subtitle = "Observed moment-based Gaussian quicklook; no instrumental-width correction",
       x = "Velocity relative to line center (km/s)",
       y = "Flux"
     )
@@ -191,7 +194,7 @@ if (isTRUE(run_bar_model)) {
     knn_k = knn_k,
     n_segments = n_segments,
     n_path_segments = max(35, n_segments),
-    model_control = list(bar_phi_deg = bar_phi_deg),
+    model_control = list(analysis_mode = "preview", phi_bar_disc_deg = phi_bar_disc_deg),
     show_plots = FALSE
   )
 

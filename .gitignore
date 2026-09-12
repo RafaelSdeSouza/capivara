@@ -13,3 +13,5 @@
 src/*.o
 src/*.so
 src/symbols.rds
+__pycache__/
+*.pyc

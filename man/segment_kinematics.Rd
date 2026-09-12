@@ -18,7 +18,10 @@ segment_kinematics(
   include_coarse_starlet = FALSE,
   support_mode = c("starlet", "line_flux"),
   line_flux_sigma = 3,
-  show_plots = interactive()
+  show_plots = interactive(),
+  wavelength_frame = "observed",
+  wavelength_medium = "vacuum",
+  profile_centering_mode = c("systemic", "local_centroid")
 )
 }
 \arguments{
@@ -56,6 +59,19 @@ footprint with a robust emission-line-flux threshold before fitting.}
 `support_mode = "line_flux"`.}
 
 \item{show_plots}{Print the compact kinematic panel.}
+
+\item{wavelength_frame}{Native spectral axis frame, `observed` (MaNGA DRP)
+or `rest`. A rest-frame input is not redshifted a second time.}
+
+\item{wavelength_medium}{Wavelength convention of both axis and laboratory
+line catalogue: `vacuum` (MaNGA DRP) or `air`.}
+
+\item{profile_centering_mode}{`systemic` retains the systemic-relative velocity
+coordinate; `local_centroid` subtracts each positive-profile centroid for
+the path representation only. The extraction window remains systemic.
+Conventional velocity maps always retain systemic velocities. Path signatures
+depend on increments and are translation invariant for the same samples;
+retain the separate centroid feature when bulk velocity is required.}
 }
 \value{
 A `capivara_kinematic_segmentation` object containing native maps,

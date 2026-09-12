@@ -174,7 +174,7 @@
 #'
 #' @param input A FITS-like object with `imDat`, or a raw 3D array.
 #' @param Ncomp Integer, the number of clusters to form. Defaults to `15`.
-#' @param redshift Kept for API compatibility with `segment()`.
+#' @param redshift Systemic redshift. Required explicitly for rest-frame selection.
 #' @param scale_fn Optional row-wise spectral scaling function. Defaults to
 #'   \code{median_scale()}, matching \code{\link{segment}}.
 #' @param target_snr Optional minimum accepted SNR per cluster. When supplied,
@@ -186,9 +186,17 @@
 #'   \code{target_snr} is supplied. For this scalable backend, the default grid
 #'   is capped at 50 clusters.
 #' @param wavelength_range Optional wavelength interval used to compute SNR when
-#'   \code{target_snr} is supplied.
+#'   \code{target_snr} is supplied. This SNR interval is always in native
+#'   input coordinates, independently of `feature_wavelength_frame`.
+#' @param wavelength_frame Frame of the input wavelength axis: `observed` or
+#'   `rest`. May instead be supplied as `input$wavelength_frame`.
+#' @param feature_wavelength_frame Frame of the requested feature interval:
+#'   `observed` or `rest`. Required when bounds are supplied. Rest selection
+#'   requires an explicit valid redshift, including for a rest-frame input.
 #' @param feature_wavelength_range Optional wavelength interval used to select
-#'   the spectral channels used for clustering. The returned
+#'   the spectral channels used for clustering. Selection includes native
+#'   channels inside the closed interval; no resampling is performed.
+#'   `wavelength_provenance` records frames, redshift, actual bounds and indices.
 #'   \code{original_cube} remains the full input cube so downstream summed
 #'   spectra are still flux-preserving across the full spectral axis.
 #' @param snr_stat Either integrated SNR or median per-wavelength SNR when
@@ -224,6 +232,16 @@
 #' @param feature_scale Optional column-wise feature scaling after row scaling.
 #' @param spatial_weight Optional weight for appending normalized x/y coordinates.
 #' @param mask Optional logical spatial mask with dimensions n_row x n_col.
+#' @param support Optional `capivara_support` object. With an explicit
+#'   representation, omission selects that representation's declared validity
+#'   and eligibility domain; a supplied object is an additional explicit
+#'   spatial restriction. Historical `representation = NULL` calls retain their
+#'   original support behavior. Support cannot be combined with `mask` or
+#'   legacy starlet masking.
+#' @param representation Optional explicit `capivara_representation`. It selects
+#'   the observed-entry four-neighbour hierarchy. `NULL` retains the historical
+#'   sparse feature-kNN backend.
+#' @param sample_validity Optional logical row-column-channel validity array.
 #' @param valid_mode Valid-pixel rule. \code{"sagui"} applies the stricter
 #'   finite-fraction, energy, and row-MAD screen used by Sagui's sparse-Ward
 #'   backend; \code{"signal"} matches the exact \code{\link{segment}} support;
@@ -238,7 +256,7 @@
 #' @export
 segment_large <- function(input,
                           Ncomp = 15,
-                          redshift = 0,
+                          redshift = NA_real_,
                           scale_fn = median_scale,
                           target_snr = NULL,
                           var_cube = NULL,
@@ -266,13 +284,34 @@ segment_large <- function(input,
                           mask = NULL,
                           valid_mode = c("sagui", "signal", "finite"),
                           return_details = FALSE,
-                          verbose = FALSE) {
+                          verbose = FALSE,
+                          wavelength_frame = NULL,
+                          feature_wavelength_frame = NULL,
+                          support = NULL,
+                          representation = NULL,
+                          sample_validity = NULL) {
+  scale_fn_supplied <- !missing(scale_fn)
+  valid_mode_supplied <- !missing(valid_mode)
   feature_scale <- match.arg(feature_scale)
   valid_mode <- match.arg(valid_mode)
   snr_stat <- match.arg(snr_stat)
   starlet_mode <- match.arg(starlet_mode)
   mask_mode <- match.arg(mask_mode)
   support_method <- match.arg(support_method)
+  if (!is.null(representation)) {
+    if (!is.null(target_snr)) stop("Representation-specific hierarchy does not yet implement target-S/N cutting; use a fixed chronological `Ncomp`.", call. = FALSE)
+    if (scale_fn_supplied || feature_scale != "none" || spatial_weight != 0 || valid_mode_supplied) stop("An explicit representation cannot be combined with legacy scaling, spatial weights, or valid-mode filters.", call. = FALSE)
+    if (!is.null(feature_wavelength_range) || !is.null(feature_wavelength_frame)) stop("The representation declares its coordinate domain; do not also supply legacy feature bounds.", call. = FALSE)
+    if (isTRUE(use_starlet_mask) || !is.null(mask)) stop("Build and supply one explicit support object before representation-specific segmentation.", call. = FALSE)
+    return(.segment_semantic(input, Ncomp, redshift, var_cube, representation,
+                             sample_validity, support, wavelength_frame,
+                             return_details = return_details))
+  }
+  if (!is.null(support) && (isTRUE(use_starlet_mask) || !is.null(mask))) {
+    stop("Supply `support`, `mask`, or legacy starlet masking as one explicit support path.")
+  }
+
+  raw_input <- .as_cubedat(input)
 
   if (!is.null(target_snr) && !missing(Ncomp)) {
     stop("Specify either `Ncomp` or `target_snr`, not both.")
@@ -293,10 +332,14 @@ segment_large <- function(input,
     mask_mode = mask_mode
   )
 
-  full_cubedat <- .as_cubedat(starlet_prep$input)
+  supported_input <- .apply_capivara_support(starlet_prep$input, support)
+  full_cubedat <- if (is.null(support)) supported_input else raw_input
   feature_subset <- .subset_cubedat_wavelength_range(
-    full_cubedat,
-    feature_wavelength_range = feature_wavelength_range
+    supported_input,
+    feature_wavelength_range = feature_wavelength_range,
+    wavelength_frame = wavelength_frame,
+    feature_wavelength_frame = feature_wavelength_frame,
+    redshift = redshift
   )
   cubedat <- feature_subset$cubedat
   cube <- cubedat$imDat
@@ -348,6 +391,7 @@ segment_large <- function(input,
 
     valid <- valid & as.vector(mask)
   }
+  if (!is.null(support)) valid <- valid & as.vector(support$analysis_mask)
 
   valid_indices <- which(valid)
 
@@ -355,7 +399,7 @@ segment_large <- function(input,
     stop("No valid pixels after filtering.")
   }
 
-  if (!is.null(Ncomp) && length(valid_indices) < Ncomp) {
+  if (is.null(target_snr) && !is.null(Ncomp) && length(valid_indices) < Ncomp) {
     stop("`Ncomp` is larger than the number of valid pixels.")
   }
 
@@ -416,10 +460,7 @@ segment_large <- function(input,
       var_input <- if (is.null(feature_wavelength_range)) {
         .as_cubedat(var_cube)
       } else {
-        .subset_cubedat_wavelength_range(
-          var_cube,
-          feature_wavelength_range = feature_wavelength_range
-        )$cubedat
+        .subset_variance_channels(var_cube, full_cubedat, feature_subset$wave_idx)
       }
       if (!identical(dim(var_input$imDat), dim(cubedat$imDat))) {
         stop("`var_cube` must have the same dimensions as the input cube.")
@@ -521,6 +562,8 @@ segment_large <- function(input,
     )
   )
 
+  out$wavelength_provenance <- feature_subset$provenance
+
   if (!is.null(feature_wavelength_range)) {
     out$feature_wavelength_range <- feature_wavelength_range
     out$feature_wavelength_index <- feature_subset$wave_idx
@@ -536,6 +579,13 @@ segment_large <- function(input,
   if (!is.null(starlet_prep$support_info)) {
     out$support_info <- starlet_prep$support_info
   }
+  if (!is.null(support)) {
+    warning("`support` without `representation` restricts spatial enrollment but retains historical sparse spectral behavior.", call. = FALSE)
+    out$support <- support
+    out$support_id <- support$support_id
+    out$support_provenance <- support$provenance
+    out$backend_info$support_id <- support$support_id
+  }
 
   if (return_details) {
     out <- c(out, list(
@@ -547,5 +597,10 @@ segment_large <- function(input,
     ))
   }
 
-  out
+  out <- .capivara_attach_legacy_provenance(
+    out, support, starlet_prep$starlet_info, starlet_prep$support_info,
+    validity_rule = paste("historical sparse valid_mode =", valid_mode),
+    missing_value_rule = "historical sparse feature scaling with non-finite entries replaced by zero"
+  )
+  .capivara_attach_spatial_products(out, full_cubedat)
 }

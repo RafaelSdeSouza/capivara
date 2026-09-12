@@ -1,37 +1,14 @@
-.capivara_emission_line_table <- function() {
-  data.frame(
-    name = c(
-      "oii3727", "neiii3869", "hdelta", "hgamma", "hbeta",
-      "oiii4959", "oiii5007", "oi6300", "halpha",
-      "nii6548", "nii6583", "sii6716", "sii6731"
-    ),
-    label = c(
-      "[O II] 3727", "[Ne III] 3869", "Hdelta", "Hgamma", "Hbeta",
-      "[O III] 4959", "[O III] 5007", "[O I] 6300", "Halpha",
-      "[N II] 6548", "[N II] 6583", "[S II] 6716", "[S II] 6731"
-    ),
-    rest_wavelength = c(
-      3727.09, 3869.86, 4101.74, 4340.47, 4861.33,
-      4958.91, 5006.84, 6300.30, 6562.80,
-      6548.05, 6583.45, 6716.44, 6730.82
-    ),
-    family = c(
-      "blue", "blue", "balmer", "balmer", "balmer",
-      "agn", "agn", "agn", "balmer",
-      "agn", "agn", "agn", "agn"
-    ),
-    stringsAsFactors = FALSE
-  )
-}
-
-.capivara_match_emission_lines <- function(lines) {
-  tab <- .capivara_emission_line_table()
+.capivara_match_emission_lines <- function(lines, wavelength_medium = "vacuum") {
+  tab <- .capivara_emission_line_table(wavelength_medium)
   aliases <- c(
-    oii = "oii3727", oii3726 = "oii3727", oii3729 = "oii3727",
+    oii3726 = "oii3726", oii3729 = "oii3729",
     neiii = "neiii3869",
     hd = "hdelta", hdelta4102 = "hdelta",
     hg = "hgamma", hgamma4340 = "hgamma",
     hb = "hbeta", hbeta4861 = "hbeta",
+    o3 = "oiii5007", o35007 = "oiii5007", o34959 = "oiii4959",
+    n2 = "nii6583", n26548 = "nii6548", n26583 = "nii6583",
+    s26716 = "sii6716", s26731 = "sii6731", o1 = "oi6300", o16300 = "oi6300",
     oiii = "oiii5007", oiii5007 = "oiii5007", oiii4959 = "oiii4959",
     oi = "oi6300", oi6300 = "oi6300",
     ha = "halpha", halpha6563 = "halpha",
@@ -42,12 +19,13 @@
   if (length(lines) == 1L && tolower(lines) %in% c("agn", "default")) {
     lines <- c("hbeta", "oiii4959", "oiii5007", "oi6300", "halpha", "nii6548", "nii6583", "sii6716", "sii6731")
   } else if (length(lines) == 1L && tolower(lines) %in% c("strong", "optical")) {
-    lines <- c("oii3727", "hbeta", "oiii5007", "halpha", "nii6583", "sii6716", "sii6731")
+    lines <- c("oii3726", "oii3729", "hbeta", "oiii5007", "halpha", "nii6583", "sii6716", "sii6731")
   }
 
-  keys <- tolower(gsub("[^a-z0-9]+", "", lines))
+  keys <- gsub("[^a-z0-9]+", "", tolower(lines))
   keys <- unname(ifelse(keys %in% names(aliases), aliases[keys], keys))
 
+  if (any(keys %in% c("oii", "oii3727"))) stop("Ambiguous [O II] blend: select oii3726 and/or oii3729 explicitly.")
   unknown <- setdiff(keys, tab$name)
   if (length(unknown)) {
     stop(
@@ -107,10 +85,13 @@
                                             feature_mode = c("windows", "window_derivative", "hybrid", "moments", "profile", "profile_derivative"),
                                             continuum_subtract = FALSE,
                                             positive_only = FALSE,
-                                            line_weights = NULL) {
+                                            line_weights = NULL,
+                                            wavelength_frame = NULL,
+                                            wavelength_medium = NULL,
+                                            systemic_redshift_source = "explicit argument") {
   feature_mode <- match.arg(feature_mode)
 
-  if (!is.finite(redshift)) {
+  if (!.valid_systemic_redshift(redshift)) {
     stop("`redshift` must be a finite numeric value for emission-line segmentation.", call. = FALSE)
   }
 
@@ -122,10 +103,18 @@
 
   dims <- dim(cube)
   wavelengths <- .wavelength_axis(cubedat, dims[3])
-  tab <- .capivara_match_emission_lines(lines)
-  tab$observed_wavelength <- tab$rest_wavelength * (1 + redshift)
-  covered <- tab$observed_wavelength >= min(wavelengths, na.rm = TRUE) &
-    tab$observed_wavelength <= max(wavelengths, na.rm = TRUE)
+  wavelength_frame <- .input_wavelength_frame(cubedat, wavelength_frame, required = TRUE)
+  stored_medium <- cubedat$wavelength_medium
+  if (is.null(wavelength_medium)) wavelength_medium <- stored_medium
+  if (is.null(wavelength_medium)) stop("Specify wavelength_medium ('air' or 'vacuum') for line selection.")
+  wavelength_medium <- match.arg(wavelength_medium, c("air", "vacuum"))
+  if (!is.null(stored_medium) && stored_medium != wavelength_medium) stop("Conflicting wavelength_medium metadata.")
+  tab <- .capivara_match_emission_lines(lines, wavelength_medium)
+  tab$observed_wavelength <- tab$source_vacuum_wavelength * (1 + redshift)
+  if (wavelength_medium == "air") tab$observed_wavelength <- convert_wavelength_medium(tab$observed_wavelength, "vacuum", "air")
+  tab$native_wavelength <- if (wavelength_frame == "observed") tab$observed_wavelength else tab$rest_wavelength
+  covered <- tab$native_wavelength >= min(wavelengths, na.rm = TRUE) &
+    tab$native_wavelength <= max(wavelengths, na.rm = TRUE)
   tab <- tab[covered, , drop = FALSE]
   if (!nrow(tab)) {
     stop("None of the requested redshifted emission lines are covered by the cube wavelength axis.", call. = FALSE)
@@ -149,20 +138,21 @@
 
   mat <- matrix(cube, nrow = dims[1] * dims[2], ncol = dims[3])
   features <- list()
+  measured_valid <- rep(FALSE, nrow(mat))
   feature_info <- data.frame()
+  line_provenance <- list()
+  used_channels <- integer()
 
   for (i in seq_len(nrow(tab))) {
-    line_idx <- .capivara_line_window_index(wavelengths, tab$observed_wavelength[i], line_window_kms)
-    cont_idx <- .capivara_continuum_window_index(
-      wavelengths,
-      tab$observed_wavelength[i],
-      line_window_kms,
-      continuum_inner_kms,
-      continuum_outer_kms
-    )
+    coordinate <- .systemic_line_coordinate(wavelengths, tab$rest_wavelength[i], redshift,
+      wavelength_frame, tab$name[i], systemic_redshift_source, line_window_kms, "systemic", wavelength_medium)
+    line_idx <- which(abs(coordinate$velocity) <= line_window_kms)
+    cont_idx <- which(abs(coordinate$velocity) >= max(line_window_kms,continuum_inner_kms) &
+                      abs(coordinate$velocity) <= continuum_outer_kms)
     if (length(line_idx) < 2L) next
 
     line_flux <- mat[, line_idx, drop = FALSE]
+    measured_valid <- measured_valid | rowSums(is.finite(line_flux)) >= 2L
     if (isTRUE(continuum_subtract)) {
       continuum <- if (length(cont_idx)) {
         .capivara_safe_row_median(mat[, cont_idx, drop = FALSE])
@@ -180,7 +170,11 @@
       resid[!is.finite(resid)] <- 0
     }
 
-    dv <- 299792.458 * (wavelengths[line_idx] / tab$observed_wavelength[i] - 1)
+    dv <- coordinate$velocity[line_idx]
+    line_provenance[[tab$name[i]]] <- c(coordinate$provenance,
+      list(selected_channel_indices = line_idx, continuum_channel_indices = cont_idx))
+    used_channels <- union(used_channels, line_idx)
+    if (isTRUE(continuum_subtract)) used_channels <- union(used_channels, cont_idx)
     moments <- NULL
     if (feature_mode %in% c("hybrid", "moments")) {
       total <- rowSums(resid, na.rm = TRUE)
@@ -262,16 +256,22 @@
     feature_info = feature_info,
     line_table = tab,
     wavelengths = wavelengths,
-    original_cube = cubedat
+    measured_valid = measured_valid,
+    original_cube = cubedat,
+    line_provenance = line_provenance,
+    selected_channel_indices = sort(used_channels)
   )
 }
 
 #' List built-in emission lines for Capivara line-sensitive segmentation
 #'
-#' @return A data frame with line names, labels, rest wavelengths, and families.
+#' @param wavelength_medium Laboratory wavelength convention: `vacuum` (SDSS DR17 DAP default)
+#'   or `air` (explicit conversion of the same registry).
+#' @return A data frame with identifiers, labels, laboratory wavelengths in Angstrom,
+#'   medium, source reference, registry version, and conversion provenance.
 #' @export
-emission_lines <- function() {
-  .capivara_emission_line_table()
+emission_lines <- function(wavelength_medium = c("vacuum", "air")) {
+  .capivara_emission_line_table(match.arg(wavelength_medium))
 }
 
 #' Segment an IFU cube using emission-line features
@@ -314,6 +314,10 @@ emission_lines <- function() {
 #'   Use `Inf` to force the full graph.
 #' @param seed Random seed used only when `max_pixels` triggers sampling.
 #' @param ... Additional arguments passed to [segment_large()].
+#' @param wavelength_frame Input wavelength frame, `observed` or `rest`;
+#'   may be supplied in input metadata. Selection uses native channels.
+#' @param wavelength_medium `air` or `vacuum`; must match input metadata.
+#' @param systemic_redshift_source Provenance of the supplied systemic redshift.
 #' @return A `segment_large` result with emission-line feature metadata.
 #' @export
 segment_emission_lines <- function(input,
@@ -333,6 +337,9 @@ segment_emission_lines <- function(input,
                                    valid_mode = c("finite", "signal", "sagui"),
                                    max_pixels = 30000,
                                    seed = 1L,
+                                   wavelength_frame = NULL,
+                                   wavelength_medium = NULL,
+                                   systemic_redshift_source = "explicit argument",
                                    ...) {
   feature_mode <- match.arg(feature_mode)
   valid_mode <- match.arg(valid_mode)
@@ -348,7 +355,9 @@ segment_emission_lines <- function(input,
     feature_mode = feature_mode,
     continuum_subtract = continuum_subtract,
     positive_only = positive_only,
-    line_weights = line_weights
+    line_weights = line_weights,
+    wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+    systemic_redshift_source = systemic_redshift_source
   )
 
   n_row <- dim(features$cube$imDat)[1]
@@ -372,23 +381,27 @@ segment_emission_lines <- function(input,
       is.finite(row_energy) & row_energy > 0 &
       is.finite(row_mad) & row_mad > 0
   }
+  valid <- valid & features$measured_valid
   valid_indices <- which(valid)
   if (!length(valid_indices)) {
     stop("No valid pixels after emission-line feature construction.", call. = FALSE)
   }
 
+  # Match the pre-existing unsampled row scaling in both computational paths.
+  feature_mat <- .sparse_ward_scale_features(feature_mat, scale_fn = NULL)
+  features$cube$imDat <- array(feature_mat, dim(features$cube$imDat))
   sampled <- is.finite(max_pixels) && length(valid_indices) > max_pixels
   if (!sampled) {
     out <- segment_large(
       features$cube,
       Ncomp = Ncomp,
       use_starlet_mask = FALSE,
-      mask = NULL,
+      mask = matrix(valid, n_row, n_col),
       valid_mode = valid_mode,
       knn_k = knn_k,
       spatial_weight = spatial_weight,
       feature_scale = "none",
-      scale_fn = NULL,
+      scale_fn = identity,
       ...
     )
   } else {
@@ -467,7 +480,27 @@ segment_emission_lines <- function(input,
     )
   }
 
+  # The clustered columns are derived features; provenance indexes their
+  # contributing channels on the retained native spectral cube.
+  out$wavelength_provenance <- .subset_cubedat_wavelength_range(
+    features$original_cube, wavelength_frame = features$line_provenance[[1]]$input_wavelength_frame,
+    redshift = redshift)$provenance
+  ix <- features$selected_channel_indices
+  w <- features$wavelengths[ix]
+  wr <- if (out$wavelength_provenance$input_wavelength_frame == "observed") w / (1 + redshift) else w
+  out$wavelength_provenance$selected_channel_indices <- ix
+  out$wavelength_provenance$number_of_selected_channels <- length(ix)
+  out$wavelength_provenance$selected_native_wavelength_min <- min(w)
+  out$wavelength_provenance$selected_native_wavelength_max <- max(w)
+  out$wavelength_provenance$selected_rest_wavelength_min <- min(wr)
+  out$wavelength_provenance$selected_rest_wavelength_max <- max(wr)
+  out$wavelength_provenance$requested_feature_wavelength_frame <- "rest"
+  out$wavelength_provenance$wavelength_medium <- features$line_provenance[[1]]$wavelength_medium
+  out$wavelength_provenance$selection_kind <- "disjoint line windows; continuum channels included only when subtracted"
+  out$kinematic_provenance <- features$line_provenance
   out$original_cube <- features$original_cube
+  out$axDat <- features$original_cube$axDat
+  out$header <- features$original_cube$hdr
   out$emission_line_features <- list(
     mode = feature_mode,
     redshift = redshift,

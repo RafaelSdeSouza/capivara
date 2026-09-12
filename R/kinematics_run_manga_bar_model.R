@@ -1,9 +1,4 @@
 .capivara_workflow_file <- function(name, repo_root = NULL) {
-  installed <- system.file("extdata", "kinematics", name, package = "capivara")
-  if (nzchar(installed) && file.exists(installed)) {
-    return(installed)
-  }
-
   # This fallback is only for running directly from a source checkout.
   if (!is.null(repo_root) && length(repo_root) && !is.na(repo_root[[1]]) && nzchar(repo_root[[1]])) {
     candidate <- file.path(
@@ -14,6 +9,9 @@
       return(candidate)
     }
   }
+
+  installed <- system.file("extdata", "kinematics", name, package = "capivara")
+  if (nzchar(installed) && file.exists(installed)) return(installed)
 
   stop(
     "Could not locate the bundled Capivara kinematics workflow. Reinstall capivara.",
@@ -37,6 +35,16 @@
   old
 }
 
+.capivara_clear_workflow_env <- function(prefix = "CAPIVARA_") {
+  current <- Sys.getenv()
+  keys <- names(current)[startsWith(names(current), prefix)]
+  # Explicit metadata locations are not numerical workflow controls.
+  keys <- setdiff(keys, c("CAPIVARA_MANGA_METADATA", "CAPIVARA_REPO_ROOT"))
+  old <- current[keys]
+  Sys.unsetenv(keys)
+  old
+}
+
 .capivara_run_native_kinematics <- function(cube_path,
                                              redshift,
                                              emission_line,
@@ -51,7 +59,13 @@
                                              starlet_scales,
                                              include_coarse_starlet,
                                              support_mode,
-                                             line_flux_sigma) {
+                                             line_flux_sigma,
+                                             wavelength_frame = "observed",
+                                             wavelength_medium = "vacuum",
+                                             systemic_redshift_source = "explicit argument",
+                                             profile_centering_mode = "systemic") {
+  inherited <- .capivara_clear_workflow_env()
+  on.exit(.capivara_restore_env(names(inherited), inherited), add = TRUE)
   prefix <- gsub("[^A-Za-z0-9]+", "_", tolower(object_id))
   native_runner <- .capivara_workflow_file("native_kinematics_workflow.R", repo_root)
   native_env <- c(
@@ -59,6 +73,10 @@
     CAPIVARA_CUBE_PATH = cube_path,
     CAPIVARA_OUTPUT_DIR = output_dir,
     CAPIVARA_REDSHIFT = as.character(redshift),
+    CAPIVARA_REDSHIFT_SOURCE = systemic_redshift_source,
+    CAPIVARA_WAVELENGTH_FRAME = wavelength_frame,
+    CAPIVARA_WAVELENGTH_MEDIUM = wavelength_medium,
+    CAPIVARA_PROFILE_CENTERING_MODE = profile_centering_mode,
     CAPIVARA_LINE = emission_line,
     CAPIVARA_OUTPUT_PREFIX = prefix,
     CAPIVARA_KNN = as.character(knn_k),
@@ -76,7 +94,7 @@
     CAPIVARA_CENTROID_WINDOW_KMS = "220"
   )
   old_native_env <- .capivara_set_env(native_env)
-  on.exit(.capivara_restore_env(names(native_env), old_native_env), add = TRUE)
+  on.exit(.capivara_restore_env(names(native_env), old_native_env), add = TRUE, after = FALSE)
 
   native_scope <- new.env(parent = environment(.capivara_run_native_kinematics))
   source(native_runner, local = native_scope)
@@ -122,6 +140,16 @@
 #'   footprint with a robust emission-line-flux threshold before fitting.
 #' @param line_flux_sigma Border-noise threshold, in robust sigma units, when
 #'   `support_mode = "line_flux"`.
+#' @param wavelength_frame Native spectral axis frame, `observed` (MaNGA DRP)
+#'   or `rest`. A rest-frame input is not redshifted a second time.
+#' @param wavelength_medium Wavelength convention of both axis and laboratory
+#'   line catalogue: `vacuum` (MaNGA DRP) or `air`.
+#' @param profile_centering_mode `systemic` retains the systemic-relative velocity
+#'   coordinate; `local_centroid` subtracts each positive-profile centroid for
+#'   the path representation only. The extraction window remains systemic.
+#'   Conventional velocity maps always retain systemic velocities. Path signatures
+#'   depend on increments and are translation invariant for the same samples;
+#'   retain the separate centroid feature when bulk velocity is required.
 #' @param show_plots Print the compact kinematic panel.
 #' @return A `capivara_kinematic_segmentation` object containing native maps,
 #'   support, kinematic segmentation, optional path segmentation, and paths.
@@ -139,7 +167,13 @@ segment_kinematics <- function(cube_path,
                                include_coarse_starlet = FALSE,
                                support_mode = c("starlet", "line_flux"),
                                line_flux_sigma = 3,
-                               show_plots = interactive()) {
+                               show_plots = interactive(),
+                               wavelength_frame = "observed",
+                               wavelength_medium = "vacuum",
+                               profile_centering_mode = c("systemic", "local_centroid")) {
+  wavelength_frame <- match.arg(wavelength_frame, c("observed", "rest"))
+  wavelength_medium <- match.arg(wavelength_medium, c("vacuum", "air"))
+  profile_centering_mode <- match.arg(profile_centering_mode)
   segmentation_mode <- match.arg(segmentation_mode)
   support_mode <- match.arg(support_mode)
   cube_path <- normalizePath(cube_path, mustWork = TRUE)
@@ -168,7 +202,10 @@ segment_kinematics <- function(cube_path,
     starlet_scales = starlet_scales,
     include_coarse_starlet = include_coarse_starlet,
     support_mode = support_mode,
-    line_flux_sigma = line_flux_sigma
+    line_flux_sigma = line_flux_sigma,
+    wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+    systemic_redshift_source = z_info$source,
+    profile_centering_mode = profile_centering_mode
   )
 
   out <- list(
@@ -179,6 +216,8 @@ segment_kinematics <- function(cube_path,
     native_rds = native_run$native_rds,
     native = native_run$native,
     panel = native_run$panel,
+    frame_provenance = native_run$native$frame_provenance,
+    wavelength_provenance = native_run$native$wavelength_provenance,
     segmentation_mode = segmentation_mode,
     segmentation = if (identical(segmentation_mode, "path_signature")) {
       native_run$native$path_signature
@@ -198,9 +237,18 @@ segment_kinematics <- function(cube_path,
     starlet_scales = "2:5",
     include_coarse_starlet = FALSE,
     display_orientation = "rot90_cw",
-    disc_pa_deg = NA_real_,
+    wavelength_frame = "observed",
+    wavelength_medium = "vacuum",
+    profile_centering_mode = "systemic",
+    disc_pa_image_deg = NA_real_,
     disc_inc_deg = NA_real_,
-    bar_phi_deg = NA_real_,
+    phi_bar_disc_deg = NA_real_,
+    bar_geometry = NULL,
+    analysis_mode = "science",
+    x0 = NA_real_,
+    y0 = NA_real_,
+    vsys = NA_real_,
+    n_rings = 22L,
     use_bar_support_mask = FALSE,
     bar_support_width_deg = 25,
     robust_fit = TRUE,
@@ -218,11 +266,27 @@ segment_kinematics <- function(cube_path,
   if (!is.list(control) || is.null(names(control))) {
     stop("`model_control` must be a named list.", call. = FALSE)
   }
+  for (old in c("disc_pa_deg", "bar_phi_deg")) {
+    new <- if (old == "disc_pa_deg") "disc_pa_image_deg" else "phi_bar_disc_deg"
+    if (old %in% names(control)) {
+      warning(old, " is deprecated; use ", new, ".", call. = FALSE)
+      if (!is.null(control[[new]]) && !identical(control[[new]], control[[old]])) {
+        stop("Conflicting geometry controls: ", old, " and ", new, call. = FALSE)
+      }
+      control[[new]] <- control[[old]]
+      control[[old]] <- NULL
+    }
+  }
   unknown <- setdiff(names(control), names(defaults))
   if (length(unknown)) {
     stop("Unknown `model_control` entries: ", paste(unknown, collapse = ", "), call. = FALSE)
   }
-  utils::modifyList(defaults, control)
+  out <- utils::modifyList(defaults, control)
+  out$analysis_mode <- match.arg(out$analysis_mode, c("science", "preview"))
+  out$wavelength_frame <- match.arg(out$wavelength_frame, c("observed", "rest"))
+  out$wavelength_medium <- match.arg(out$wavelength_medium, c("vacuum", "air"))
+  out$profile_centering_mode <- match.arg(out$profile_centering_mode, c("systemic", "local_centroid"))
+  out
 }
 
 .capivara_run_kinematic_model <- function(cube_path,
@@ -244,6 +308,15 @@ segment_kinematics <- function(cube_path,
   model <- .capivara_match_kinematic_model(model)
   support_mode <- match.arg(support_mode, c("starlet", "line_flux"))
   control <- .capivara_model_control(model_control)
+  if (control$analysis_mode == "science" && !is.finite(control$disc_inc_deg)) {
+    stop("Scientific mode requires model_control$disc_inc_deg. Use analysis_mode='preview' explicitly for placeholder geometry.", call. = FALSE)
+  }
+  if (control$analysis_mode == "science" && model == "bisymmetric_bar" &&
+      is.null(control$bar_geometry) && !is.finite(control$phi_bar_disc_deg)) {
+    stop("Scientific bar modelling requires vetted bar_geometry or an explicit phi_bar_disc_deg.", call. = FALSE)
+  }
+  inherited_model <- .capivara_clear_workflow_env("CAPIVARA_MODEL_")
+  on.exit(.capivara_restore_env(names(inherited_model), inherited_model), add = TRUE)
 
   cube_path <- normalizePath(cube_path, mustWork = TRUE)
   z_info <- resolve_manga_redshift(cube_path, redshift = redshift)
@@ -271,17 +344,27 @@ segment_kinematics <- function(cube_path,
     starlet_scales = control$starlet_scales,
     include_coarse_starlet = control$include_coarse_starlet,
     support_mode = support_mode,
-    line_flux_sigma = line_flux_sigma
+    line_flux_sigma = line_flux_sigma,
+    systemic_redshift_source = z_info$source,
+    wavelength_frame = control$wavelength_frame,
+    wavelength_medium = control$wavelength_medium,
+    profile_centering_mode = control$profile_centering_mode
   )
   model_prefix <- paste(native_run$prefix, emission_line, model, sep = "_")
   model_runner <- .capivara_workflow_file("native_bisymmetric_workflow.R", repo_root)
   model_env <- c(
     CAPIVARA_MODEL_USE_ENV_INPUTS = "true",
     CAPIVARA_MODEL_KIND = model,
+    CAPIVARA_MODEL_ANALYSIS_MODE = control$analysis_mode,
+    CAPIVARA_MODEL_SEGMENTATION_MODE = segmentation_mode,
     CAPIVARA_MODEL_NATIVE_RDS = native_run$native_rds,
     CAPIVARA_MODEL_OUTPUT_DIR = output_dir,
     CAPIVARA_MODEL_OUTPUT_PREFIX = model_prefix,
     CAPIVARA_MODEL_PLATEIFU = object_id,
+    CAPIVARA_MODEL_X0 = as.character(control$x0),
+    CAPIVARA_MODEL_Y0 = as.character(control$y0),
+    CAPIVARA_MODEL_VSYS = as.character(control$vsys),
+    CAPIVARA_MODEL_N_RINGS = as.character(control$n_rings),
     CAPIVARA_MODEL_DISPLAY_ORIENTATION = control$display_orientation,
     CAPIVARA_MODEL_ROBUST = if (isTRUE(control$robust_fit)) "true" else "false",
     CAPIVARA_MODEL_SMOOTH_LAMBDA = as.character(control$smooth_lambda),
@@ -291,18 +374,19 @@ segment_kinematics <- function(cube_path,
     CAPIVARA_MODEL_USE_BAR_MASK = if (isTRUE(control$use_bar_support_mask)) "true" else "false",
     CAPIVARA_MODEL_BAR_MASK_WIDTH_DEG = as.character(control$bar_support_width_deg)
   )
-  if (is.finite(control$disc_pa_deg)) {
-    model_env <- c(model_env, CAPIVARA_MODEL_PA_DEG = as.character(control$disc_pa_deg))
+  if (is.finite(control$disc_pa_image_deg)) {
+    model_env <- c(model_env, CAPIVARA_MODEL_PA_DEG = as.character(control$disc_pa_image_deg))
   }
   if (is.finite(control$disc_inc_deg)) {
     model_env <- c(model_env, CAPIVARA_MODEL_INC_DEG = as.character(control$disc_inc_deg))
   }
-  if (.capivara_is_bar_model(model) && is.finite(control$bar_phi_deg)) {
-    model_env <- c(model_env, CAPIVARA_MODEL_BAR_PHI_DEG = as.character(control$bar_phi_deg))
+  if (.capivara_is_bar_model(model) && is.finite(control$phi_bar_disc_deg)) {
+    model_env <- c(model_env, CAPIVARA_MODEL_BAR_PHI_DEG = as.character(control$phi_bar_disc_deg))
   }
   old_model_env <- .capivara_set_env(model_env)
-  on.exit(.capivara_restore_env(names(model_env), old_model_env), add = TRUE)
+  on.exit(.capivara_restore_env(names(model_env), old_model_env), add = TRUE, after = FALSE)
   model_scope <- new.env(parent = environment(.capivara_run_kinematic_model))
+  model_scope$input_bar_geometry <- control$bar_geometry
   source(model_runner, local = model_scope)
 
   result <- list(
@@ -311,6 +395,9 @@ segment_kinematics <- function(cube_path,
     redshift_source = z_info$source,
     model = model,
     model_control = control,
+    package_version = as.character(utils::packageVersion("capivara")),
+    workflow_files = c(native = .capivara_workflow_file("native_kinematics_workflow.R", repo_root),
+                       model = model_runner),
     output_dir = output_dir,
     native_rds = native_run$native_rds,
     model_rds = file.path(output_dir, paste0(model_prefix, ".rds")),
@@ -366,10 +453,19 @@ segment_kinematics <- function(cube_path,
 #'   robust emission-line-flux threshold.
 #' @param line_flux_sigma Border-noise threshold, in robust sigma units, for
 #'   `"line_flux"` support.
-#' @param model_control Named list of model controls. For a bar model,
-#'   `bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
-#'   estimates it from the inner white-light elongation. See
-#'   [kinematic_models()] for available modules.
+#' @details Model controls also accept `wavelength_frame`, `wavelength_medium`,
+#'   and `profile_centering_mode`, with the same meanings as in [segment_kinematics()].
+#' @param model_control Named list of model controls. Scientific mode (default)
+#'   requires `disc_inc_deg`. `disc_pa_image_deg` is an image-frame disc PA;
+#'   if omitted it is estimated from the velocity gradient and labelled.
+#'   A bar model also requires `phi_bar_disc_deg` or `bar_geometry`: a list
+#'   with `vetted=TRUE`, `source`, and `pa_image_deg` or
+#'   `phi_bar_disc_deg`, plus an optional native-grid logical `bar_mask`.
+#'   Image angles run from +row toward +column modulo 180 degrees.
+#'   `analysis_mode="preview"` explicitly permits a labelled placeholder
+#'   inclination and automatic white-light bar axis. Preview outputs are not
+#'   scientifically usable. An angular wedge is preview-only, not a measured
+#'   bar mask. See [kinematic_models()] for available models.
 #' @param show_plots Print figures as they are generated.
 #' @return A `capivara_kinematic_result` with maps, segmentation, model, plots,
 #'   and saved-product paths.
@@ -411,15 +507,18 @@ run_kinematic_analysis <- function(cube_path,
 
 #' Run the explicit bisymmetric-bar module for a MaNGA cube
 #'
-#' This convenience wrapper is intentionally bar-specific. By default it
-#' derives a photometric in-plane bar-angle prior from the white-light image;
-#' supplying `bar_phi_deg` overrides that estimate. It never substitutes the
+#' This convenience wrapper is intentionally bar-specific. Scientific mode
+#' requires supplied bar geometry or an explicit in-plane bar angle. Automatic
+#' white-light estimation is limited to explicit preview mode. It never substitutes the
 #' disc position angle for a bar angle. For an ordinary rotation model, use
 #' [run_kinematic_analysis()] with its axisymmetric default.
 #'
 #' @inheritParams run_kinematic_analysis
-#' @param bar_phi_deg Optional manual in-plane bar angle in degrees relative to
-#'   the disc major axis. Leave as `NA` to estimate it from white light.
+#' @param bar_phi_deg Deprecated input alias for `phi_bar_disc_deg`.
+#' @param phi_bar_disc_deg In-plane axial bar angle relative to the disc major
+#'   axis, using the signed theta of the selected deprojection convention.
+#' @param bar_geometry Optional vetted geometry list, as described under
+#'   `model_control`. No second unrelated angle is estimated when supplied.
 #' @return A `capivara_kinematic_result` with the bisymmetric model and its
 #'   component decomposition.
 #' @export
@@ -436,7 +535,9 @@ run_manga_bar_model <- function(cube_path,
                                 support_mode = c("starlet", "line_flux"),
                                 line_flux_sigma = 3,
                                 model_control = list(),
-                                show_plots = interactive()) {
+                                show_plots = interactive(),
+                                phi_bar_disc_deg = NA_real_,
+                                bar_geometry = NULL) {
   if (is.null(model_control)) {
     model_control <- list()
   }
@@ -445,8 +546,15 @@ run_manga_bar_model <- function(cube_path,
   }
   support_mode <- match.arg(support_mode)
   if (is.finite(bar_phi_deg)) {
-    model_control$bar_phi_deg <- bar_phi_deg
+    warning("bar_phi_deg is deprecated; use phi_bar_disc_deg.", call. = FALSE)
+    if (is.finite(phi_bar_disc_deg) &&
+        abs(.capivara_axial_angle(phi_bar_disc_deg - bar_phi_deg)) > 1e-8) {
+      stop("Conflicting in-plane bar angles.")
+    }
+    phi_bar_disc_deg <- bar_phi_deg
   }
+  if (is.finite(phi_bar_disc_deg)) model_control$phi_bar_disc_deg <- phi_bar_disc_deg
+  if (!is.null(bar_geometry)) model_control$bar_geometry <- bar_geometry
   run_kinematic_analysis(
     cube_path = cube_path,
     redshift = redshift,

@@ -10,7 +10,7 @@ choose_ncomp_by_snr(
   var_cube = NULL,
   k_values = NULL,
   wavelength_range = NULL,
-  redshift = 0,
+  redshift = NA_real_,
   scale_fn = median_scale,
   snr_stat = c("integrated", "median_per_wavelength"),
   variance_inflation = 1,
@@ -31,7 +31,8 @@ all valid counts are tested from the maximum down to 1.}
 \item{wavelength_range}{Optional numeric vector of length 2 selecting the
 wavelength interval used to compute SNR.}
 
-\item{redshift}{Numeric redshift placeholder kept for API compatibility.}
+\item{redshift}{Systemic redshift retained in wavelength provenance.
+The SNR `wavelength_range` always uses native input coordinates.}
 
 \item{scale_fn}{Row-wise scaling function used during segmentation.}
 

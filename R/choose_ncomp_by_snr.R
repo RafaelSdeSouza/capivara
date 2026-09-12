@@ -9,12 +9,22 @@
   vapply(sort(unique(clusters)), function(cluster_id) {
     idx <- which(clusters == cluster_id)
 
-    bin_flux <- colSums(flux_mat[idx, wave_idx, drop = FALSE], na.rm = TRUE)
-    bin_var <- variance_inflation * colSums(var_mat[idx, wave_idx, drop = FALSE], na.rm = TRUE)
+    X <- flux_mat[idx, wave_idx, drop = FALSE]
+    V <- var_mat[idx, wave_idx, drop = FALSE]
+    measured <- is.finite(X)
+    usable <- measured & is.finite(V) & V > 0
+    # Retain all measured flux, but never report a partial variance for it.
+    X[!measured] <- 0
+    V[!usable] <- 0
+    complete <- colSums(measured) > 0 & colSums(measured) == colSums(usable)
+    bin_flux <- colSums(X)
+    bin_var <- variance_inflation * colSums(V)
+    bin_flux[!complete] <- bin_var[!complete] <- NA_real_
     bin_snr <- bin_flux / sqrt(bin_var)
     bin_snr[!is.finite(bin_snr)] <- NA_real_
 
     if (snr_stat == "integrated") {
+      if (any(colSums(measured) > 0 & !complete)) return(NA_real_)
       total_flux <- sum(bin_flux, na.rm = TRUE)
       total_var <- sum(bin_var, na.rm = TRUE)
       if (!is.finite(total_var) || total_var <= 0) {
@@ -57,7 +67,8 @@
 #'   all valid counts are tested from the maximum down to 1.
 #' @param wavelength_range Optional numeric vector of length 2 selecting the
 #'   wavelength interval used to compute SNR.
-#' @param redshift Numeric redshift placeholder kept for API compatibility.
+#' @param redshift Systemic redshift retained in wavelength provenance.
+#'   The SNR `wavelength_range` always uses native input coordinates.
 #' @param scale_fn Row-wise scaling function used during segmentation.
 #' @param snr_stat Either integrated SNR across the chosen window or the median
 #'   per-wavelength SNR inside that window.
@@ -73,7 +84,7 @@ choose_ncomp_by_snr <- function(input,
                                 var_cube = NULL,
                                 k_values = NULL,
                                 wavelength_range = NULL,
-                                redshift = 0,
+                                redshift = NA_real_,
                                 scale_fn = median_scale,
                                 snr_stat = c("integrated", "median_per_wavelength"),
                                 variance_inflation = 1,
@@ -167,6 +178,7 @@ choose_ncomp_by_snr <- function(input,
     cluster_snr = best_cluster_snr,
     snr_grid = snr_grid,
     hclust = details$hclust,
-    original_cube = cubedat
+    original_cube = cubedat,
+    wavelength_provenance = .subset_cubedat_wavelength_range(cubedat, redshift = redshift)$provenance
   )
 }

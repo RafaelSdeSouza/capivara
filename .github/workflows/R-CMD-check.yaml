@@ -1,0 +1,39 @@
+name: R CMD check
+on:
+  push:
+    branches: [main, fix/capivara-science-baseline]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      R_KEEP_PKG_SOURCE: "yes"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual")'
+      - name: Install and compare source with installed namespace
+        shell: Rscript {0}
+        run: |
+          lib <- tempfile("capivara-ci-library-")
+          dir.create(lib)
+          status <- system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", paste0("--library=", shQuote(lib)), "."))
+          stopifnot(status == 0)
+          status <- system2(file.path(R.home("bin"), "Rscript"), c("tools/check_source_install.R", ".", shQuote(lib)))
+          stopifnot(status == 0)

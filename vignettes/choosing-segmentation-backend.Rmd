@@ -11,9 +11,13 @@ vignette: >
 knitr::opts_chunk$set(collapse=TRUE, comment="#>")
 ```
 
-Capivara exposes an exact Ward backend and a sparse-graph Ward backend. They
-return compatible region maps and regional-product inputs, but they make
-different computational approximations.
+Calls without an explicit representation retain Capivara's historical exact
+Ward and sparse-graph Ward backends. They return compatible region maps and
+regional-product inputs, but they make different computational approximations.
+An explicit `full_flux` or `spectral_shape` declaration selects the
+four-neighbour observed-entry hierarchy described in the Semantic
+Representations vignette; both public segmentation functions then invoke the
+same representation-specific backend.
 
 ## Exact Ward
 
@@ -92,4 +96,5 @@ choice <- choose_ncomp_by_snr(
 ```
 
 The result depends on the target, variance cube, candidate grid, and wavelength
-interval.
+interval. Representation-specific hierarchies currently retain `Ncomp` only as
+a chronological compatibility cut; evidence-driven stopping is outside V4.

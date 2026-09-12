@@ -1,17 +1,19 @@
 Package: capivara
 Type: Package
 Title: Decomposition and Analysis of IFU Data Cubes
-Version: 0.3.0
-Imports: FITSio, dplyr, fastcluster, ggplot2, gridExtra, matrixStats, patchwork, readr, reshape2, RANN, Rcpp, scales, spectropath, tidyr, viridis, yaml
+Version: 0.4.5.9000
+Imports: digest, FITSio, dplyr, fastcluster, ggplot2, gridExtra, matrixStats, patchwork, readr, reshape2, RANN, Rcpp, scales, sf, spectropath, tidyr, viridis, yaml
 LinkingTo: Rcpp
-Suggests: torch, EBImage, imager, knitr, minpack.lm, rmarkdown
+Suggests: reticulate, Matrix, torch, EBImage, imager, knitr, minpack.lm, rmarkdown, testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Remotes:
     RafaelSdeSouza/spectropath
 Author: Rafael S. de Souza
 Maintainer: Rafael S. de Souza <rd23aag@herts.ac.uk>
 Description: The 'capivara' package provides tools for spectral segmentation
-    and analysis of Integral Field Unit (IFU) data cubes. It includes
-    missing-data-aware exact clustering, sparse-Ward large-cube clustering,
+    and analysis of Integral Field Unit (IFU) data cubes. It includes explicit
+    semantic flux and spectral-shape representations, an observed-entry
+    spatial Ward hierarchy, historical exact and sparse-Ward backends,
     Sagui-style white-light starlet masks,
     variance-aware cluster summaries, and signal-to-noise-guided component
     selection for astronomy workflows.
@@ -23,4 +25,3 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-BuildVignettes: false

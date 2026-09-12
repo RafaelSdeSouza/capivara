@@ -7,7 +7,7 @@
 segment_large(
   input,
   Ncomp = 15,
-  redshift = 0,
+  redshift = NA_real_,
   scale_fn = median_scale,
   target_snr = NULL,
   var_cube = NULL,
@@ -35,7 +35,12 @@ segment_large(
   mask = NULL,
   valid_mode = c("sagui", "signal", "finite"),
   return_details = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  wavelength_frame = NULL,
+  feature_wavelength_frame = NULL,
+  support = NULL,
+  representation = NULL,
+  sample_validity = NULL
 )
 }
 \arguments{
@@ -43,7 +48,7 @@ segment_large(
 
 \item{Ncomp}{Integer, the number of clusters to form. Defaults to `15`.}
 
-\item{redshift}{Kept for API compatibility with `segment()`.}
+\item{redshift}{Systemic redshift. Required explicitly for rest-frame selection.}
 
 \item{scale_fn}{Optional row-wise spectral scaling function. Defaults to
 \code{median_scale()}, matching \code{\link{segment}}.}
@@ -60,10 +65,13 @@ when \code{target_snr} is supplied.}
 is capped at 50 clusters.}
 
 \item{wavelength_range}{Optional wavelength interval used to compute SNR when
-\code{target_snr} is supplied.}
+\code{target_snr} is supplied. This SNR interval is always in native
+input coordinates, independently of `feature_wavelength_frame`.}
 
 \item{feature_wavelength_range}{Optional wavelength interval used to select
-the spectral channels used for clustering. The returned
+the spectral channels used for clustering. Selection includes native
+channels inside the closed interval; no resampling is performed.
+`wavelength_provenance` records frames, redshift, actual bounds and indices.
 \code{original_cube} remains the full input cube so downstream summed
 spectra are still flux-preserving across the full spectral axis.}
 
@@ -127,6 +135,26 @@ backend; \code{"signal"} matches the exact \code{\link{segment}} support;
 \item{return_details}{Return features, labels, and diagnostics.}
 
 \item{verbose}{Print progress messages.}
+
+\item{wavelength_frame}{Frame of the input wavelength axis: `observed` or
+`rest`. May instead be supplied as `input$wavelength_frame`.}
+
+\item{feature_wavelength_frame}{Frame of the requested feature interval:
+`observed` or `rest`. Required when bounds are supplied. Rest selection
+requires an explicit valid redshift, including for a rest-frame input.}
+
+\item{support}{Optional `capivara_support` object. With an explicit
+representation, omission selects that representation's declared validity
+and eligibility domain; a supplied object is an additional explicit
+spatial restriction. Historical `representation = NULL` calls retain their
+original support behavior. Support cannot be combined with `mask` or
+legacy starlet masking.}
+
+\item{representation}{Optional explicit `capivara_representation`. It selects
+the observed-entry four-neighbour hierarchy. `NULL` retains the historical
+sparse feature-kNN backend.}
+
+\item{sample_validity}{Optional logical row-column-channel validity array.}
 }
 \value{
 A Capivara-style segmentation object with the same core fields as

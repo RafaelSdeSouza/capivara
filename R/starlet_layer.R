@@ -31,14 +31,11 @@ upsample_kernel <- function(k, step) {
     return(v)
   }
 
-  pad <- max(0L, min(pad, n - 1L))
-  if (pad == 0L) {
-    return(v)
-  }
-
-  left <- rev(v[seq_len(pad)])
-  right <- rev(v[seq.int(n - pad + 1L, n)])
-  c(left, v, right)
+  # Symmetric extension, including the edge sample. This is identical to the
+  # former rule for pad < n, but supports arbitrarily small images/large scales.
+  indices <- (seq.int(1L - pad, n + pad) - 1L) %% (2L * n)
+  indices <- ifelse(indices < n, indices + 1L, 2L * n - indices)
+  v[indices]
 }
 
 .conv_reflect_rows <- function(mat, k) {

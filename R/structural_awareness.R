@@ -291,7 +291,7 @@ detect_support <- function(input, method = c("starlet", "adaptive"), ...) {
     semi_minor_px = semi_minor,
     axis_ratio = axis_ratio,
     ellipticity = 1 - axis_ratio,
-    pa_deg = atan2(eig$vectors[2, 1], eig$vectors[1, 1]) * 180 / pi,
+    pa_image_deg = (atan2(eig$vectors[1, 1], eig$vectors[2, 1]) * 180 / pi) %% 180,
     mean_score = mean(score[pts], na.rm = TRUE),
     max_score = max(score[pts], na.rm = TRUE)
   )
@@ -328,8 +328,17 @@ score_structures <- function(input,
     )
   }
 
+  # Clipping the upper intensity quantile creates a plateau. Selecting its
+  # first array element moves the centre when the same image is rotated.
+  # Locate the physical peak before clipping; average genuinely tied peaks.
+  finite_light <- support$collapsed[is.finite(support$collapsed)]
+  if (!length(finite_light)) stop("No finite white-light peak is available.")
+  peak <- which(is.finite(support$collapsed) &
+                  support$collapsed == max(finite_light),
+                arr.ind = TRUE)
+  if (!nrow(peak)) stop("No finite white-light peak is available.")
+  center <- colMeans(peak)
   collapsed <- .structure_robust_norm(support$collapsed)
-  center <- which(collapsed == max(collapsed, na.rm = TRUE), arr.ind = TRUE)[1, ]
 
   if (!is.null(support$decomposition)) {
     starlet_rec <- starlet_reconstruct(
@@ -410,7 +419,8 @@ score_structures <- function(input,
     parameters = list(
       structure_scales = structure_scales,
       ridge_weight = ridge_weight,
-      starlet_weight = starlet_weight
+      starlet_weight = starlet_weight,
+      centre_method = "raw_white_light_peak_tie_centroid"
     )
   )
 
@@ -576,7 +586,7 @@ catalogue_structures <- function(scores,
         "structure_id", "dominant_morphology_score", "dominance", "area_px",
         "x_centroid", "y_centroid", "r_centroid_px", "median_radius_px",
         "radius_cv", "azimuth_coverage", "semi_major_px", "semi_minor_px",
-        "axis_ratio", "ellipticity", "pa_deg", "mean_score", "max_score",
+        "axis_ratio", "ellipticity", "pa_image_deg", "mean_score", "max_score",
         "central_smooth_score", "central_elongated_score", "outer_ridge_score",
         "annular_score"
       )
@@ -639,7 +649,7 @@ classify_structures <- function(scores,
   semi_major <- 2 * sqrt(val[1])
   semi_minor <- 2 * sqrt(val[2])
   axis_ratio <- semi_minor / max(semi_major, .Machine$double.eps)
-  pa_deg <- (atan2(vec[1, 1], vec[2, 1]) * 180 / pi) %% 180
+  pa_image_deg <- (atan2(vec[1, 1], vec[2, 1]) * 180 / pi) %% 180
 
   list(
     x_centroid = centroid_xy[["x"]],
@@ -648,14 +658,14 @@ classify_structures <- function(scores,
     semi_minor_px = semi_minor,
     axis_ratio = axis_ratio,
     ellipticity = 1 - axis_ratio,
-    pa_deg = pa_deg
+    pa_image_deg = pa_image_deg
   )
 }
 
-.structure_elliptic_radius <- function(nr, nc, center, pa_deg, axis_ratio) {
+.structure_elliptic_radius <- function(nr, nc, center, pa_image_deg, axis_ratio) {
   x <- col(matrix(0, nr, nc)) - center[2]
   y <- row(matrix(0, nr, nc)) - center[1]
-  theta <- pa_deg * pi / 180
+  theta <- pa_image_deg * pi / 180
   major <- x * sin(theta) + y * cos(theta)
   minor <- x * cos(theta) - y * sin(theta)
   sqrt(major^2 + (minor / max(axis_ratio, 0.08))^2)
@@ -1020,7 +1030,7 @@ detect_bar <- function(input = NULL,
     nrow(combined),
     ncol(combined),
     center = scores$center,
-    pa_deg = ellipse$pa_deg,
+    pa_image_deg = ellipse$pa_image_deg,
     axis_ratio = ellipse$axis_ratio
   )
   candidate_radius <- stats::quantile(r_ell[candidate], 0.95, na.rm = TRUE)
@@ -1037,7 +1047,7 @@ detect_bar <- function(input = NULL,
     median_score = NA_real_,
     q75_score = NA_real_,
     area_px = NA_integer_,
-    pa_deg = NA_real_
+    pa_image_deg = NA_real_
   )
   pa_values <- numeric()
   for (i in seq_len(nrow(radial_profile))) {
@@ -1049,14 +1059,14 @@ detect_bar <- function(input = NULL,
     if (sum(ann_candidate, na.rm = TRUE) >= 8L) {
       ann_ellipse <- .structure_weighted_ellipse(ann_candidate, bar_score, center = scores$center)
       if (!is.null(ann_ellipse)) {
-        radial_profile$pa_deg[i] <- ann_ellipse$pa_deg
-        pa_values <- c(pa_values, ann_ellipse$pa_deg)
+        radial_profile$pa_image_deg[i] <- ann_ellipse$pa_image_deg
+        pa_values <- c(pa_values, ann_ellipse$pa_image_deg)
       }
     }
   }
 
   pa_scatter <- if (length(pa_values) >= 2L) {
-    stats::median(.structure_angle_diff_deg(pa_values, ellipse$pa_deg), na.rm = TRUE)
+    stats::median(.structure_angle_diff_deg(pa_values, ellipse$pa_image_deg), na.rm = TRUE)
   } else {
     max_pa_scatter_deg
   }
@@ -1136,7 +1146,7 @@ detect_bar <- function(input = NULL,
     nrow(combined),
     ncol(combined),
     center = scores$center,
-    pa_deg = ellipse$pa_deg,
+    pa_image_deg = ellipse$pa_image_deg,
     axis_ratio = max(ellipse$axis_ratio, support_axis_ratio_floor)
   )
   model_mask <- central_domain & r_ell <= bar_radius
@@ -1200,7 +1210,7 @@ detect_bar <- function(input = NULL,
 
       comp_fit <- .structure_weighted_ellipse(comp, bar_score, center = scores$center)
       if (is.null(comp_fit)) next
-      pa_diff <- .structure_angle_diff_deg(comp_fit$pa_deg, ellipse$pa_deg)
+      pa_diff <- .structure_angle_diff_deg(comp_fit$pa_image_deg, ellipse$pa_image_deg)
       comp_radius <- stats::quantile(r_ell[comp], 0.95, na.rm = TRUE)
       comp_score <- stats::median(bar_score[comp], na.rm = TRUE)
       profile_rows[[length(profile_rows) + 1L]] <- data.frame(
@@ -1211,7 +1221,7 @@ detect_bar <- function(input = NULL,
         radius_px = comp_radius,
         ellipticity = comp_fit$ellipticity,
         axis_ratio = comp_fit$axis_ratio,
-        pa_deg = comp_fit$pa_deg,
+        pa_image_deg = comp_fit$pa_image_deg,
         pa_diff_deg = pa_diff,
         median_score = comp_score,
         accepted = FALSE,
@@ -1309,7 +1319,7 @@ detect_bar <- function(input = NULL,
     ellipticity = ellipse$ellipticity,
     axis_ratio = ellipse$axis_ratio,
     support_axis_ratio = max(ellipse$axis_ratio, support_axis_ratio_floor),
-    pa_deg = ellipse$pa_deg,
+    pa_image_deg = ellipse$pa_image_deg,
     pa_scatter_deg = pa_scatter,
     bar_radius_px = bar_radius,
     support_bar_radius_px = support_bar_radius,
@@ -1317,7 +1327,7 @@ detect_bar <- function(input = NULL,
     bar_body_area_px = body_area,
     bar_body_ellipticity = if (!is.null(body_fit)) body_fit$ellipticity else NA_real_,
     bar_body_axis_ratio = if (!is.null(body_fit)) body_fit$axis_ratio else NA_real_,
-    bar_body_pa_deg = if (!is.null(body_fit)) body_fit$pa_deg else NA_real_,
+    bar_body_pa_image_deg = if (!is.null(body_fit)) body_fit$pa_image_deg else NA_real_,
     bar_body_threshold = as.numeric(body_cut),
     support_low_threshold = as.numeric(low_cut),
     isophote_profile_area_px = sum(profile_support_mask, na.rm = TRUE),
@@ -1507,11 +1517,11 @@ detect_ring <- function(input = NULL,
   major <- xx * cos(theta) + yy * sin(theta)
   minor <- -xx * sin(theta) + yy * cos(theta)
   r_ell <- sqrt(major^2 + (minor / axis_ratio)^2)
-  pa_deg <- (theta * 180 / pi) %% 180
+  pa_image_deg <- (90 - theta * 180 / pi) %% 180
   galaxy_ellipse <- list(
     axis_ratio = axis_ratio,
     ellipticity = 1 - axis_ratio,
-    pa_deg = pa_deg
+    pa_image_deg = pa_image_deg
   )
   r95 <- stats::quantile(r_ell[support_mask], 0.95, na.rm = TRUE)
   if (!is.finite(r95) || r95 <= 0) r95 <- max(r_ell[support_mask], na.rm = TRUE)
@@ -1686,7 +1696,7 @@ detect_ring <- function(input = NULL,
     model_width_px = model_width,
     axis_ratio = galaxy_ellipse$axis_ratio,
     ellipticity = galaxy_ellipse$ellipticity,
-    pa_deg = galaxy_ellipse$pa_deg,
+    pa_image_deg = galaxy_ellipse$pa_image_deg,
     azimuth_coverage = azimuth_coverage,
     radial_concentration = radial_concentration,
     support_score = support_score,
@@ -1774,6 +1784,12 @@ segment_structures <- function(input,
     feature_maps = feature_maps,
     repeats = as.integer(feature_repeats)
   )
+  # This is a feature array, not a spectral cube with an augmented wavelength axis.
+  augmented$wavelength_frame <- NULL
+  augmented$wavelength_medium <- NULL
+  augmented$wavelength <- NULL
+  augmented$axDat <- NULL
+  augmented$hdr <- NULL
 
   out <- segment_large(
     augmented,
@@ -1785,6 +1801,11 @@ segment_structures <- function(input,
     ...
   )
 
+  out$feature_axis_provenance <- out$wavelength_provenance
+  out$wavelength_provenance <- .subset_cubedat_wavelength_range(input)$provenance
+  out$original_cube <- .as_cubedat(input)
+  out$axDat <- out$original_cube$axDat
+  out$header <- out$original_cube$hdr
   out$structure_info <- list(
     mask_name = mask_name,
     feature_maps = feature_maps,

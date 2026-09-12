@@ -2,45 +2,53 @@
 % Please edit documentation in R/plot_cluster.R
 \name{plot_cluster}
 \alias{plot_cluster}
-\title{Plot a Cluster Map with Discrete Cluster Colors}
+\title{Plot exact CAPIVARA region geometry}
 \usage{
-plot_cluster(cluster_data, palette = "starry_night")
+plot_cluster(
+  cluster_data,
+  palette = "starry_night",
+  coords = c("auto", "native", "sky", "physical"),
+  mode = c("identity", "rank"),
+  rank_by = NULL,
+  east_left = TRUE,
+  show_legend = FALSE,
+  boundary_colour = .capivara_ink,
+  boundary_linewidth = 0.25
+)
 }
 \arguments{
-\item{cluster_data}{A list containing the clustering results with the following components:
-\itemize{
-  \item \code{cluster_map}: A matrix representing the spatial layout of the clusters.
-  \item \code{cluster_snr}: A numeric vector with the SNR values for each cluster.
-}}
+\item{cluster_data}{A CAPIVARA segmentation result.}
 
-\item{palette}{Character or vector of colours used for the discrete cluster
-colors. The default \code{"starry_night"} uses the Van Gogh inspired blue
-and gold palette used in the companion workflows. Viridis palette names
-such as \code{"magma"}, \code{"inferno"}, \code{"plasma"},
-\code{"viridis"}, and \code{"cividis"} are also supported.}
+\item{palette}{`"capivara"`, legacy `"starry_night"`, a viridis option,
+or a character vector. When omitted, explicit semantic results use the
+CAPIVARA palette and historical `representation = NULL` results retain
+the legacy palette.}
+
+\item{coords}{One of `"auto"`, `"native"`, `"sky"`, or `"physical"`.
+`"auto"` selects physical coordinates when WCS and redshift are present,
+sky coordinates when only WCS is present, and native coordinates otherwise.}
+
+\item{mode}{`"identity"` for nominal regions or `"rank"` for a declared
+ordered scalar.}
+
+\item{rank_by}{For rank mode, a numeric vector with one value per region or
+the name of a numeric column in [regions_sf()].}
+
+\item{east_left}{Apply the astronomical East-left display convention for sky
+and physical coordinates.}
+
+\item{show_legend}{Display the fill legend.}
+
+\item{boundary_colour}{Exact region-boundary colour.}
+
+\item{boundary_linewidth}{Boundary width in millimetres.}
 }
 \value{
-A \code{ggplot2} object representing the cluster map.
+A ggplot2 object whose first layer is [ggplot2::geom_sf()].
 }
 \description{
-This function visualizes the output of a clustering algorithm applied to
-an IFU data cube, where each cluster is assigned a distinct fill color.
-}
-\details{
-The function converts the \code{cluster_map} into a long-format data frame and
-colors each cluster with a discrete palette.
-}
-\examples{
-\dontrun{
-# Example cluster data
-cluster_data <- list(
-  cluster_map = matrix(sample(1:5, 100, replace = TRUE), nrow = 10, ncol = 10),
-  cluster_snr = c(10, 20, 30, 40, 50)
-)
-
-# Plot the cluster map
-plot <- plot_cluster(cluster_data, palette = "starry_night")
-print(plot)
-}
-
+The standard renderer draws exact cell-union `sf` regions. Scientific
+geometry always stores positive East and positive North. For sky or physical
+coordinates, the renderer reflects East exactly once in a temporary display
+copy so that North is up and East is left.
 }

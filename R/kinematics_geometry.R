@@ -1,7 +1,7 @@
 #' Estimate basic disc geometry for Capivara kinematic modelling
 #'
 #' @param spaxels Spaxel-level data frame.
-#' @param geometry List with optional x0, y0, pa_deg, inc_deg, and vsys values.
+#' @param geometry List with optional x0, y0, pa_image_deg, inc_deg, and vsys values.
 #' @param allow_placeholder_inclination If TRUE and inc_deg is missing, use
 #'   `placeholder_inc_deg` and flag this in `geometry_status`.
 #' @param placeholder_inc_deg Placeholder inclination in degrees.
@@ -11,6 +11,14 @@ estimate_disc_geometry <- function(spaxels,
                                    geometry = list(),
                                    allow_placeholder_inclination = FALSE,
                                    placeholder_inc_deg = 60) {
+  if (!is.null(geometry$pa_deg)) {
+    warning("geometry$pa_deg is deprecated; supply pa_image_deg in the native image frame.", call. = FALSE)
+    if (!is.null(geometry$pa_image_deg) &&
+        abs(.capivara_axial_angle(geometry$pa_image_deg - geometry$pa_deg)) > 1e-8) {
+      stop("Conflicting pa_image_deg and deprecated pa_deg.", call. = FALSE)
+    }
+    geometry$pa_image_deg <- geometry$pa_deg
+  }
   get <- function(name) {
     value <- geometry[[name]]
     if (is.null(value) || length(value) == 0L || is.na(value)) NA_real_ else as.numeric(value)
@@ -46,13 +54,13 @@ estimate_disc_geometry <- function(spaxels,
     status <- c(status, "vsys_supplied")
   }
 
-  pa_deg <- get("pa_deg")
-  if (!is.finite(pa_deg)) {
+  pa_image_deg <- get("pa_image_deg")
+  if (!is.finite(pa_image_deg)) {
     valid <- spaxels$valid & is.finite(spaxels$velocity)
     if (sum(valid) >= 5L) {
       fit <- stats::lm(velocity ~ x + y, data = spaxels[valid, , drop = FALSE])
       b <- stats::coef(fit)
-      pa_deg <- (atan2(b[["x"]], b[["y"]]) * 180 / pi) %% 180
+      pa_image_deg <- (atan2(b[["x"]], b[["y"]]) * 180 / pi) %% 180
       status <- c(status, "pa_estimated_from_velocity_gradient")
     } else {
       stop("PA is missing and there are too few valid spaxels to estimate it.", call. = FALSE)
@@ -84,9 +92,10 @@ estimate_disc_geometry <- function(spaxels,
     x0 = x0,
     y0 = y0,
     vsys = vsys,
-    pa_deg = pa_deg,
+    pa_image_deg = pa_image_deg,
+    pa_sky_deg = NA_real_,
     inc_deg = inc_deg,
-    pa_rad = pa_deg * pi / 180,
+    pa_image_rad = pa_image_deg * pi / 180,
     inc_rad = inc_deg * pi / 180,
     coordinate_convention = get_character("coordinate_convention", "nirvana"),
     geometry_status = paste(status, collapse = ";")
@@ -107,7 +116,7 @@ estimate_disc_geometry <- function(spaxels,
 deproject_coordinates <- function(x, y, geometry) {
   dx <- x - geometry$x0
   dy <- y - geometry$y0
-  pa <- geometry$pa_rad
+  pa <- geometry$pa_image_rad
   inc <- geometry$inc_rad
   convention <- geometry$coordinate_convention
   if (is.null(convention) || !length(convention)) {

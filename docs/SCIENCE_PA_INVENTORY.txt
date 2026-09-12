@@ -1,0 +1,90 @@
+inst/extdata/kinematics/native_bisymmetric_workflow.R:119:    pa_deg = env_num("CAPIVARA_MODEL_PA_DEG", NA_real_),
+inst/extdata/kinematics/native_bisymmetric_workflow.R:135:  bar_phi_deg <- env_num("CAPIVARA_MODEL_BAR_PHI_DEG", NA_real_)
+inst/extdata/kinematics/native_bisymmetric_workflow.R:138:    phi_b_deg = bar_phi_deg,
+man/run_kinematic_analysis.Rd:55:`bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
+inst/tutorials/run_kinematic_analysis.R:23:# model_control <- list(bar_phi_deg = 41, disc_inc_deg = 38) # manual override
+inst/tutorials/run_full_manga_science_workflow.R:32:bar_phi_deg <- NA_real_       # NA estimates a photometric prior from white light.
+inst/tutorials/run_full_manga_science_workflow.R:338:  bar_phi_deg = bar_phi_deg,
+inst/tutorials/run_full_manga_science_workflow.R:386:  sprintf("Bar angle prior (deg): %.3f", bar_result$model_result$bar_geometry$phi_b_deg),
+inst/tutorials/run_bisymmetric_bar_model.R:11:bar_phi_deg <- NA_real_ # Automatic from white light; set a measured in-plane angle to override.
+inst/tutorials/run_bisymmetric_bar_model.R:32:  bar_phi_deg = bar_phi_deg,
+inst/tutorials/capivara_full_workflow.R:26:bar_phi_deg <- NA_real_ # automatic from white light; set a measured angle to override
+inst/tutorials/capivara_full_workflow.R:194:    model_control = list(bar_phi_deg = bar_phi_deg),
+man/run_manga_bar_model.Rd:12:  bar_phi_deg = NA_real_,
+man/run_manga_bar_model.Rd:34:\item{bar_phi_deg}{Optional manual in-plane bar angle in degrees relative to
+man/run_manga_bar_model.Rd:55:`bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
+man/run_manga_bar_model.Rd:68:supplying `bar_phi_deg` overrides that estimate. It never substitutes the
+R/structural_awareness.R:274:  axis_ratio <- semi_minor / semi_major
+R/structural_awareness.R:292:    axis_ratio = axis_ratio,
+R/structural_awareness.R:293:    ellipticity = 1 - axis_ratio,
+R/structural_awareness.R:294:    pa_deg = atan2(eig$vectors[2, 1], eig$vectors[1, 1]) * 180 / pi,
+R/structural_awareness.R:579:        "axis_ratio", "ellipticity", "pa_deg", "mean_score", "max_score",
+R/structural_awareness.R:641:  axis_ratio <- semi_minor / max(semi_major, .Machine$double.eps)
+R/structural_awareness.R:642:  pa_deg <- (atan2(vec[1, 1], vec[2, 1]) * 180 / pi) %% 180
+R/structural_awareness.R:649:    axis_ratio = axis_ratio,
+R/structural_awareness.R:650:    ellipticity = 1 - axis_ratio,
+R/structural_awareness.R:651:    pa_deg = pa_deg
+R/structural_awareness.R:655:.structure_elliptic_radius <- function(nr, nc, center, pa_deg, axis_ratio) {
+R/structural_awareness.R:658:  theta <- pa_deg * pi / 180
+R/structural_awareness.R:661:  sqrt(major^2 + (minor / max(axis_ratio, 0.08))^2)
+R/structural_awareness.R:858:#' @param support_axis_ratio_floor Minimum axis ratio used for the final filled
+R/structural_awareness.R:913:                       support_axis_ratio_floor = 0.46,
+R/structural_awareness.R:968:    support_axis_ratio_floor = support_axis_ratio_floor,
+R/structural_awareness.R:1023:    pa_deg = ellipse$pa_deg,
+R/structural_awareness.R:1024:    axis_ratio = ellipse$axis_ratio
+R/structural_awareness.R:1040:    pa_deg = NA_real_
+R/structural_awareness.R:1052:        radial_profile$pa_deg[i] <- ann_ellipse$pa_deg
+R/structural_awareness.R:1053:        pa_values <- c(pa_values, ann_ellipse$pa_deg)
+R/structural_awareness.R:1059:    stats::median(.structure_angle_diff_deg(pa_values, ellipse$pa_deg), na.rm = TRUE)
+R/structural_awareness.R:1139:    pa_deg = ellipse$pa_deg,
+R/structural_awareness.R:1140:    axis_ratio = max(ellipse$axis_ratio, support_axis_ratio_floor)
+R/structural_awareness.R:1203:      pa_diff <- .structure_angle_diff_deg(comp_fit$pa_deg, ellipse$pa_deg)
+R/structural_awareness.R:1213:        axis_ratio = comp_fit$axis_ratio,
+R/structural_awareness.R:1214:        pa_deg = comp_fit$pa_deg,
+R/structural_awareness.R:1310:    axis_ratio = ellipse$axis_ratio,
+R/structural_awareness.R:1311:    support_axis_ratio = max(ellipse$axis_ratio, support_axis_ratio_floor),
+R/structural_awareness.R:1312:    pa_deg = ellipse$pa_deg,
+R/structural_awareness.R:1319:    bar_body_axis_ratio = if (!is.null(body_fit)) body_fit$axis_ratio else NA_real_,
+R/structural_awareness.R:1320:    bar_body_pa_deg = if (!is.null(body_fit)) body_fit$pa_deg else NA_real_,
+R/structural_awareness.R:1504:  axis_ratio <- sqrt(max(min(eig$values) / max(eig$values), 0.15))
+R/structural_awareness.R:1509:  r_ell <- sqrt(major^2 + (minor / axis_ratio)^2)
+R/structural_awareness.R:1510:  pa_deg <- (theta * 180 / pi) %% 180
+R/structural_awareness.R:1512:    axis_ratio = axis_ratio,
+R/structural_awareness.R:1513:    ellipticity = 1 - axis_ratio,
+R/structural_awareness.R:1514:    pa_deg = pa_deg
+R/structural_awareness.R:1687:    axis_ratio = galaxy_ellipse$axis_ratio,
+R/structural_awareness.R:1689:    pa_deg = galaxy_ellipse$pa_deg,
+R/kinematics_geometry.R:4:#' @param geometry List with optional x0, y0, pa_deg, inc_deg, and vsys values.
+R/kinematics_geometry.R:49:  pa_deg <- get("pa_deg")
+R/kinematics_geometry.R:50:  if (!is.finite(pa_deg)) {
+R/kinematics_geometry.R:55:      pa_deg <- (atan2(b[["x"]], b[["y"]]) * 180 / pi) %% 180
+R/kinematics_geometry.R:87:    pa_deg = pa_deg,
+R/kinematics_geometry.R:89:    pa_rad = pa_deg * pi / 180,
+R/kinematics_run_one_galaxy.R:168:    phi_b_deg = .capivara_nested_cfg(config, "bar", "phi_b_deg", .capivara_nested_cfg(config, "bar", "bar_pa_deg", NULL))
+R/kinematics_run_manga_bar_model.R:201:    disc_pa_deg = NA_real_,
+R/kinematics_run_manga_bar_model.R:203:    bar_phi_deg = NA_real_,
+R/kinematics_run_manga_bar_model.R:294:  if (is.finite(control$disc_pa_deg)) {
+R/kinematics_run_manga_bar_model.R:295:    model_env <- c(model_env, CAPIVARA_MODEL_PA_DEG = as.character(control$disc_pa_deg))
+R/kinematics_run_manga_bar_model.R:300:  if (.capivara_is_bar_model(model) && is.finite(control$bar_phi_deg)) {
+R/kinematics_run_manga_bar_model.R:301:    model_env <- c(model_env, CAPIVARA_MODEL_BAR_PHI_DEG = as.character(control$bar_phi_deg))
+R/kinematics_run_manga_bar_model.R:370:#'   `bar_phi_deg` is an optional manual in-plane prior; when omitted, Capivara
+R/kinematics_run_manga_bar_model.R:416:#' supplying `bar_phi_deg` overrides that estimate. It never substitutes the
+R/kinematics_run_manga_bar_model.R:421:#' @param bar_phi_deg Optional manual in-plane bar angle in degrees relative to
+R/kinematics_run_manga_bar_model.R:430:                                bar_phi_deg = NA_real_,
+R/kinematics_run_manga_bar_model.R:447:  if (is.finite(bar_phi_deg)) {
+R/kinematics_run_manga_bar_model.R:448:    model_control$bar_phi_deg <- bar_phi_deg
+R/kinematics_plot_capivara_kinematics.R:334:    "phi: ", round(result$geometry$pa_deg, 1), " deg.\n",
+R/kinematics_plot_capivara_kinematics.R:452:    "phi: ", round(result$geometry$pa_deg, 1), " deg.\n",
+R/kinematics_plot_capivara_kinematics.R:453:    "phi_b: ", round(result$bar_geometry$phi_b_deg, 1), " deg.\n",
+R/kinematics_disc_model.R:140:#' @param phi_b_deg Optional supplied in-plane bar angle relative to the major axis.
+R/kinematics_disc_model.R:145:#' @return A list with `phi_b_rad`, `phi_b_deg`, and status.
+R/kinematics_disc_model.R:148:                                  phi_b_deg = NULL,
+R/kinematics_disc_model.R:151:  if (!is.null(phi_b_deg) && length(phi_b_deg) == 1L && is.finite(phi_b_deg)) {
+R/kinematics_disc_model.R:152:    phi <- as.numeric(phi_b_deg) * pi / 180
+R/kinematics_disc_model.R:153:    return(list(phi_b_rad = phi, phi_b_deg = as.numeric(phi_b_deg), bar_status = "bar_angle_supplied"))
+R/kinematics_disc_model.R:174:  list(phi_b_rad = phi, phi_b_deg = phi * 180 / pi, bar_status = "bar_angle_estimated_from_capivara_bar_support")
+R/kinematics_disc_model.R:250:    phi_b_deg = phi * 180 / pi,
+R/kinematics_disc_model.R:252:    photometric_axis_ratio = sqrt(eig$values[[1L]] / eig$values[[2L]]),
+R/kinematics_disc_model.R:418:      phi_b_deg = bar_geometry$phi_b_deg,
+R/kinematics_run_batch.R:21:      pa_deg = row$pa_deg %||% NULL,
+R/kinematics_run_batch.R:26:      bar_pa_deg = row$bar_pa_deg %||% NULL,

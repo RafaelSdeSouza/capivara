@@ -1,0 +1,13 @@
+package_version: 0.4.4.9000
+package_library: /private/tmp/capivara-v4-release-lib/capivara
+evidence_root: /Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/worktrees/capivara-hierarchical-segmentation/research/semantic_representations
+experiment_viii_commit: 9c23b7d4
+experiment_ix_commit: 19d0c60a
+experiment_x_commit: 5335c878
+profile_id: representation-sha256-dec22fe4bfce7ff59a235d455775fac752865bdb4fecd841bd75c07ce01edfd3
+amplitude_replay: EXACT_WITHIN_BINARY64_TOLERANCE
+coverage_replay: EXACT_WITHIN_BINARY64_TOLERANCE
+recovered_8602_eligible: 288
+recovered_8602_support: 333
+native_partitions_generated: 0
+verdict: READ_ONLY_FIVE_OBJECT_AUDIT_PASSED

@@ -151,6 +151,13 @@ The integer values are categorical region identifiers. `NA` in
 support. The table reports the number of assigned spaxels and the
 wavelength-integrated sum of each regional spectrum.
 
+The quick start retains Capivara’s published historical transformation.
+For an explicit scientific meaning, declare `full_flux_representation()`
+or `manga_sandra_spectral_shape()` and supply a `capivara_support`
+object. The validated optical shape profile requires measured amplitude
+S/N \>= 30, returns the removed amplitude separately, and reports
+whether the eligible domain supports a whole-galaxy interpretation.
+
 ``` r
 plot_cluster(seg)
 ```

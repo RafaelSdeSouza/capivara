@@ -1,0 +1,119 @@
+---
+title: "Semantic Representations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Semantic Representations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, comment="#>")
+```
+
+A spectral partition inherits the meaning of the quantities given to the
+hierarchy. `full_flux` retains absolute flux, whereas `spectral_shape` removes
+one positive multiplicative amplitude and returns that amplitude separately.
+Neither representation combines flux, kinematic moments, or SpectroPath
+coordinates in one weighted vector. The existing kinematic and SpectroPath
+workflows retain their own scientific meanings.
+
+## Declared representations
+
+Every declaration records its coordinate domain, invariances, retained and
+removed quantities, required support, eligibility, units, validation domain,
+and provenance. A shape representation also records a positive-homogeneous
+amplitude functional,
+
+\[
+X(\xi)=\frac{F(\xi)}{A[F]}, \qquad A[aF]=aA[F],\quad a>0.
+\]
+
+`full_flux_representation()` constructs the unnormalized flux declaration.
+`spectral_shape_representation()` accepts a user-supplied amplitude functional
+and does not certify it. A MUSE spectrum, an ALMA frequency or velocity cube, a
+NIRCam multiband vector, and another hyperspectral observation therefore need
+their own amplitude definition and validation domain.
+
+## Validated MaNGA/Sandra optical profile
+
+`manga_sandra_spectral_shape()` fixes the configuration validated in
+Experiments VIII--X. Its amplitude is the arithmetic mean of all native samples
+in the complete rest-frame, vacuum-wavelength union 5050--5100, 5400--5500,
+6000--6100, and 6800--6900 Angstrom. It requires a positive amplitude and
+measured amplitude S/N of at least 30. Equal native samples receive equal
+weight; the implementation does not replace this definition with an integral
+or a resampled mean.
+
+```{r declaration}
+library(capivara)
+
+shape <- manga_sandra_spectral_shape()
+shape$validation_domain$status
+shape$required_support$amplitude_windows
+```
+
+The first-order Satterthwaite statistic is available through
+`spectral_shape_diagnostic()`. It diagnoses pairs under the validated
+independent-Gaussian, diagonal spectral-error model. It never changes a Ward
+cost and does not represent spatial covariance between MaNGA spaxels.
+
+## Validity, support, and segmentation
+
+Voxel validity remains a row-column-channel array. For an explicit semantic
+representation, the default analysis domain is its declared measurement
+validity and eligibility domain. CAPIVARA does not intersect that domain with
+Starlet. Detection, host association, Starlet evidence, representation
+eligibility, and final analysis support remain separate objects.
+
+```{r semantic-workflow, eval=FALSE}
+quality <- build_quality_support(
+  flux = cube$imDat,
+  wavelength = cube$wavelength,
+  min_valid_fraction = 0.7,
+  variance = variance_cube$imDat,
+  dq = dq_cube,
+  wavelength_interval = c(4800, 7400),
+  wavelength_frame = "rest",
+  interval_wavelength_frame = "rest"
+)
+
+seg <- segment_large(
+  cube,
+  Ncomp = 24,
+  var_cube = variance_cube,
+  sample_validity = quality$sample_validity,
+  representation = manga_sandra_spectral_shape()
+)
+
+seg$amplitude
+seg$coverage_qc
+seg$hierarchy$qc
+```
+
+A declared spatial restriction remains available when the science question
+requires one. Construct it explicitly with `build_capivara_support()` and pass
+it as `support`; CAPIVARA then intersects it with the frozen representation
+eligibility. Starlet may supply that explicit object or remain an auxiliary
+multiscale diagnostic, but it is never inserted silently.
+
+Missing channels remain absent from the transformed spectra. A merge is
+admitted only when both clusters meet the reliable-overlap and feature-support
+rules. Its cost is then the increase in observed-entry within-cluster SSE over
+jointly represented channels. Spatial adjacency defines candidate contact but
+cannot make an unsupported spectral comparison admissible.
+
+The hierarchy preserves raw merge costs and reports inversions. Overlapping
+binary64 forward-error intervals invoke the Experiment-IX secondary order: the
+lexicographically smallest pair of minimum original spaxel identifiers. This
+order makes unresolved numerical choices reproducible; it supplies no physical
+evidence for a fixed-`Ncomp` subdivision.
+
+## Historical calls
+
+Calls without `representation` preserve the published median-scaled exact or
+sparse workflow. That historical transformation is distinct from explicit
+`full_flux`. New semantic arguments were appended to the public signatures, so
+existing positional calls keep their earlier interpretation. Supplying a new
+support object without a representation emits a warning because the historical
+backend retains its earlier treatment of missing samples.

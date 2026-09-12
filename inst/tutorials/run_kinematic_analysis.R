@@ -17,10 +17,10 @@ model <- "axisymmetric"          # or "bisymmetric_bar" for a known bar
 support_mode <- "starlet"         # or "line_flux" for a clean gas-kinematics footprint
 line_flux_sigma <- 3              # robust border-noise threshold for `line_flux`
 
-# Keep this empty for the ordinary disc model. For a bar model, Capivara derives
-# the prior from white light and never substitutes the disc PA.
-model_control <- list()
-# model_control <- list(bar_phi_deg = 41, disc_inc_deg = 38) # manual override
+# Preview explicitly permits placeholder inclination. Scientific mode requires
+# a constrained disc inclination and, for a bar model, supplied bar geometry.
+model_control <- list(analysis_mode = "preview")
+# model_control <- list(phi_bar_disc_deg = 41, disc_inc_deg = 38) # supplied geometry
 
 output_dir <- file.path(
   dirname(cube_path),

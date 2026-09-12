@@ -7,7 +7,7 @@ use_env_inputs <- tolower(Sys.getenv("CAPIVARA_USE_ENV_INPUTS", unset = "false")
 # Common knobs:
 #   CAPIVARA_REDSHIFT=0.0461
 #   CAPIVARA_LINE=halpha            # aliases include hbeta, oiii5007, nii6583, sii6716
-#   CAPIVARA_LINE_REST=6562.8       # optional override, Angstrom
+#   CAPIVARA_LINE_REST=6564.608     # optional registry-consistent vacuum Angstrom
 #   CAPIVARA_OUTPUT_PREFIX=manga10218
 #   CAPIVARA_KNN=100 CAPIVARA_NCOMP=25
 #   CAPIVARA_PATH_KNN=100 CAPIVARA_PATH_NCOMP=45 CAPIVARA_PATH_SPATIAL_WEIGHT=0.10
@@ -19,7 +19,7 @@ cube_path <- if (!use_env_inputs && length(args) >= 1) {
   args[[1]]
 } else {
   env_cube_path <- Sys.getenv("CAPIVARA_CUBE_PATH", unset = "")
-  if (nzchar(env_cube_path)) env_cube_path else "/Users/rd23aag/Documents/GitHub/iFUN/Capivara_Eat_Manga/bar_merger/manga-10218-12703-LOGCUBE.fits"
+  if (nzchar(env_cube_path)) env_cube_path else stop("Supply a cube path explicitly.", call. = FALSE)
 }
 out_dir <- if (!use_env_inputs && length(args) >= 2) {
   args[[2]]
@@ -69,79 +69,22 @@ parse_int_seq <- function(x, default) {
   vals[is.finite(vals)]
 }
 
-line_catalog <- data.frame(
-  alias = c(
-    "halpha", "ha", "halpha6563",
-    "hbeta", "hb", "hbeta4861",
-    "oiii5007", "o3", "o3_5007",
-    "oiii4959", "o3_4959",
-    "nii6548", "n2_6548",
-    "nii6583", "n2", "n2_6583",
-    "sii6716", "s2_6716",
-    "sii6731", "s2_6731",
-    "oi6300", "o1", "o1_6300"
-  ),
-  line_name = c(
-    rep("Halpha", 3),
-    rep("Hbeta", 3),
-    rep("[OIII] 5007", 3),
-    rep("[OIII] 4959", 2),
-    rep("[NII] 6548", 2),
-    rep("[NII] 6583", 3),
-    rep("[SII] 6716", 2),
-    rep("[SII] 6731", 2),
-    rep("[OI] 6300", 3)
-  ),
-  slug = c(
-    rep("halpha", 3),
-    rep("hbeta", 3),
-    rep("oiii5007", 3),
-    rep("oiii4959", 2),
-    rep("nii6548", 2),
-    rep("nii6583", 3),
-    rep("sii6716", 2),
-    rep("sii6731", 2),
-    rep("oi6300", 3)
-  ),
-  rest_wave = c(
-    rep(6562.8, 3),
-    rep(4861.33, 3),
-    rep(5006.84, 3),
-    rep(4958.91, 2),
-    rep(6548.05, 2),
-    rep(6583.45, 3),
-    rep(6716.44, 2),
-    rep(6730.82, 2),
-    rep(6300.30, 3)
-  ),
-  stringsAsFactors = FALSE
-)
-
 sanitize_slug <- function(x) {
   x <- tolower(gsub("[^A-Za-z0-9]+", "_", x))
   x <- gsub("^_+|_+$", "", x)
   if (!nzchar(x)) "line" else x
 }
 
-line_spec <- function(line_key, rest_wave_override = NA_real_) {
-  key <- sanitize_slug(line_key)
-  rec <- line_catalog[match(key, line_catalog$alias), ]
-  if (nrow(rec) != 1L || is.na(rec$alias)) {
-    label <- line_key
-    slug <- sanitize_slug(line_key)
-    rest <- rest_wave_override
-  } else {
-    label <- rec$line_name
-    slug <- rec$slug
-    rest <- if (is.finite(rest_wave_override)) rest_wave_override else rec$rest_wave
+line_spec <- function(line_key, rest_wave_override = NA_real_, medium = "vacuum") {
+  rec <- .capivara_match_emission_lines(line_key, medium)
+  if (nrow(rec) != 1L) stop("Choose one registered emission line.")
+  if (is.finite(rest_wave_override) && abs(rest_wave_override-rec$rest_wavelength)>1e-6) {
+    stop("CAPIVARA_LINE_REST disagrees with the referenced line registry/medium.")
   }
-  if (!is.finite(rest) || rest <= 0) {
-    stop("Set a known CAPIVARA_LINE alias or provide CAPIVARA_LINE_REST in Angstrom.")
-  }
-  list(name = label, slug = slug, rest_wave = rest)
+  list(name = rec$label, slug = rec$name, rest_wave = rec$rest_wavelength)
 }
 
-redshift <- env_num(c("CAPIVARA_REDSHIFT", "CAPIVARA_10218_REDSHIFT"), "0.0461")
+redshift <- env_num(c("CAPIVARA_REDSHIFT", "CAPIVARA_10218_REDSHIFT"), NA_real_)
 ncomp <- env_int(c("CAPIVARA_NCOMP", "CAPIVARA_10218_NCOMP"), "25")
 knn_k <- env_int(c("CAPIVARA_KNN", "CAPIVARA_10218_KNN"), "100")
 path_ncomp <- env_int(c("CAPIVARA_PATH_NCOMP", "CAPIVARA_10218_PATH_NCOMP"), "45")
@@ -151,7 +94,11 @@ run_spectral_segmentation <- env_bool(c("CAPIVARA_RUN_SPECTRAL_SEGMENTATION", "C
 run_path_signatures <- env_bool(c("CAPIVARA_RUN_PATH_SIGNATURES", "CAPIVARA_10218_RUN_PATH_SIGNATURES"), "true")
 line_key <- env_chr(c("CAPIVARA_LINE", "CAPIVARA_EMISSION_LINE", "CAPIVARA_10218_LINE"), "halpha")
 line_rest_override <- env_num(c("CAPIVARA_LINE_REST", "CAPIVARA_10218_LINE_REST", "CAPIVARA_10218_HALPHA_REST"), NA_real_)
-line <- line_spec(line_key, line_rest_override)
+wavelength_frame <- env_chr("CAPIVARA_WAVELENGTH_FRAME", "observed")
+wavelength_medium <- env_chr("CAPIVARA_WAVELENGTH_MEDIUM", "vacuum")
+systemic_redshift_source <- env_chr("CAPIVARA_REDSHIFT_SOURCE", "explicit workflow environment")
+profile_centering_mode <- env_chr("CAPIVARA_PROFILE_CENTERING_MODE", "systemic")
+line <- line_spec(line_key, line_rest_override, wavelength_medium)
 line_window_kms <- env_num(c("CAPIVARA_LINE_WINDOW_KMS", "CAPIVARA_10218_LINE_WINDOW_KMS"), "600")
 cont_inner_kms <- env_num(c("CAPIVARA_LINE_CONT_INNER_KMS", "CAPIVARA_10218_LINE_CONT_INNER_KMS"), "800")
 cont_outer_kms <- env_num(c("CAPIVARA_LINE_CONT_OUTER_KMS", "CAPIVARA_10218_LINE_CONT_OUTER_KMS"), "1400")
@@ -273,7 +220,7 @@ plot_seg <- function(mat, path, title = NULL, n = NULL) {
 }
 
 read_wave <- function(path, fits) {
-  wave <- tryCatch(as.numeric(FITSio::readFITS(path, hdu = 6)$imDat), error = function(e) NULL)
+  wave <- tryCatch(as.numeric(.capivara_read_fits(path, hdu = 6)$imDat), error = function(e) NULL)
   if (!is.null(wave) && length(wave) == dim(fits$imDat)[3]) {
     return(wave)
   }
@@ -282,104 +229,6 @@ read_wave <- function(path, fits) {
     return(as.numeric(wave))
   }
   stop("Could not recover wavelength axis from FITS file.")
-}
-
-compute_line_maps <- function(cube,
-                              wave,
-                              mask,
-                              z,
-                              rest_wave,
-                              line_name,
-                              line_window_kms = 600,
-                              peak_search_kms = 350,
-                              centroid_window_kms = 260,
-                              cont_inner_kms = 800,
-                              cont_outer_kms = 1400) {
-  lambda0 <- rest_wave * (1 + z)
-  vel <- 299792.458 * (wave / lambda0 - 1)
-  line_idx <- which(abs(vel) <= line_window_kms)
-  cont_idx <- which(abs(vel) > cont_inner_kms & abs(vel) <= cont_outer_kms)
-  if (length(line_idx) < 5L || length(cont_idx) < 5L) {
-    stop("Insufficient wavelength channels for ", line_name, " line/continuum windows.")
-  }
-
-  nx <- dim(cube)[1]
-  ny <- dim(cube)[2]
-  flux <- matrix(NA_real_, nx, ny)
-  velocity <- matrix(NA_real_, nx, ny)
-  sigma <- matrix(NA_real_, nx, ny)
-  asymmetry <- matrix(NA_real_, nx, ny)
-  h3_proxy <- matrix(NA_real_, nx, ny)
-  h4_proxy <- matrix(NA_real_, nx, ny)
-
-  for (idx in which(mask)) {
-    ij <- arrayInd(idx, .dim = c(nx, ny))
-    i <- ij[1]
-    j <- ij[2]
-    spec <- cube[i, j, ]
-    if (!any(is.finite(spec[line_idx]))) next
-
-    cont <- stats::median(spec[cont_idx], na.rm = TRUE)
-    if (!is.finite(cont)) next
-    line <- spec[line_idx] - cont
-    line[!is.finite(line)] <- 0
-    v <- vel[line_idx]
-    search <- abs(v) <= peak_search_kms
-    if (sum(search) < 3L) {
-      search <- rep(TRUE, length(v))
-    }
-    search_idx <- which(search)
-    peak <- search_idx[which.max(line[search])]
-    if (!length(peak) || !is.finite(line[peak]) || line[peak] <= 0) next
-
-    local <- abs(v - v[peak]) <= centroid_window_kms
-    if (sum(local) < 3L) {
-      local <- rep(TRUE, length(v))
-    }
-    pos <- pmax(line, 0)
-    pos[!local] <- 0
-    sum_pos <- sum(pos)
-    if (!is.finite(sum_pos) || sum_pos <= 0) next
-
-    mu <- sum(v * pos) / sum_pos
-    sig <- sqrt(sum(pos * (v - mu)^2) / sum_pos)
-    blue <- sum(pos[v < 0])
-    red <- sum(pos[v > 0])
-
-    flux[i, j] <- sum_pos
-    velocity[i, j] <- mu
-    sigma[i, j] <- sig
-    asymmetry[i, j] <- (red - blue) / (red + blue + .Machine$double.eps)
-    if (is.finite(sig) && sig > 0) {
-      zvel <- (v - mu) / sig
-      h3_proxy[i, j] <- sum(pos * zvel^3) / sum_pos
-      h4_proxy[i, j] <- sum(pos * zvel^4) / sum_pos - 3
-    }
-  }
-
-  ok <- mask & is.finite(flux) & flux > 0 & is.finite(velocity) & is.finite(sigma)
-  if (sum(ok) > 5L) {
-    velocity[ok] <- velocity[ok] - stats::median(velocity[ok], na.rm = TRUE)
-  }
-
-  list(
-    lambda0 = lambda0,
-    line_name = line_name,
-    rest_wave = rest_wave,
-    line_window_kms = line_window_kms,
-    cont_inner_kms = cont_inner_kms,
-    cont_outer_kms = cont_outer_kms,
-    velocity_grid = vel,
-    line_idx = line_idx,
-    cont_idx = cont_idx,
-    flux = flux,
-    velocity = velocity,
-    sigma = sigma,
-    asymmetry = asymmetry,
-    h3_proxy = h3_proxy,
-    h4_proxy = h4_proxy,
-    valid = ok
-  )
 }
 
 clean_support <- function(mask) {
@@ -442,41 +291,6 @@ line_flux_support <- function(flux, candidate_mask, z_threshold = 3) {
   )
 }
 
-baseline_subtract <- function(v, y, n_edge = 2L) {
-  edge <- c(seq_len(min(n_edge, length(y))), seq.int(max(1L, length(y) - n_edge + 1L), length(y)))
-  base <- stats::median(y[edge], na.rm = TRUE)
-  y - base
-}
-
-nonparam_velocity <- function(v, y) {
-  line <- baseline_subtract(v, y)
-  pos <- pmax(line, 0)
-  flux <- sum(pos, na.rm = TRUE)
-  if (!is.finite(flux) || flux <= 0) {
-    return(data.frame(
-      np_flux = NA_real_,
-      np_peak_v = NA_real_,
-      np_centroid = NA_real_,
-      np_sigma = NA_real_,
-      np_w80 = NA_real_
-    ))
-  }
-
-  centroid <- sum(v * pos, na.rm = TRUE) / flux
-  sigma <- sqrt(sum((v - centroid)^2 * pos, na.rm = TRUE) / flux)
-  ord <- order(v)
-  cum <- cumsum(pos[ord]) / flux
-  qv <- stats::approx(cum, v[ord], xout = c(0.1, 0.5, 0.9), ties = "ordered", rule = 2)$y
-
-  data.frame(
-    np_flux = flux,
-    np_peak_v = v[which.max(line)],
-    np_centroid = centroid,
-    np_sigma = sigma,
-    np_w80 = qv[3] - qv[1]
-  )
-}
-
 nearest_fill_map <- function(mat, support, source_mask) {
   out <- mat
   source <- support & source_mask & is.finite(mat)
@@ -536,67 +350,6 @@ nearest_impute_feature_cube <- function(feature_cube, mask) {
 
   feature_cube[] <- mat
   feature_cube
-}
-
-build_path_feature_cube <- function(cube,
-                                    wave,
-                                    observed_wave,
-                                    mask,
-                                    max_abs_velocity = 600,
-                                    feature_names = c("p2", "p3u", "p3F", "p4F", "p4T", "p_pm")) {
-  vel <- 299792.458 * (wave / observed_wave - 1)
-  keep <- abs(vel) <= max_abs_velocity
-  vel <- vel[keep]
-  line_cube <- cube[, , keep, drop = FALSE]
-  nx <- dim(cube)[1]
-  ny <- dim(cube)[2]
-  feature_cube <- array(NA_real_, dim = c(nx, ny, length(feature_names)), dimnames = list(NULL, NULL, feature_names))
-  rows <- vector("list", sum(mask, na.rm = TRUE))
-  n <- 0L
-
-  for (i in seq_len(nx)) {
-    for (j in seq_len(ny)) {
-      if (!isTRUE(mask[i, j])) next
-      flux <- as.numeric(line_cube[i, j, ])
-      if (sum(is.finite(flux)) < 8L) next
-      flux[!is.finite(flux)] <- 0
-      line <- baseline_subtract(vel, flux)
-      amp <- max(abs(line), na.rm = TRUE)
-      if (!is.finite(amp) || amp <= 0) next
-      profile <- line / amp
-      pf <- tryCatch(
-        spectropath::path_features(cbind(vel, profile), depth = 4, normalize = TRUE, notation = "paper"),
-        error = function(e) NULL
-      )
-      if (is.null(pf)) next
-      vals <- as.numeric(pf[1, feature_names, drop = TRUE])
-      feature_cube[i, j, ] <- vals
-
-      np <- nonparam_velocity(vel, line)
-      n <- n + 1L
-      rows[[n]] <- data.frame(
-        x = i,
-        y = j,
-        line_flux = np$np_flux,
-        centroid_kms = np$np_centroid,
-        sigma_kms = np$np_sigma,
-        w80_kms = np$np_w80,
-        pf[, feature_names, drop = FALSE],
-        check.names = FALSE
-      )
-    }
-  }
-
-  feature_cube <- nearest_impute_feature_cube(feature_cube, mask)
-  table <- if (n) do.call(rbind, rows[seq_len(n)]) else data.frame()
-
-  list(
-    feature_cube = feature_cube,
-    table = table,
-    velocity = vel,
-    line_cube = line_cube,
-    features = feature_names
-  )
 }
 
 segment_median_map <- function(seg_map, value_map) {
@@ -665,8 +418,18 @@ message(sprintf(
   redshift,
   line$rest_wave * (1 + redshift)
 ))
-fits <- FITSio::readFITS(cube_path, hdu = 1)
+fits <- .capivara_read_fits(cube_path, hdu = 1)
+wavelength_frame <- .input_wavelength_frame(fits, wavelength_frame, required = TRUE)
+if (!is.null(fits$wavelength_medium) && fits$wavelength_medium != wavelength_medium) {
+  stop("The requested wavelength_medium conflicts with the native MaNGA metadata.")
+}
 wave <- read_wave(cube_path, fits)
+lsf <- read_manga_lsf(cube_path, fits)
+lsf_provenance <- c(lsf$provenance, list(
+  fitting_method = "native profile moments and SpectroPath descriptors",
+  selected_lsf = "neither: observed profile representation",
+  correction_applied = FALSE, width_interpretation = "observed; includes instrumental and pixel broadening"))
+# Retain both native LSFs at every extracted line sample in the returned product.
 cube <- fits$imDat
 
 message("Building full-frame starlet support...")
@@ -695,7 +458,9 @@ if (identical(kinematic_support, "line_flux")) {
     peak_search_kms = peak_search_kms,
     centroid_window_kms = centroid_window_kms,
     cont_inner_kms = cont_inner_kms,
-    cont_outer_kms = cont_outer_kms
+    cont_outer_kms = cont_outer_kms,
+    wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+    systemic_redshift_source = systemic_redshift_source
   )
   support_info <- line_flux_support(
     preliminary_kin$flux,
@@ -739,9 +504,14 @@ kin <- compute_line_maps(
   peak_search_kms = peak_search_kms,
   centroid_window_kms = centroid_window_kms,
   cont_inner_kms = cont_inner_kms,
-  cont_outer_kms = cont_outer_kms
+  cont_outer_kms = cont_outer_kms,
+  wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+  systemic_redshift_source = systemic_redshift_source
 )
-kin <- fill_kinematic_holes(kin, support)
+# Preserve measured systemic velocities. The model runner can explicitly flag
+# preview imputation; segmentation here uses only measured line profiles.
+kin$measured_valid <- kin$valid
+kin$imputed <- matrix(FALSE, nrow(support), ncol(support))
 
 kin_cube <- array(NA_real_, dim = c(dim(cube)[1], dim(cube)[2], 6L))
 kin_cube[, , 1] <- log10(kin$flux)
@@ -750,6 +520,11 @@ kin_cube[, , 3] <- kin$sigma
 kin_cube[, , 4] <- kin$asymmetry
 kin_cube[, , 5] <- kin$h3_proxy
 kin_cube[, , 6] <- kin$h4_proxy
+kin$frame_provenance$lsf <- lsf_provenance
+kin$lsf_sigma_angstrom_pre <- lsf$lsf_sigma_angstrom_pre[,,kin$line_idx,drop=FALSE]
+kin$lsf_sigma_angstrom_post <- lsf$lsf_sigma_angstrom_post[,,kin$line_idx,drop=FALSE]
+rm(lsf)
+gc()
 kin_input <- list(imDat = kin_cube, hdr = fits$hdr, axDat = NULL)
 
 message("Running kinematic-aware Capivara segmentation...")
@@ -766,6 +541,10 @@ kin_seg <- segment_large(
   verbose = TRUE
 )
 
+kin_seg$feature_axis_provenance <- kin_seg$wavelength_provenance
+kin_seg$wavelength_provenance <- kin$wavelength_provenance
+kin_seg$kinematic_provenance <- kin$frame_provenance
+
 path_features <- NULL
 path_seg <- NULL
 if (run_path_signatures) {
@@ -775,8 +554,13 @@ if (run_path_signatures) {
     wave = wave,
     observed_wave = kin$lambda0,
     mask = kin$valid,
-    max_abs_velocity = path_window_kms
+    max_abs_velocity = path_window_kms,
+    rest_wave = line$rest_wave, redshift = redshift, line_name = line$name,
+    wavelength_frame = wavelength_frame, wavelength_medium = wavelength_medium,
+    systemic_redshift_source = systemic_redshift_source,
+    profile_centering_mode = profile_centering_mode
   )
+  path_features$frame_provenance$lsf <- lsf_provenance
   path_input <- list(imDat = path_features$feature_cube, hdr = fits$hdr, axDat = NULL)
 
   message("Running path-signature kinematic-aware Capivara segmentation...")
@@ -793,6 +577,9 @@ if (run_path_signatures) {
     valid_mode = "finite",
     verbose = TRUE
   )
+  path_seg$feature_axis_provenance <- path_seg$wavelength_provenance
+  path_seg$wavelength_provenance <- path_features$wavelength_provenance
+  path_seg$kinematic_provenance <- path_features$frame_provenance
   if (nrow(path_features$table)) {
     path_features$table$path_signature_segment <- path_seg$cluster_map[cbind(path_features$table$x, path_features$table$y)]
   }
@@ -809,7 +596,7 @@ if (run_spectral_segmentation) {
   plot_seg(seg$cluster_map, file.path(out_dir, sprintf("%s_capivara_segments_n%d.png", object_prefix, ncomp)), sprintf("Capivara full-spectrum segments (N=%d)", ncomp), n = ncomp)
 }
 plot_cont(log10(kin$flux), file.path(out_dir, paste0(file_prefix, "_flux_log.png")), paste(line$name, "log flux"), limits = robust_limits(log10(kin$flux)))
-plot_cont(kin$velocity, file.path(out_dir, paste0(file_prefix, "_velocity_centered.png")), paste(line$name, "velocity, median centered"), palette = div_palette, limits = robust_limits(kin$velocity, symmetric = TRUE), midpoint = 0)
+plot_cont(kin$velocity, file.path(out_dir, paste0(file_prefix, "_velocity_systemic.png")), paste(line$name, "systemic-relative velocity"), palette = div_palette, limits = robust_limits(kin$velocity, symmetric = TRUE), midpoint = 0)
 plot_cont(kin$sigma, file.path(out_dir, paste0(file_prefix, "_sigma.png")), paste(line$name, "sigma"), limits = robust_limits(kin$sigma))
 plot_cont(kin$asymmetry, file.path(out_dir, paste0(file_prefix, "_asymmetry.png")), paste(line$name, "red-blue asymmetry"), palette = div_palette, limits = c(-1, 1), midpoint = 0)
 plot_cont(kin$h3_proxy, file.path(out_dir, paste0(file_prefix, "_h3_proxy.png")), paste(line$name, "h3 proxy"), palette = div_palette, limits = robust_limits(kin$h3_proxy, symmetric = TRUE), midpoint = 0)
@@ -866,7 +653,7 @@ tab$starlet_support <- as.vector(support_starlet)
 tab$kinematic_support <- as.vector(support)
 tab$capivara_segment <- as.vector(seg$cluster_map)
 tab[[paste0(line$slug, "_flux")]] <- as.vector(kin$flux)
-tab[[paste0(line$slug, "_velocity_centered")]] <- as.vector(kin$velocity)
+tab[[paste0(line$slug, "_velocity_systemic")]] <- as.vector(kin$velocity)
 tab[[paste0(line$slug, "_sigma")]] <- as.vector(kin$sigma)
 tab[[paste0(line$slug, "_asymmetry")]] <- as.vector(kin$asymmetry)
 tab[[paste0(line$slug, "_h3_proxy")]] <- as.vector(kin$h3_proxy)
@@ -887,16 +674,16 @@ maps <- list(
   kinematic_support = support + 0,
   capivara_segment = seg$cluster_map,
   setNames(list(log10(kin$flux)), paste0(line$slug, "_log_flux"))[[1]],
-  setNames(list(kin$velocity), paste0(line$slug, "_velocity_centered"))[[1]],
+  setNames(list(kin$velocity), paste0(line$slug, "_velocity_systemic"))[[1]],
   setNames(list(kin$sigma), paste0(line$slug, "_sigma"))[[1]],
   setNames(list(kin$asymmetry), paste0(line$slug, "_asymmetry"))[[1]],
   setNames(list(kin$h3_proxy), paste0(line$slug, "_h3_proxy"))[[1]],
   setNames(list(kin$h4_proxy), paste0(line$slug, "_h4_proxy"))[[1]],
   kinematic_aware_segment = kin_seg$cluster_map
 )
-names(maps)[3:8] <- c(
+names(maps)[4:9] <- c(
   paste0(line$slug, "_log_flux"),
-  paste0(line$slug, "_velocity_centered"),
+  paste0(line$slug, "_velocity_systemic"),
   paste0(line$slug, "_sigma"),
   paste0(line$slug, "_asymmetry"),
   paste0(line$slug, "_h3_proxy"),
@@ -912,7 +699,9 @@ map_stack <- array(NA_real_, dim = c(dim(cube)[1], dim(cube)[2], length(maps)))
 for (k in seq_along(maps)) {
   map_stack[, , k] <- maps[[k]]
 }
-try(FITSio::writeFITSim(map_stack, file.path(out_dir, paste0(file_prefix, "_capivara_kinematic_maps.fits")), type = "double"), silent = TRUE)
+stopifnot(length(names(maps)) == length(maps), !anyNA(names(maps)),
+          all(nzchar(names(maps))), !anyDuplicated(names(maps)))
+FITSio::writeFITSim(map_stack, file.path(out_dir, paste0(file_prefix, "_capivara_kinematic_maps.fits")), type = "double")
 utils::write.csv(
   data.frame(
     channel = seq_len(dim(map_stack)[3]),
@@ -926,6 +715,9 @@ saveRDS(
   list(
     cube_path = cube_path,
     redshift = redshift,
+    frame_provenance = kin$frame_provenance,
+    wavelength_provenance = kin$wavelength_provenance,
+    profile_centering_mode = profile_centering_mode,
     ncomp = ncomp,
     knn_k = knn_k,
     run_spectral_segmentation = run_spectral_segmentation,

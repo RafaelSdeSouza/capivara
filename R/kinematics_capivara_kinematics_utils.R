@@ -55,15 +55,20 @@ matrix_to_long <- function(mat, value_name = "value") {
   tmp <- tempfile(fileext = ".fits")
   con <- gzfile(path, "rb")
   on.exit(close(con), add = TRUE)
-  raw <- readBin(con, what = "raw", n = file.info(path)$size * 30L)
-  writeBin(raw, tmp)
+  dest <- file(tmp, "wb")
+  on.exit(close(dest), add = TRUE)
+  repeat {
+    bytes <- readBin(con, what = "raw", n = 1024L * 1024L)
+    if (!length(bytes)) break
+    writeBin(bytes, dest)
+  }
   tmp
 }
 
 .fits_hdu_index <- function(path, max_hdu = 80L) {
   rows <- vector("list", max_hdu)
   for (hdu in seq_len(max_hdu)) {
-    z <- try(FITSio::readFITS(path, hdu = hdu, maxLines = 20000), silent = TRUE)
+    z <- try(.capivara_read_fits(path, hdu = hdu, maxLines = 20000), silent = TRUE)
     if (inherits(z, "try-error")) {
       rows[[hdu]] <- NULL
       next
@@ -85,7 +90,7 @@ matrix_to_long <- function(mat, value_name = "value") {
   if (!length(hit) || is.na(hit)) {
     stop("Could not find FITS extension '", extname, "'.", call. = FALSE)
   }
-  FITSio::readFITS(path, hdu = hdu_index$hdu[hit], maxLines = 20000)
+  .capivara_read_fits(path, hdu = hdu_index$hdu[hit], maxLines = 20000)
 }
 
 .fits_channel_index <- function(hdr, patterns) {
