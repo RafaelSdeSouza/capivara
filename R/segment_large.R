@@ -232,6 +232,13 @@
 #' @param feature_scale Optional column-wise feature scaling after row scaling.
 #' @param spatial_weight Optional weight for appending normalized x/y coordinates.
 #' @param mask Optional logical spatial mask with dimensions n_row x n_col.
+#' @param support Optional `capivara_support` object. Its explicit
+#'   `analysis_mask` is applied before feature construction and is retained in
+#'   the result. It cannot be combined with `mask` or legacy starlet masking.
+#' @param representation Optional explicit `capivara_representation`. It selects
+#'   the observed-entry four-neighbour hierarchy. `NULL` retains the historical
+#'   sparse feature-kNN backend.
+#' @param sample_validity Optional logical row-column-channel validity array.
 #' @param valid_mode Valid-pixel rule. \code{"sagui"} applies the stricter
 #'   finite-fraction, energy, and row-MAD screen used by Sagui's sparse-Ward
 #'   backend; \code{"signal"} matches the exact \code{\link{segment}} support;
@@ -276,13 +283,32 @@ segment_large <- function(input,
                           return_details = FALSE,
                           verbose = FALSE,
                           wavelength_frame = NULL,
-                          feature_wavelength_frame = NULL) {
+                          feature_wavelength_frame = NULL,
+                          support = NULL,
+                          representation = NULL,
+                          sample_validity = NULL) {
+  scale_fn_supplied <- !missing(scale_fn)
+  valid_mode_supplied <- !missing(valid_mode)
   feature_scale <- match.arg(feature_scale)
   valid_mode <- match.arg(valid_mode)
   snr_stat <- match.arg(snr_stat)
   starlet_mode <- match.arg(starlet_mode)
   mask_mode <- match.arg(mask_mode)
   support_method <- match.arg(support_method)
+  if (!is.null(representation)) {
+    if (!is.null(target_snr)) stop("Representation-specific hierarchy does not yet implement target-S/N cutting; use a fixed chronological `Ncomp`.", call. = FALSE)
+    if (scale_fn_supplied || feature_scale != "none" || spatial_weight != 0 || valid_mode_supplied) stop("An explicit representation cannot be combined with legacy scaling, spatial weights, or valid-mode filters.", call. = FALSE)
+    if (!is.null(feature_wavelength_range) || !is.null(feature_wavelength_frame)) stop("The representation declares its coordinate domain; do not also supply legacy feature bounds.", call. = FALSE)
+    if (isTRUE(use_starlet_mask) || !is.null(mask)) stop("Build and supply one explicit support object before representation-specific segmentation.", call. = FALSE)
+    return(.segment_semantic(input, Ncomp, redshift, var_cube, representation,
+                             sample_validity, support, wavelength_frame,
+                             return_details = return_details))
+  }
+  if (!is.null(support) && (isTRUE(use_starlet_mask) || !is.null(mask))) {
+    stop("Supply `support`, `mask`, or legacy starlet masking as one explicit support path.")
+  }
+
+  raw_input <- .as_cubedat(input)
 
   if (!is.null(target_snr) && !missing(Ncomp)) {
     stop("Specify either `Ncomp` or `target_snr`, not both.")
@@ -303,9 +329,10 @@ segment_large <- function(input,
     mask_mode = mask_mode
   )
 
-  full_cubedat <- .as_cubedat(starlet_prep$input)
+  supported_input <- .apply_capivara_support(starlet_prep$input, support)
+  full_cubedat <- if (is.null(support)) supported_input else raw_input
   feature_subset <- .subset_cubedat_wavelength_range(
-    full_cubedat,
+    supported_input,
     feature_wavelength_range = feature_wavelength_range,
     wavelength_frame = wavelength_frame,
     feature_wavelength_frame = feature_wavelength_frame,
@@ -361,6 +388,7 @@ segment_large <- function(input,
 
     valid <- valid & as.vector(mask)
   }
+  if (!is.null(support)) valid <- valid & as.vector(support$analysis_mask)
 
   valid_indices <- which(valid)
 
@@ -547,6 +575,13 @@ segment_large <- function(input,
   }
   if (!is.null(starlet_prep$support_info)) {
     out$support_info <- starlet_prep$support_info
+  }
+  if (!is.null(support)) {
+    warning("`support` without `representation` restricts spatial enrollment but retains historical sparse spectral behavior.", call. = FALSE)
+    out$support <- support
+    out$support_id <- support$support_id
+    out$support_provenance <- support$provenance
+    out$backend_info$support_id <- support$support_id
   }
 
   if (return_details) {

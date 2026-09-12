@@ -1,3 +1,26 @@
+# capivara 0.4.4.9000
+
+## Added
+
+- Explicit `full_flux` and `spectral_shape` declarations with coordinate,
+  invariance, support, eligibility, units, validation, and provenance fields.
+- The validated MaNGA/Sandra optical shape profile at measured amplitude
+  S/N >= 30, with amplitude returned separately.
+- Wavelength-dependent validity and support objects with stable identities.
+- A four-neighbour observed-entry Ward hierarchy with separate overlap
+  admission, Experiment-IX numerical tie handling, raw costs, and inversion QC.
+- Object-level representation coverage diagnostics.
+
+## Compatibility
+
+- Calls to `segment()` and `segment_large()` without `representation` retain
+  their historical transformations and backends. The new arguments were
+  appended to both signatures, so existing positional calls keep their meaning.
+- A support object used without an explicit representation emits a warning
+  because this path retains the historical missing-value treatment.
+- Fixed `Ncomp` remains a chronological hierarchy cut. V4 does not assign a
+  scientific interpretation to the selected component count.
+
 # capivara 0.3.0
 
 Released: 2026-05-05

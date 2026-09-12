@@ -28,7 +28,10 @@ segment(
   positive_only = TRUE,
   mask_mode = c("na", "zero"),
   wavelength_frame = NULL,
-  feature_wavelength_frame = NULL
+  feature_wavelength_frame = NULL,
+  support = NULL,
+  representation = NULL,
+  sample_validity = NULL
 )
 }
 \arguments{
@@ -108,6 +111,17 @@ when \code{use_starlet_mask = TRUE}.}
 \item{feature_wavelength_frame}{Frame of the requested feature interval:
 `observed` or `rest`. Required when bounds are supplied. Rest selection
 requires an explicit valid redshift, including for a rest-frame input.}
+
+\item{support}{Optional `capivara_support` object. Its explicit analysis mask
+is applied before clustering and the complete support contract is retained
+in the result. It cannot be combined with legacy starlet masking.}
+
+\item{representation}{Optional explicit `capivara_representation`. When
+supplied, CAPIVARA uses the observed-entry spatial hierarchy; the default
+`NULL` retains the historical median-centred all-pairs implementation.}
+
+\item{sample_validity}{Optional logical row-column-channel validity array.
+A support object's quality record takes precedence when this is omitted.}
 }
 \value{
 A list containing:

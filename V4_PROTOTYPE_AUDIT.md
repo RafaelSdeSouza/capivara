@@ -1,0 +1,18 @@
+# Parked V4 prototype audit against the Experiment-X handoff
+
+Audit recorded before production implementation. The parked worktree was at `3e017dc3`; its uncommitted prototype changed `DESCRIPTION`, `NAMESPACE`, `R/segment.R`, `R/segment_large.R`, their generated documentation, and added `R/support_contract.R` plus support tests.
+
+| Prototype change | Classification | Production decision |
+| --- | --- | --- |
+| `support=` in `segment()` and `segment_large()` | retain but adapt | Keep one explicit support-object entry point and reject conflicting legacy mask paths. Apply its final spatial domain without altering `original_cube`, but preserve channel-dependent validity for the representation and hierarchy rather than replacing every excluded or bad sample with zero. |
+| `R/support_contract.R`: separation of quality, detection, host, ambiguity and analysis masks | retain but adapt | Keep the separation and legal disconnected support. Add the exact native sample-validity array, representation eligibility, exclusions by cause, configuration/provenance and stable identities for both the support and the exact analysis request. Use four-neighbour component bookkeeping and never fill or join support morphologically. |
+| `build_quality_support()` spatial fraction screen | replace | A spatial `quality_mask` alone cannot encode the validated contract. Replace it with a voxel-validity object that preserves finite-flux, variance and DQ states by channel; retain summary fractions only as diagnostics. |
+| `.apply_capivara_support()` whole-spaxel masking | replace | It erases the channel-level distinction and feeds the historical zero-filling route. The representation-specific path will select eligible spaxels while leaving bad channels missing. |
+| Support hashing through serialized `digest` payloads | retain but adapt | Keep SHA-256 identity, but define explicit canonical payloads and separate quality/support/analysis identities so that provenance and selected channels round-trip deterministically. |
+| Added `digest` import and package version `0.4.4.9000` | retain unchanged | The support and representation identities require SHA-256. Version `0.4.4.9000` identifies the V4 development baseline. |
+| Added support exports in `NAMESPACE` | retain but adapt | Retain the two support constructors and add the minimal semantic-representation, validated-profile, preparation and coverage-QC exports. Regenerate the namespace from roxygen. |
+| Prototype support tests | retain but adapt | Preserve the useful disconnected-support, stable-hash and pre-clustering-support checks. Replace assumptions based on spatial quality collapse and add deterministic fixtures for the full Experiment-X production contract. |
+| Generated `segment` and support documentation | discard and regenerate | The current pages describe only the parked spatial-mask prototype. Regenerate them from the final source after the public API and compatibility behavior are fixed. |
+| Untracked Python bytecode | discard | It is a build artefact and is excluded from the V4 source. |
+
+Historical calls with no representation object will retain the published legacy path and receive no change in feature semantics. `spectral_shape` will require an explicit representation object. Its validated MaNGA/Sandra profile will use the frozen four-window equal-native-sample amplitude, measured amplitude S/N≥30, feature guards and ≥70% reliable overlap. The new path will use the observed-entry cluster SSE and the Experiment-IX numerical-equivalence rule; it will never pass pairwise-deletion distances to ordinary Euclidean Ward.

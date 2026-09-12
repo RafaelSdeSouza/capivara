@@ -37,6 +37,8 @@ navbar:
       menu:
       - text: Segmentation backends
         href: articles/choosing-segmentation-backend.html
+      - text: Semantic representations
+        href: articles/semantic-representations.html
       - text: Support masks
         href: articles/support-masks.html
       - text: Regional spectra
@@ -71,6 +73,7 @@ articles:
   navbar: ~
   contents:
   - choosing-segmentation-backend
+  - semantic-representations
   - support-masks
   - flux-preserving-products
   - fits-ds9-export
@@ -90,11 +93,24 @@ reference:
   - segment_large
   - choose_ncomp_by_snr
   - estimate_segment_memory
+- title: Semantic representations
+  desc: Explicit flux and shape meanings, preparation, diagnostics, and native coverage.
+  contents:
+  - capivara_representation
+  - capivara_amplitude_functional
+  - full_flux_representation
+  - spectral_shape_representation
+  - manga_sandra_spectral_shape
+  - prepare_capivara_representation
+  - spectral_shape_diagnostic
+  - representation_coverage_qc
 - title: Support construction
   desc: Foreground support builders used before assigning region labels.
   contents:
   - build_starlet_mask
   - build_adaptive_support
+  - build_quality_support
+  - build_capivara_support
 - title: Flux-preserving spectra and reconstruction
   desc: Regional spectra and reconstructed cubes for downstream analysis.
   contents:

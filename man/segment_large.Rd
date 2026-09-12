@@ -37,7 +37,10 @@ segment_large(
   return_details = FALSE,
   verbose = FALSE,
   wavelength_frame = NULL,
-  feature_wavelength_frame = NULL
+  feature_wavelength_frame = NULL,
+  support = NULL,
+  representation = NULL,
+  sample_validity = NULL
 )
 }
 \arguments{
@@ -139,6 +142,16 @@ backend; \code{"signal"} matches the exact \code{\link{segment}} support;
 \item{feature_wavelength_frame}{Frame of the requested feature interval:
 `observed` or `rest`. Required when bounds are supplied. Rest selection
 requires an explicit valid redshift, including for a rest-frame input.}
+
+\item{support}{Optional `capivara_support` object. Its explicit
+`analysis_mask` is applied before feature construction and is retained in
+the result. It cannot be combined with `mask` or legacy starlet masking.}
+
+\item{representation}{Optional explicit `capivara_representation`. It selects
+the observed-entry four-neighbour hierarchy. `NULL` retains the historical
+sparse feature-kNN backend.}
+
+\item{sample_validity}{Optional logical row-column-channel validity array.}
 }
 \value{
 A Capivara-style segmentation object with the same core fields as

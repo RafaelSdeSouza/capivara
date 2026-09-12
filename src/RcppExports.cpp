@@ -10,6 +10,27 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// capivara_observed_ward_cpp
+List capivara_observed_ward_cpp(NumericMatrix features, LogicalMatrix validity, IntegerMatrix edges, IntegerVector original_ids, IntegerVector feature_group, double min_shared_fraction, double min_contributor_fraction, double min_feature_fraction, double input_error_gamma, CharacterVector leaf_signatures, int target_k);
+RcppExport SEXP _capivara_capivara_observed_ward_cpp(SEXP featuresSEXP, SEXP validitySEXP, SEXP edgesSEXP, SEXP original_idsSEXP, SEXP feature_groupSEXP, SEXP min_shared_fractionSEXP, SEXP min_contributor_fractionSEXP, SEXP min_feature_fractionSEXP, SEXP input_error_gammaSEXP, SEXP leaf_signaturesSEXP, SEXP target_kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type features(featuresSEXP);
+    Rcpp::traits::input_parameter< LogicalMatrix >::type validity(validitySEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edges(edgesSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type original_ids(original_idsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type feature_group(feature_groupSEXP);
+    Rcpp::traits::input_parameter< double >::type min_shared_fraction(min_shared_fractionSEXP);
+    Rcpp::traits::input_parameter< double >::type min_contributor_fraction(min_contributor_fractionSEXP);
+    Rcpp::traits::input_parameter< double >::type min_feature_fraction(min_feature_fractionSEXP);
+    Rcpp::traits::input_parameter< double >::type input_error_gamma(input_error_gammaSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type leaf_signatures(leaf_signaturesSEXP);
+    Rcpp::traits::input_parameter< int >::type target_k(target_kSEXP);
+    rcpp_result_gen = Rcpp::wrap(capivara_observed_ward_cpp(features, validity, edges, original_ids, feature_group, min_shared_fraction, min_contributor_fraction, min_feature_fraction, input_error_gamma, leaf_signatures, target_k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // capivara_sparse_ward_cut_cpp
 IntegerVector capivara_sparse_ward_cut_cpp(NumericMatrix features, IntegerMatrix nn_idx, int target_k);
 RcppExport SEXP _capivara_capivara_sparse_ward_cut_cpp(SEXP featuresSEXP, SEXP nn_idxSEXP, SEXP target_kSEXP) {
@@ -25,6 +46,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_capivara_capivara_observed_ward_cpp", (DL_FUNC) &_capivara_capivara_observed_ward_cpp, 11},
     {"_capivara_capivara_sparse_ward_cut_cpp", (DL_FUNC) &_capivara_capivara_sparse_ward_cut_cpp, 3},
     {NULL, NULL, 0}
 };

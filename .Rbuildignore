@@ -21,3 +21,7 @@
 ^tools$
 ^README\.qmd$
 ^README_files$
+^validation$
+^V4_PROTOTYPE_AUDIT\.md$
+^POST_V4_METHODOLOGICAL_ROADMAP\.md$
+^SCIENCE_BASELINE_FREEZE_V4\.md$

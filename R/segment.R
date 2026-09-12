@@ -65,6 +65,14 @@
 #'   \code{use_starlet_mask = TRUE}.
 #' @param mask_mode Either \code{"na"} or \code{"zero"} for masked spaxels
 #'   when \code{use_starlet_mask = TRUE}.
+#' @param support Optional `capivara_support` object. Its explicit analysis mask
+#'   is applied before clustering and the complete support contract is retained
+#'   in the result. It cannot be combined with legacy starlet masking.
+#' @param representation Optional explicit `capivara_representation`. When
+#'   supplied, CAPIVARA uses the observed-entry spatial hierarchy; the default
+#'   `NULL` retains the historical median-centred all-pairs implementation.
+#' @param sample_validity Optional logical row-column-channel validity array.
+#'   A support object's quality record takes precedence when this is omitted.
 #'
 #' @details
 #' Steps performed by the function:
@@ -127,10 +135,28 @@ segment <- function(input,
                     positive_only = TRUE,
                     mask_mode = c("na", "zero"),
                     wavelength_frame = NULL,
-                    feature_wavelength_frame = NULL) {
+                    feature_wavelength_frame = NULL,
+                    support = NULL,
+                    representation = NULL,
+                    sample_validity = NULL) {
+  scale_fn_supplied <- !missing(scale_fn)
   starlet_mode <- match.arg(starlet_mode)
   mask_mode <- match.arg(mask_mode)
   support_method <- match.arg(support_method)
+  if (!is.null(representation)) {
+    if (!is.null(target_snr)) stop("Representation-specific hierarchy does not yet implement target-S/N cutting; use a fixed chronological `Ncomp`.", call. = FALSE)
+    if (scale_fn_supplied) stop("An explicit representation owns its transformation; do not also supply `scale_fn`.", call. = FALSE)
+    if (!is.null(feature_wavelength_range) || !is.null(feature_wavelength_frame)) stop("The representation declares its coordinate domain; do not also supply legacy feature bounds.", call. = FALSE)
+    if (isTRUE(use_starlet_mask)) stop("Build and supply one explicit support object before representation-specific segmentation.", call. = FALSE)
+    return(.segment_semantic(input, Ncomp, redshift, var_cube, representation,
+                             sample_validity, support, wavelength_frame,
+                             return_details = TRUE))
+  }
+  if (!is.null(support) && isTRUE(use_starlet_mask)) {
+    stop("Supply a `capivara_support` object or request legacy starlet masking, not both.")
+  }
+
+  raw_input <- .as_cubedat(input)
 
   starlet_prep <- .apply_starlet_support(
     input = input,
@@ -146,9 +172,10 @@ segment <- function(input,
     positive_only = positive_only,
     mask_mode = mask_mode
   )
-  full_input <- .as_cubedat(starlet_prep$input)
+  supported_input <- .apply_capivara_support(starlet_prep$input, support)
+  full_input <- if (is.null(support)) supported_input else raw_input
   feature_subset <- .subset_cubedat_wavelength_range(
-    full_input,
+    supported_input,
     feature_wavelength_range = feature_wavelength_range,
     wavelength_frame = wavelength_frame,
     feature_wavelength_frame = feature_wavelength_frame,
@@ -192,6 +219,13 @@ segment <- function(input,
   }
   if (!is.null(starlet_prep$support_info)) {
     out$support_info <- starlet_prep$support_info
+  }
+  if (!is.null(support)) {
+    warning("`support` without `representation` restricts spatial enrollment but retains historical spectral scaling and missing-value behavior.", call. = FALSE)
+    out$support <- support
+    out$support_id <- support$support_id
+    out$support_provenance <- support$provenance
+    out$cluster_map[!support$analysis_mask] <- NA_integer_
   }
 
   out$original_cube <- full_input
