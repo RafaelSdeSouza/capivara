@@ -1,6 +1,9 @@
 url: https://rafaelsdesouza.com.br/capivara/
 destination: docs
 
+repo:
+  branch: main
+
 template:
   bootstrap: 5
   light-switch: true

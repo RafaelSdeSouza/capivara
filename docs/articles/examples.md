@@ -52,13 +52,13 @@ regional_spectra <- summarize_cluster_spectra(seg)$sum_spectra
 ```
 
 Replace the path with a local FITS cube. The [Get
-Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
+Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
 guide provides a runnable simulation.
 
 ## Kinematic and model-specific examples
 
 The [Kinematic
-Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md)
+Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.html)
 guide covers line maps and an axisymmetric disc model. The [Bar
-Model](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md)
+Model](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.html)
 guide adds bisymmetric terms for a known barred galaxy.

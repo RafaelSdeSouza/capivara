@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/RafaelSdeSouza/capivara/blob/HEAD/inst/CITATION)
+[`inst/CITATION`](https://github.com/RafaelSdeSouza/capivara/blob/main/inst/CITATION)
 
 de Souza R, Dahmer-Hahn L, Shen S, Chies-Santos A, Chen M, Rahna P,
 Coelho P, Riffel R, Ye R, Tahmasebzadeh B (2025). “capivara: a

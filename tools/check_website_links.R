@@ -3,6 +3,13 @@
 args <- commandArgs(trailingOnly = TRUE)
 site_dir <- normalizePath(if (length(args)) args[[1]] else "docs", mustWork = TRUE)
 
+canonical <- list(
+  repository = "https://github.com/RafaelSdeSouza/capivara",
+  documentation = "https://rafaelsdesouza.com.br/capivara/",
+  get_started = "https://rafaelsdesouza.com.br/capivara/articles/getting-started.html",
+  get_started_source = "https://github.com/RafaelSdeSouza/capivara/blob/main/vignettes/getting-started.Rmd"
+)
+
 if (!requireNamespace("xml2", quietly = TRUE)) {
   stop("The xml2 package is required.")
 }
@@ -33,6 +40,84 @@ normalise_target <- function(source, href) {
 }
 
 errors <- character()
+
+# Canonical-link checks cover both editable sources and generated website
+# artifacts. Relative links inside generated HTML remain valid pkgdown links;
+# GitHub-facing README links must use the public documentation host.
+repo_dir <- normalizePath(file.path(site_dir, ".."), mustWork = TRUE)
+text_files <- c(
+  file.path(repo_dir, c("README.qmd", "README.md")),
+  list.files(file.path(repo_dir, "vignettes"), pattern = "[.]Rmd$", full.names = TRUE),
+  html_files
+)
+text_files <- unique(text_files[file.exists(text_files)])
+
+# pkgdown also emits .md pages and llms.txt, and deliberately rewrites links
+# within that machine-readable corpus to the generated .md alternatives. Those
+# files are not browser-facing canonical pages and must not be hand-edited.
+
+for (source in text_files) {
+  lines <- readLines(source, warn = FALSE)
+  bad_public_md <- grep(
+    "https://rafaelsdesouza[.]com[.]br/capivara/[^[:space:]<>)\\\"]+[.]md([#?][^[:space:]<>)\\\"]*)?",
+    lines,
+    value = TRUE
+  )
+  if (length(bad_public_md)) {
+    errors <- c(errors, sprintf("Public documentation URL uses .md: %s", source))
+  }
+
+  bad_blob <- grep(
+    "https://github[.]com/RafaelSdeSouza/capivara/(blob|raw)/(main|master|HEAD)/articles/",
+    lines,
+    value = TRUE
+  )
+  if (length(bad_blob)) {
+    errors <- c(errors, sprintf("GitHub URL points to absent root articles/: %s", source))
+  }
+
+  generated_head <- grep(
+    "https://github[.]com/RafaelSdeSouza/capivara/blob/HEAD/",
+    lines,
+    value = TRUE
+  )
+  if (length(generated_head)) {
+    errors <- c(errors, sprintf("Repository source URL uses HEAD instead of main: %s", source))
+  }
+}
+
+for (source in file.path(repo_dir, c("README.qmd", "README.md"))) {
+  if (!file.exists(source)) next
+  lines <- readLines(source, warn = FALSE)
+  bad_readme_relative <- grep(
+    "[(](articles/|reference/)[^)]*[)]",
+    lines,
+    value = TRUE
+  )
+  if (length(bad_readme_relative)) {
+    errors <- c(errors, sprintf("GitHub README uses a root-relative documentation link: %s", source))
+  }
+  contents <- paste(lines, collapse = "\n")
+  for (url in canonical[c("documentation", "get_started")]) {
+    if (!grepl(url, contents, fixed = TRUE)) {
+      errors <- c(errors, sprintf("GitHub README omits canonical URL %s: %s", url, source))
+    }
+  }
+}
+
+get_started_html <- file.path(site_dir, "articles", "getting-started.html")
+if (!file.exists(get_started_html)) {
+  errors <- c(errors, sprintf("Generated Get Started page is missing: %s", get_started_html))
+} else {
+  contents <- paste(readLines(get_started_html, warn = FALSE), collapse = "\n")
+  if (!grepl(canonical$get_started_source, contents, fixed = TRUE)) {
+    errors <- c(errors, sprintf(
+      "Generated Get Started page does not link to its canonical editable source: %s",
+      get_started_html
+    ))
+  }
+}
+
 for (source in html_files) {
   doc <- tryCatch(xml2::read_html(source), error = function(e) e)
   if (inherits(doc, "error")) {
@@ -87,4 +172,8 @@ if (length(errors)) {
   quit(status = 1L)
 }
 
-cat(sprintf("PASS: checked %d HTML files for internal targets, fragments, H1s, and main-content alt text.\n", length(html_files)))
+cat(sprintf(
+  "PASS: checked %d HTML files and %d source/generated text files for internal targets, fragments, canonical documentation URLs, H1s, and main-content alt text.\n",
+  length(html_files),
+  length(text_files)
+))

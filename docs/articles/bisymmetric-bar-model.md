@@ -55,6 +55,6 @@ model_control = list(
 Compare this result with the full-footprint model.
 
 Start with the axisymmetric model in [Kinematic
-Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.md).
+Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.html).
 Interpret a bar only after comparing the model diagnostics with
 independent observations.

@@ -84,8 +84,11 @@ spiral perturbation can be added without changing the upstream workflow.
 kinematic_models()
 ```
 
-The bar-specific workflow is documented separately in `vignette("bisymmetric-bar-model", package = "capivara")`.
+The bar-specific workflow is documented separately in
+[`vignette("bisymmetric-bar-model", package = "capivara")`](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.html).
 
-Return to [Get Started](getting-started.html), or view the [MaNGA
-examples](examples.html). Region labels are categorical; velocity and
-dispersion are separate quantities.
+Return to [Get
+Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html),
+or view the [MaNGA
+examples](https://rafaelsdesouza.com.br/capivara/articles/examples.html). Region
+labels are categorical; velocity and dispersion are separate quantities.

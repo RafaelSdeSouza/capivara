@@ -5,7 +5,9 @@ Capivara performs spectral segmentation of integral-field spectroscopy
 and returning flux-preserving regional spectra.
 
 [Peer-reviewed paper](https://doi.org/10.1093/mnras/staf688) ·
-[arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
+[arXiv:2410.21962](https://arxiv.org/abs/2410.21962) ·
+[Documentation](https://rafaelsdesouza.com.br/capivara/) · [Get
+Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
 
 ![A landscape mosaic of real MaNGA galaxies and their Capivara spectral
 segmentation maps, with each categorical region shown in a distinct
@@ -139,28 +141,28 @@ absorption and nebular features.
 
 Use `spectra$sum_spectra` for flux-preserving regional spectra. Means
 and medians describe spectral shape. The [Get Started
-guide](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
 runs the complete example.
 
 ## Continue with
 
 - [Choose the exact or sparse-graph
-  backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md)
+  backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.html)
 - [Construct and interpret support
-  masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md)
+  masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.html)
 - [Export flux-preserving regional
-  spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.md)
+  spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.html)
 - [Write FITS maps for
-  DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
+  DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.html)
 - [View MaNGA
-  examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md)
+  examples](https://rafaelsdesouza.com.br/capivara/articles/examples.html)
 
 ## Functions
 
 The [function
-index](https://rafaelsdesouza.com.br/capivara/reference/index.md) groups
-the public API by task. Kinematic analysis and bisymmetric modelling
-have separate guides.
+index](https://rafaelsdesouza.com.br/capivara/reference/index.html)
+groups the public API by task. Kinematic analysis and bisymmetric
+modelling have separate guides.
 
 ## About
 

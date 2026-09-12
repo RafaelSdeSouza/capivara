@@ -7,7 +7,9 @@ Capivara performs spectral segmentation of integral-field spectroscopy
 and returning flux-preserving regional spectra.
 
 [Peer-reviewed paper](https://doi.org/10.1093/mnras/staf688) ·
-[arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
+[arXiv:2410.21962](https://arxiv.org/abs/2410.21962) ·
+[Documentation](https://rafaelsdesouza.com.br/capivara/) · [Get
+Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
 
 <figure class="science-figure">
 
@@ -167,22 +169,28 @@ absorption and nebular features.
 
 Use `spectra$sum_spectra` for flux-preserving regional spectra. Means
 and medians describe spectral shape. The [Get Started
-guide](articles/getting-started.html) runs the complete example.
+guide](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
+runs the complete example.
 
 ## Continue with
 
 - [Choose the exact or sparse-graph
-  backend](articles/choosing-segmentation-backend.html)
-- [Construct and interpret support masks](articles/support-masks.html)
+  backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.html)
+- [Construct and interpret support
+  masks](https://rafaelsdesouza.com.br/capivara/articles/support-masks.html)
 - [Export flux-preserving regional
-  spectra](articles/flux-preserving-products.html)
-- [Write FITS maps for DS9](articles/fits-ds9-export.html)
-- [View MaNGA examples](articles/examples.html)
+  spectra](https://rafaelsdesouza.com.br/capivara/articles/flux-preserving-products.html)
+- [Write FITS maps for
+  DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.html)
+- [View MaNGA
+  examples](https://rafaelsdesouza.com.br/capivara/articles/examples.html)
 
 ## Functions
 
-The [function index](reference/index.html) groups the public API by
-task. Kinematic analysis and bisymmetric modelling have separate guides.
+The [function
+index](https://rafaelsdesouza.com.br/capivara/reference/index.html)
+groups the public API by task. Kinematic analysis and bisymmetric
+modelling have separate guides.
 
 ## About
 

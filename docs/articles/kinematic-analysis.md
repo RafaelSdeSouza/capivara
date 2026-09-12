@@ -82,11 +82,11 @@ kinematic_models()
 ```
 
 The bar-specific workflow is documented separately in
-[`vignette("bisymmetric-bar-model", package = "capivara")`](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.md).
+[`vignette("bisymmetric-bar-model", package = "capivara")`](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.html).
 
 Return to [Get
-Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.md),
+Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html),
 or view the [MaNGA
-examples](https://rafaelsdesouza.com.br/capivara/articles/examples.md).
+examples](https://rafaelsdesouza.com.br/capivara/articles/examples.html).
 Region labels are categorical; velocity and dispersion are separate
 quantities.

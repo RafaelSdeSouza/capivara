@@ -1,0 +1,439 @@
+READ-ONLY SOURCE PROBES; generated 2026-09-10 22:40:11
+R: R version 4.5.2 (2025-10-31)
+
+Installed/source API
+$installed_version
+[1] "0.3.0"
+
+$installed
+$installed$cube_path
+
+
+$installed$redshift
+[1] NA
+
+$installed$emission_line
+[1] "halpha"
+
+$installed$segmentation_mode
+c("kinematic", "path_signature")
+
+$installed$bar_phi_deg
+
+
+$installed$output_dir
+NULL
+
+$installed$object_id
+NULL
+
+$installed$knn_k
+[1] 50
+
+$installed$n_segments
+[1] 25
+
+$installed$n_path_segments
+[1] 45
+
+$installed$model_control
+list()
+
+$installed$show_plots
+interactive()
+
+
+$source
+$source$cube_path
+
+
+$source$redshift
+[1] NA
+
+$source$emission_line
+[1] "halpha"
+
+$source$segmentation_mode
+c("kinematic", "path_signature")
+
+$source$bar_phi_deg
+[1] NA
+
+$source$output_dir
+NULL
+
+$source$object_id
+NULL
+
+$source$knn_k
+[1] 50
+
+$source$n_segments
+[1] 25
+
+$source$n_path_segments
+[1] 45
+
+$source$support_mode
+c("starlet", "line_flux")
+
+$source$line_flux_sigma
+[1] 3
+
+$source$model_control
+list()
+
+$source$show_plots
+interactive()
+
+
+
+Missing flux with finite variance: expected weighted mean=10, variance=1
+$wavelength
+[1] 1
+
+$cluster_ids
+[1] 1
+
+$n_spaxels
+1 
+2 
+
+$finite_counts
+  1
+1 1
+
+$median_spectra
+   1
+1 10
+
+$mean_spectra
+   1
+1 10
+
+$sum_spectra
+   1
+1 10
+
+$sum_variance
+  1
+1 2
+
+$weighted_mean_spectra
+  1
+1 5
+
+$weighted_mean_variance
+    1
+1 0.5
+
+
+All-missing channel
+$wavelength
+[1] 1
+
+$cluster_ids
+[1] 1
+
+$n_spaxels
+1 
+2 
+
+$finite_counts
+  1
+1 0
+
+$median_spectra
+   1
+1 NA
+
+$mean_spectra
+   1
+1 NA
+
+$sum_spectra
+  1
+1 0
+
+$sum_variance
+  1
+1 0
+
+$weighted_mean_spectra
+   1
+1 NA
+
+$weighted_mean_variance
+   1
+1 NA
+
+
+Counterclockwise point transform on 2x3 array: expected x=1,y=1
+  x y
+1 1 0
+
+Matrix rotation target for original [1,3]=5
+     row col
+[1,]   1   1
+
+Imputation flag placement
+  x y wrong_flag correct_flag
+1 1 1      FALSE        FALSE
+2 2 1       TRUE        FALSE
+3 3 1      FALSE        FALSE
+4 1 2      FALSE         TRUE
+5 2 2      FALSE        FALSE
+6 3 2      FALSE        FALSE
+
+Starlet finite pixels, 24x24 J=5
+[1] 576 576 576 576  36  36
+
+Horizontal ellipse PA disagreement
+$catalogue
+[1] -180
+
+$bar
+[1] 90
+
+
+Bar-labelled fallback and NIRVANA theta
+$fallback_phi
+[1] 30
+
+$theta_at_positive_end
+[1] 330
+
+
+FITS channel names from actual workflow expressions
+                         channel                     name sentinel
+starlet_support                1          starlet_support        1
+kinematic_support              2        kinematic_support        2
+halpha_log_flux                3          halpha_log_flux        3
+halpha_velocity_centered       4 halpha_velocity_centered        4
+halpha_sigma                   5             halpha_sigma        5
+halpha_asymmetry               6         halpha_asymmetry        6
+halpha_h3_proxy                7          halpha_h3_proxy        7
+halpha_h4_proxy                8          halpha_h4_proxy        8
+                               9                                 9
+kinematic_aware_segment       10  kinematic_aware_segment       10
+
+Augmented structure result stores feature channels as spectra
+$input_channels
+[1] 8
+
+$returned_channels
+[1] 11
+
+$summary_channels
+[1] 11
+
+
+All-missing emission spectrum eligibility
+$missing_pixel_label
+[1] 1
+
+$returned_axDat
+NULL
+
+$original_axDat
+  ctype crpix crval cdelt len
+1     x     1     1   1.0   2
+2     y     1     1   1.0   3
+3  WAVE     1  6500   0.6 201
+
+
+FITS header redshift reader
+$full_dimension
+[1] 2 3 4
+
+$maxLines1_success
+[1] TRUE
+
+$note
+[1] "Short-header fixture only; does not localize earlier real-file connection warnings"
+
+
+Exact and sparse distance semantics
+$seed
+[1] 1
+
+$same_partition_L1_L2
+[1] FALSE
+
+$same_partition_sparse_full_L2
+[1] TRUE
+
+
+Source/installed function equality
+detector  wrapper 
+    TRUE    FALSE 
+
+Prototype duplicate function bodies
+                                                              function_name
+.capivara_apply_velocity_window             .capivara_apply_velocity_window
+.capivara_bar_fit_mask                               .capivara_bar_fit_mask
+.capivara_build_spaxels                             .capivara_build_spaxels
+.capivara_cfg                                                 .capivara_cfg
+.capivara_dilate_mask                                 .capivara_dilate_mask
+.capivara_dir_create                                   .capivara_dir_create
+.capivara_display_matrix                           .capivara_display_matrix
+.capivara_erode_mask                                   .capivara_erode_mask
+.capivara_fill_holes                                   .capivara_fill_holes
+.capivara_fit_linear_velocity_model     .capivara_fit_linear_velocity_model
+.capivara_largest_component                     .capivara_largest_component
+.capivara_map_plot                                       .capivara_map_plot
+.capivara_neighbor_offsets                       .capivara_neighbor_offsets
+.capivara_nested_cfg                                   .capivara_nested_cfg
+.capivara_piecewise_basis                         .capivara_piecewise_basis
+.capivara_read_config                                 .capivara_read_config
+.capivara_report_text                                 .capivara_report_text
+.capivara_require                                         .capivara_require
+.capivara_restore_env                                 .capivara_restore_env
+.capivara_second_derivative_penalty     .capivara_second_derivative_penalty
+.capivara_set_env                                         .capivara_set_env
+.capivara_shift_mask                                   .capivara_shift_mask
+.capivara_squish_oob                                   .capivara_squish_oob
+.capivara_velocity_knots                           .capivara_velocity_knots
+.capivara_velocity_weights                       .capivara_velocity_weights
+.capivara_workflow_file                             .capivara_workflow_file
+.capivara_write_log                                     .capivara_write_log
+.fits_channel_index                                     .fits_channel_index
+.fits_hdu_index                                             .fits_hdu_index
+.fits_header_value                                       .fits_header_value
+.fits_read_ext                                               .fits_read_ext
+.fits_temp_unzip                                           .fits_temp_unzip
+.manga_clean_redshift                                 .manga_clean_redshift
+.manga_header_value                                     .manga_header_value
+.manga_metadata_file                                   .manga_metadata_file
+.matrix_from_fits_image                             .matrix_from_fits_image
+%||%                                                                   %||%
+compute_residual_diagnostics                   compute_residual_diagnostics
+deproject_coordinates                                 deproject_coordinates
+disc_velocity_model                                     disc_velocity_model
+estimate_bar_geometry                                 estimate_bar_geometry
+estimate_disc_geometry                               estimate_disc_geometry
+fit_axisymmetric_piecewise_model           fit_axisymmetric_piecewise_model
+fit_bisymmetric_model                                 fit_bisymmetric_model
+fit_disc_model                                               fit_disc_model
+infer_manga_plateifu                                   infer_manga_plateifu
+manga_metadata                                               manga_metadata
+manga_redshift                                               manga_redshift
+matrix_to_long                                               matrix_to_long
+plot_capivara_component_decomposition plot_capivara_component_decomposition
+plot_capivara_kinematics                           plot_capivara_kinematics
+read_capivara_output                                   read_capivara_output
+read_manga_cube_metadata                           read_manga_cube_metadata
+read_manga_maps                                             read_manga_maps
+read_manga_redshift_table                         read_manga_redshift_table
+resolve_manga_redshift                               resolve_manga_redshift
+run_batch_barred_manga                               run_batch_barred_manga
+run_manga_bar_model                                     run_manga_bar_model
+run_one_galaxy                                               run_one_galaxy
+                                      identical_body
+.capivara_apply_velocity_window                 TRUE
+.capivara_bar_fit_mask                          TRUE
+.capivara_build_spaxels                         TRUE
+.capivara_cfg                                   TRUE
+.capivara_dilate_mask                           TRUE
+.capivara_dir_create                            TRUE
+.capivara_display_matrix                        TRUE
+.capivara_erode_mask                            TRUE
+.capivara_fill_holes                            TRUE
+.capivara_fit_linear_velocity_model             TRUE
+.capivara_largest_component                     TRUE
+.capivara_map_plot                             FALSE
+.capivara_neighbor_offsets                      TRUE
+.capivara_nested_cfg                            TRUE
+.capivara_piecewise_basis                       TRUE
+.capivara_read_config                           TRUE
+.capivara_report_text                           TRUE
+.capivara_require                               TRUE
+.capivara_restore_env                           TRUE
+.capivara_second_derivative_penalty             TRUE
+.capivara_set_env                               TRUE
+.capivara_shift_mask                            TRUE
+.capivara_squish_oob                            TRUE
+.capivara_velocity_knots                        TRUE
+.capivara_velocity_weights                      TRUE
+.capivara_workflow_file                        FALSE
+.capivara_write_log                             TRUE
+.fits_channel_index                             TRUE
+.fits_hdu_index                                 TRUE
+.fits_header_value                              TRUE
+.fits_read_ext                                  TRUE
+.fits_temp_unzip                                TRUE
+.manga_clean_redshift                           TRUE
+.manga_header_value                             TRUE
+.manga_metadata_file                           FALSE
+.matrix_from_fits_image                         TRUE
+%||%                                            TRUE
+compute_residual_diagnostics                    TRUE
+deproject_coordinates                           TRUE
+disc_velocity_model                             TRUE
+estimate_bar_geometry                          FALSE
+estimate_disc_geometry                          TRUE
+fit_axisymmetric_piecewise_model                TRUE
+fit_bisymmetric_model                           TRUE
+fit_disc_model                                  TRUE
+infer_manga_plateifu                            TRUE
+manga_metadata                                  TRUE
+manga_redshift                                  TRUE
+matrix_to_long                                  TRUE
+plot_capivara_component_decomposition          FALSE
+plot_capivara_kinematics                       FALSE
+read_capivara_output                            TRUE
+read_manga_cube_metadata                        TRUE
+read_manga_maps                                 TRUE
+read_manga_redshift_table                       TRUE
+resolve_manga_redshift                          TRUE
+run_batch_barred_manga                          TRUE
+run_manga_bar_model                            FALSE
+run_one_galaxy                                  TRUE
+
+Dependency provenance
+[[1]]
+[[1]]$Package
+[1] "capivara"
+
+[[1]]$Version
+[1] "0.3.0"
+
+[[1]]$RemoteSha
+[1] "467b6ab2f99fddac8ea9cbf1e3daf3eb1f68ada2"
+
+
+[[2]]
+[[2]]$Package
+[1] "spectropath"
+
+[[2]]$Version
+[1] "0.1.0"
+
+[[2]]$<NA>
+NULL
+
+
+[[3]]
+[[3]]$Package
+[1] "capivaraPPXF"
+
+[[3]]$Version
+[1] "0.0.0.9000"
+
+[[3]]$<NA>
+NULL
+
+
+
+pPXF paired rebin regression on saved pilot wavelength arrays
+/Users/rd23aag/.matplotlib is not a writable directory
+Matplotlib created a temporary cache directory at /var/folders/y_/27y51wnx0cz5lf2hsksp1gdc0000gr/T/matplotlib-aiabbaee because there was an issue with the default path (/Users/rd23aag/.matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+
+Fontconfig error: No writable cache directories
+	/opt/homebrew/var/cache/fontconfig
+	/Users/rd23aag/.cache/fontconfig
+	/Users/rd23aag/.fontconfig
+Matplotlib is building the font cache; this may take a moment.
+  observation   redshift initial_length repeat_length paired_repeat_wave
+1 11004-12701 0.01837224           2647          2646               2646
+2  11014-3704 0.02453957           2664          2663               2663

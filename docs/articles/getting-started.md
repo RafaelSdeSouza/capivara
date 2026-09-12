@@ -278,9 +278,9 @@ pass it to
 or
 [`segment_large()`](https://rafaelsdesouza.com.br/capivara/reference/segment_large.md).
 The [backend
-guide](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.html)
 explains that choice; the [support
-guide](https://rafaelsdesouza.com.br/capivara/articles/support-masks.md)
+guide](https://rafaelsdesouza.com.br/capivara/articles/support-masks.html)
 covers data-driven masks; and [FITS and
-DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.md)
+DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.html)
 shows how to save the map with its WCS.

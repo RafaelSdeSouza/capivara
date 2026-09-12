@@ -267,6 +267,9 @@ describe spectral shape.
 
 For an observed cube, read the FITS object with `FITSio::readFITS()` and pass it
 to `segment()` or `segment_large()`. The [backend
-guide](choosing-segmentation-backend.html) explains that choice; the [support
-guide](support-masks.html) covers data-driven masks; and [FITS and
-DS9](fits-ds9-export.html) shows how to save the map with its WCS.
+guide](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.html)
+explains that choice; the [support
+guide](https://rafaelsdesouza.com.br/capivara/articles/support-masks.html) covers
+data-driven masks; and [FITS and
+DS9](https://rafaelsdesouza.com.br/capivara/articles/fits-ds9-export.html) shows
+how to save the map with its WCS.
