@@ -273,6 +273,19 @@ build_capivara_support <- function(quality, detection_mask, host_mask = NULL,
   out <- list(
     parent_support_id = support$support_id,
     representation_id = prepared$representation_id,
+    support_source = support$source,
+    validity_contract = list(
+      source = prepared$sample_validity_provenance$source,
+      rule = "declared valid-fraction and feature-window measurement support",
+      validity_map = prepared$validity_map,
+      missing_samples = "retained as missing; never zero-filled"
+    ),
+    eligibility_contract = list(
+      representation = prepared$representation$name,
+      declaration = prepared$representation$eligibility,
+      eligibility_map = prepared$eligible_map
+    ),
+    representation = .capivara_declaration(prepared$representation),
     requested_analysis_mask = support$analysis_mask,
     supplied_representation_eligibility = support$representation_eligibility,
     representation_eligibility = prepared$eligible_map,
@@ -285,6 +298,67 @@ build_capivara_support <- function(quality, detection_mask, host_mask = NULL,
     construction = "requested support intersected with frozen representation eligibility"
   )
   out$analysis_support_id <- .capivara_stable_id("analysis", out)
+  out
+}
+
+.capivara_default_representation_support <- function(prepared) {
+  if (!inherits(prepared, "capivara_prepared_representation")) {
+    stop("A prepared representation is required.", call. = FALSE)
+  }
+  validity <- prepared$validity_map
+  if (!is.logical(validity) || length(dim(validity)) != 2L) {
+    stop("The representation did not provide a spatial validity domain.",
+         call. = FALSE)
+  }
+  build_capivara_support(
+    quality = validity,
+    detection_mask = validity,
+    analysis_mask = validity,
+    ambiguous_mask = validity,
+    representation_eligibility = prepared$eligible_map,
+    construction_method = paste(
+      "representation-specific validity domain with frozen eligibility for",
+      prepared$representation$name
+    ),
+    source = "representation_domain_default",
+    configuration = list(
+      spatial_detection = "none",
+      starlet_intersection = FALSE,
+      target_association = "not inferred",
+      representation = prepared$representation$name
+    ),
+    provenance = list(
+      support_source = "representation_domain_default",
+      validity_contract = "representation measurement validity",
+      eligibility_contract = prepared$representation$eligibility,
+      representation = .capivara_declaration(prepared$representation)
+    )
+  )
+}
+
+.capivara_attach_legacy_provenance <- function(
+    out, support, starlet_info = NULL, support_info = NULL,
+    validity_rule, missing_value_rule) {
+  source <- if (!is.null(support)) {
+    paste0("explicit_support_legacy_semantics:", support$source)
+  } else if (!is.null(starlet_info)) {
+    "historical_starlet"
+  } else if (!is.null(support_info)) {
+    "historical_adaptive_support"
+  } else {
+    "historical_implicit_support"
+  }
+  out$support_source <- source
+  out$validity_contract <- list(
+    path = "historical representation=NULL",
+    rule = validity_rule,
+    missing_value_rule = missing_value_rule
+  )
+  out$eligibility_contract <- list(
+    path = "historical representation=NULL",
+    representation_specific_eligibility = FALSE
+  )
+  out["representation"] <- list(NULL)
   out
 }
 

@@ -1,3 +1,18 @@
+# capivara 0.4.5.9000
+
+## Spatial-foundation integration
+
+- Explicit semantic representations now default to their declared measurement
+  validity and eligibility domains. Starlet remains an explicit support choice;
+  historical calls without a representation retain their original path.
+- Segmentation results expose exact labelled-cell union geometry through
+  `regions_sf()`, `domain_sf()`, and `region_adjacency()`.
+- A declared spatial contract carries native, tangent-plane East/North, and
+  physical coordinates without changing native arrays. East-left presentation
+  is applied once in the vector renderer.
+- The approved Van Gogh 2.0 continuous, rank, identity, and diverging scales and
+  the CAPIVARA publication theme are available as display-only defaults.
+
 # capivara 0.4.4.9000
 
 ## Added

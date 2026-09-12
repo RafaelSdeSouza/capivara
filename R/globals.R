@@ -1,6 +1,7 @@
 utils::globalVariables(c(
   "cluster",
   "Cluster",
+  "capivara_fill",
   "Col",
   "Flux",
   "Highlighted",

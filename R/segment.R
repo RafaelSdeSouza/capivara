@@ -65,9 +65,12 @@
 #'   \code{use_starlet_mask = TRUE}.
 #' @param mask_mode Either \code{"na"} or \code{"zero"} for masked spaxels
 #'   when \code{use_starlet_mask = TRUE}.
-#' @param support Optional `capivara_support` object. Its explicit analysis mask
-#'   is applied before clustering and the complete support contract is retained
-#'   in the result. It cannot be combined with legacy starlet masking.
+#' @param support Optional `capivara_support` object. With an explicit
+#'   representation, omission selects that representation's declared validity
+#'   and eligibility domain; a supplied object is an additional explicit
+#'   spatial restriction. Historical `representation = NULL` calls retain their
+#'   original support behavior. Support cannot be combined with legacy starlet
+#'   masking.
 #' @param representation Optional explicit `capivara_representation`. When
 #'   supplied, CAPIVARA uses the observed-entry spatial hierarchy; the default
 #'   `NULL` retains the historical median-centred all-pairs implementation.
@@ -240,5 +243,10 @@ segment <- function(input,
     out$feature_wavelengths <- feature_subset$selected_wavelengths
   }
 
-  out
+  out <- .capivara_attach_legacy_provenance(
+    out, support, starlet_prep$starlet_info, starlet_prep$support_info,
+    validity_rule = "positive finite integrated signal on the historical input path",
+    missing_value_rule = "historical row scaling with non-finite entries replaced by zero"
+  )
+  .capivara_attach_spatial_products(out, full_input)
 }

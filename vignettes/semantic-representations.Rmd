@@ -60,10 +60,11 @@ cost and does not represent spatial covariance between MaNGA spaxels.
 
 ## Validity, support, and segmentation
 
-Voxel validity remains a row-column-channel array. Detection, host association,
-representation eligibility, and final analysis support are stored separately.
-The following outline assumes that `detection` and `host` were established
-before segmentation.
+Voxel validity remains a row-column-channel array. For an explicit semantic
+representation, the default analysis domain is its declared measurement
+validity and eligibility domain. CAPIVARA does not intersect that domain with
+Starlet. Detection, host association, Starlet evidence, representation
+eligibility, and final analysis support remain separate objects.
 
 ```{r semantic-workflow, eval=FALSE}
 quality <- build_quality_support(
@@ -77,21 +78,11 @@ quality <- build_quality_support(
   interval_wavelength_frame = "rest"
 )
 
-support <- build_capivara_support(
-  quality = quality,
-  detection_mask = detection,
-  host_mask = host,
-  analysis_mask = host,
-  construction_method = "declared external host support",
-  source = "native reduction",
-  provenance = list(cube_id = cube_id)
-)
-
 seg <- segment_large(
   cube,
   Ncomp = 24,
   var_cube = variance_cube,
-  support = support,
+  sample_validity = quality$sample_validity,
   representation = manga_sandra_spectral_shape()
 )
 
@@ -99,6 +90,12 @@ seg$amplitude
 seg$coverage_qc
 seg$hierarchy$qc
 ```
+
+A declared spatial restriction remains available when the science question
+requires one. Construct it explicitly with `build_capivara_support()` and pass
+it as `support`; CAPIVARA then intersects it with the frozen representation
+eligibility. Starlet may supply that explicit object or remain an auxiliary
+multiscale diagnostic, but it is never inserted silently.
 
 Missing channels remain absent from the transformed spectra. A merge is
 admitted only when both clusters meet the reliable-overlap and feature-support

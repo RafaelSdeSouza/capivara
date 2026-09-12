@@ -112,9 +112,12 @@ when \code{use_starlet_mask = TRUE}.}
 `observed` or `rest`. Required when bounds are supplied. Rest selection
 requires an explicit valid redshift, including for a rest-frame input.}
 
-\item{support}{Optional `capivara_support` object. Its explicit analysis mask
-is applied before clustering and the complete support contract is retained
-in the result. It cannot be combined with legacy starlet masking.}
+\item{support}{Optional `capivara_support` object. With an explicit
+representation, omission selects that representation's declared validity
+and eligibility domain; a supplied object is an additional explicit
+spatial restriction. Historical `representation = NULL` calls retain their
+original support behavior. Support cannot be combined with legacy starlet
+masking.}
 
 \item{representation}{Optional explicit `capivara_representation`. When
 supplied, CAPIVARA uses the observed-entry spatial hierarchy; the default

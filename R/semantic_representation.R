@@ -428,6 +428,7 @@ prepare_capivara_representation <- function(input, representation, var_cube = NU
     }
   }
   map <- function(x) matrix(x, dims[1], dims[2])
+  validity_map <- map(support_ok)
   input_gamma <- if (representation$type == "spectral_shape")
     .capivara_gamma(amplitude_samples + 6L) else .capivara_gamma(1L)
   out <- list(
@@ -438,6 +439,7 @@ prepare_capivara_representation <- function(input, representation, var_cube = NU
     amplitude = amplitude, amplitude_variance = amplitude_variance,
     amplitude_snr = amplitude_snr, amplitude_samples = amplitude_samples,
     valid_fraction = valid_fraction, feature_fraction = feature_fraction,
+    validity = support_ok, validity_map = validity_map,
     eligible = eligible, eligible_map = map(eligible),
     measured_continuum = map(continuum), input_error_gamma = input_gamma,
     sample_validity_provenance = list(

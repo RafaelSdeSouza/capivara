@@ -232,9 +232,12 @@
 #' @param feature_scale Optional column-wise feature scaling after row scaling.
 #' @param spatial_weight Optional weight for appending normalized x/y coordinates.
 #' @param mask Optional logical spatial mask with dimensions n_row x n_col.
-#' @param support Optional `capivara_support` object. Its explicit
-#'   `analysis_mask` is applied before feature construction and is retained in
-#'   the result. It cannot be combined with `mask` or legacy starlet masking.
+#' @param support Optional `capivara_support` object. With an explicit
+#'   representation, omission selects that representation's declared validity
+#'   and eligibility domain; a supplied object is an additional explicit
+#'   spatial restriction. Historical `representation = NULL` calls retain their
+#'   original support behavior. Support cannot be combined with `mask` or
+#'   legacy starlet masking.
 #' @param representation Optional explicit `capivara_representation`. It selects
 #'   the observed-entry four-neighbour hierarchy. `NULL` retains the historical
 #'   sparse feature-kNN backend.
@@ -594,5 +597,10 @@ segment_large <- function(input,
     ))
   }
 
-  out
+  out <- .capivara_attach_legacy_provenance(
+    out, support, starlet_prep$starlet_info, starlet_prep$support_info,
+    validity_rule = paste("historical sparse valid_mode =", valid_mode),
+    missing_value_rule = "historical sparse feature scaling with non-finite entries replaced by zero"
+  )
+  .capivara_attach_spatial_products(out, full_cubedat)
 }

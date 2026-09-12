@@ -69,10 +69,12 @@
                               representation, sample_validity, support,
                               wavelength_frame = NULL,
                               return_details = FALSE) {
-  if (!inherits(support, "capivara_support")) {
-    stop("Explicit semantic segmentation requires a `capivara_support` object.", call. = FALSE)
+  if (!is.null(support) && !inherits(support, "capivara_support")) {
+    stop("`support` must be NULL or a `capivara_support` object.", call. = FALSE)
   }
-  if (!isTRUE(support$qc$nonempty_analysis)) stop("`support$analysis_mask` is empty.", call. = FALSE)
+  if (!is.null(support) && !isTRUE(support$qc$nonempty_analysis)) {
+    stop("`support$analysis_mask` is empty.", call. = FALSE)
+  }
   if (!is.numeric(Ncomp) || length(Ncomp) != 1L || !is.finite(Ncomp) ||
       Ncomp != as.integer(Ncomp) || Ncomp < 1L) stop("`Ncomp` must be a positive integer.", call. = FALSE)
   raw <- .as_cubedat(input)
@@ -88,6 +90,10 @@
     raw, representation, var_cube = var_cube,
     sample_validity = sample_validity, support = support, redshift = redshift
   )
+  support_defaulted <- is.null(support)
+  if (support_defaulted) {
+    support <- .capivara_default_representation_support(prepared)
+  }
   analysis_support <- .capivara_analysis_support(support, prepared)
   final <- analysis_support$final_analysis_mask
   original_ids <- which(final)
@@ -125,9 +131,13 @@
     amplitude_variance = matrix(prepared$amplitude_variance, dim(raw$imDat)[1L], dim(raw$imDat)[2L]),
     amplitude_snr = matrix(prepared$amplitude_snr, dim(raw$imDat)[1L], dim(raw$imDat)[2L]),
     representation_eligibility = prepared$eligible_map,
+    representation_validity = prepared$validity_map,
     support = support, support_id = support$support_id,
     analysis_support = analysis_support,
     analysis_support_id = analysis_support$analysis_support_id,
+    support_source = analysis_support$support_source,
+    validity_contract = analysis_support$validity_contract,
+    eligibility_contract = analysis_support$eligibility_contract,
     support_provenance = support$provenance,
     coverage_qc = coverage, hierarchy = hierarchy,
     wavelength_provenance = prepared$wavelength_provenance,
@@ -137,10 +147,12 @@
       support_id = support$support_id,
       analysis_support_id = analysis_support$analysis_support_id,
       valid_pixels = length(original_ids),
+      support_defaulted_from_representation = support_defaulted,
+      starlet_intersection = isTRUE(support$configuration$starlet_intersection),
       diagnostic_in_merge_cost = FALSE,
       fixed_k_role = "backward-compatible chronological cut; no physical privilege"
     ))
   )
   if (return_details) out$prepared_representation <- prepared
-  out
+  .capivara_attach_spatial_products(out, raw)
 }

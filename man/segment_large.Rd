@@ -143,9 +143,12 @@ backend; \code{"signal"} matches the exact \code{\link{segment}} support;
 `observed` or `rest`. Required when bounds are supplied. Rest selection
 requires an explicit valid redshift, including for a rest-frame input.}
 
-\item{support}{Optional `capivara_support` object. Its explicit
-`analysis_mask` is applied before feature construction and is retained in
-the result. It cannot be combined with `mask` or legacy starlet masking.}
+\item{support}{Optional `capivara_support` object. With an explicit
+representation, omission selects that representation's declared validity
+and eligibility domain; a supplied object is an additional explicit
+spatial restriction. Historical `representation = NULL` calls retain their
+original support behavior. Support cannot be combined with `mask` or
+legacy starlet masking.}
 
 \item{representation}{Optional explicit `capivara_representation`. It selects
 the observed-entry four-neighbour hierarchy. `NULL` retains the historical

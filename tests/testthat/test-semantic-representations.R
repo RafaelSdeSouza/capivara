@@ -158,6 +158,34 @@ test_that("amplitude eligibility is measured at S/N 30 and needs a complete unio
   expect_true(q$eligibility_causes$incomplete_amplitude[2, 1])
 })
 
+test_that("explicit representations default to their own validity and eligibility domains", {
+  x <- shape_fixture(amplitude_snr = c(29.9, 30.1, 31, 50))
+  x$validity[1, 2, 20] <- FALSE
+  prepared <- prepare_capivara_representation(
+    x$input, x$profile, x$variance, x$validity
+  )
+  support <- .capivara_default_representation_support(prepared)
+  analysis <- .capivara_analysis_support(support, prepared)
+  expect_identical(support$source, "representation_domain_default")
+  expect_false(support$configuration$starlet_intersection)
+  expect_identical(support$analysis_mask, prepared$validity_map)
+  expect_identical(analysis$final_analysis_mask, prepared$eligible_map)
+  expect_identical(analysis$representation$name, "spectral_shape")
+  expect_identical(analysis$validity_contract$missing_samples,
+                   "retained as missing; never zero-filled")
+
+  fit <- segment(
+    x$input, Ncomp = 2L, var_cube = x$variance,
+    representation = x$profile, sample_validity = x$validity
+  )
+  expect_identical(fit$support_source, "representation_domain_default")
+  expect_false(fit$backend_info$starlet_intersection)
+  expect_identical(fit$analysis_support$final_analysis_mask,
+                   prepared$eligible_map)
+  expect_true(all(c("support_source", "validity_contract",
+                    "eligibility_contract", "representation") %in% names(fit)))
+})
+
 test_that("one bad non-anchor channel remains missing without rejecting its spaxel", {
   x <- shape_fixture()
   channel <- which(!x$anchor)[20]
