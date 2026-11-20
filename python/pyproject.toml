@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "capivara-astro"
+version = "0.0.1.dev0"
+description = "Experimental Python implementation of CAPIVARA scientific contracts"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Rafael S. de Souza"}]
+dependencies = ["numpy>=1.24", "scipy>=1.10"]
+
+[project.optional-dependencies]
+visual = ["matplotlib>=3.7"]
+test = ["pytest>=8", "matplotlib>=3.7"]
+astro = ["astropy>=6", "specutils>=2"]
+docs = ["mkdocs-material>=9", "mkdocstrings[python]>=0.26"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/capivara"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
