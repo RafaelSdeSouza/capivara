@@ -7,6 +7,7 @@
 | [RFC 0001 — Scientific platform architecture](0001-platform-architecture.md) | One scientific specification, native R and Python, module boundaries, representation semantics and research isolation |
 | [RFC 0002 — Scientific API and mathematical contracts](0002-scientific-api-specification.md) | Complete 41-function R export inventory, intuition and assumptions, data/result schemas, three distinct segmentation objectives, Python API proposal, research operator gates |
 | [RFC 0003 — Validation, documentation and release](0003-validation-documentation-release.md) | Scientific testing and parity, website/gallery information architecture, visualization standards, citation and staged release gates |
+| [RFC 0004 — Scientific editorial and geometric statistics](0004-scientific-editorial-and-geometric-statistics.md) | Research-paper quality prose, figure-first visual directions, group-action and measurement-operator compatibility, mathematical proof obligations and experimental separation |
 
 ## What is decided
 
