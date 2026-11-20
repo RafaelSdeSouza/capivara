@@ -10,6 +10,7 @@
 | [RFC 0004 — Scientific editorial and geometric statistics](0004-scientific-editorial-and-geometric-statistics.md) | Research-paper quality prose, figure-first visual directions, group-action and measurement-operator compatibility, mathematical proof obligations and experimental separation |
 | [RFC 0005 — External package benchmark and editorial copy](0005-external-benchmark-and-editorial-copy.md) | Named comparisons to leading astronomy packages, figure-first layouts, natural homepage and API copy, and a precise new-math validation target |
 | [RFC 0006 — Approved visual direction and first real MaNGA atlas](0006-approved-visual-direction-and-real-manga-atlas.md) | White site, vivid data, exact selectable polygon regions, linked spectra, 3D modalities and a verified 7443-12703 pilot protocol |
+| [RFC 0007 — V7 colour grammar and mobile-screen audit](0007-v7-colour-and-mobile-audit.md) | Science-specific palettes, 45-region geometry/color rules and a concrete critique of the V6 mobile site versus leading projects |
 
 ## What is decided
 
