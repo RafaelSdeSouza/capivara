@@ -12,6 +12,9 @@
 | [RFC 0006 — Approved visual direction and first real MaNGA atlas](0006-approved-visual-direction-and-real-manga-atlas.md) | White site, vivid data, exact selectable polygon regions, linked spectra, 3D modalities and a verified 7443-12703 pilot protocol |
 | [RFC 0007 — V7 colour grammar and mobile-screen audit](0007-v7-colour-and-mobile-audit.md) | Science-specific palettes, 45-region geometry/color rules and a concrete critique of the V6 mobile site versus leading projects |
 
+| [RFC 0008 — Decision-theoretic redshift information audit](0008-decision-theoretic-redshift-information-audit.md) | Read-only physical-information retention audit and redshift-aware synthetic science gates |
+| [RFC 0009 — Unified spectral, emission and kinematic inference](0009-unified-spatial-spectral-inference-covariance-and-performance.md) | Shared rest-frame observation model, covariance and joint fitting layers; Fisher–Rao audit, scalability and Codex acceptance gates |
+
 ## What is decided
 
 - Keep the published CAPIVARA spectral segmentation science and R public API reproducible.
