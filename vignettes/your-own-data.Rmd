@@ -171,6 +171,36 @@ The catalogue describes measured spectral structure, not inferred physical
 populations. Missing fixed-aperture channels remain gaps, and neighbourhood
 distances are descriptive rather than calibrated detection significances.
 
+
+## Compare galaxy views
+
+For a verified MaNGA LOGCUBE, the native workflow exports gas-velocity,
+observed line-width, line-flux, kinematic segmentation and SpectroPath maps
+on the same native grid. It does not require pPXF. Supply the measured
+redshift and the appropriate line for your observations.
+
+```{r views, eval=FALSE}
+script <- system.file("tutorials", "run_atlas_views.R",
+                      package = "capivara", mustWork = TRUE)
+system2(file.path(R.home("bin"), "Rscript"),
+        shQuote(c(script, "manga-8602-12705-LOGCUBE.fits.gz",
+                  "8602-12705", as.character(systemic_redshift),
+                  "oiii5007", "my_galaxy_views", "25")))
+viewer <- system.file("atlas", "views.html", package = "capivara",
+                      mustWork = TRUE)
+utils::browseURL(viewer)
+```
+
+Open `my_galaxy_views/views.json`. Click a pixel on any map to locate
+it on the others. Select a segmentation partition to outline its
+footprint across the maps. Region identifiers belong to their own
+partitions; the inspector reports overlap rather than equating labels.
+
+The widths include instrumental and pixel broadening, and the maps
+do not provide calibrated uncertainties or a dynamical model. The
+workflow is a preview requiring validation on the actual FITS cube.
+The original image gallery and regional-spectra explorer remain separate.
+
 ## Where to go next
 
 - [Explore real galaxies](examples.html) for examples and observing programmes.
