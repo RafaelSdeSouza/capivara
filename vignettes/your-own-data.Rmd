@@ -1,0 +1,153 @@
+---
+title: "Analyse your own data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Analyse your own data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## 1. Installation
+
+Install R and the compiler toolchain for your platform (Rtools on Windows,
+Xcode command-line tools on macOS, or the relevant compiler and development
+libraries on Linux). The sf dependency may require GDAL, GEOS and PROJ.
+Install the current package:
+
+```{r install, eval=FALSE}
+install.packages("remotes")
+remotes::install_github("RafaelSdeSouza/capivara", upgrade="never")
+library(capivara)
+packageVersion("capivara")
+```
+
+For this development tutorial before merge, install the tutorial branch
+explicitly by appending @docs/reproducible-atlas-examples to the GitHub
+repository name in the command above. SpectroPath is currently a package
+dependency; torch and the pPXF companion are not needed for the starter.
+
+## 2. Run your first example
+
+No FITS download is necessary. From R:
+
+```{r demo, eval=FALSE}
+script <- system.file("tutorials", "run_prepared_cube.R",
+                      package="capivara", mustWork=TRUE)
+system2(file.path(R.home("bin"), "Rscript"),
+        shQuote(c(script, "--demo", "capivara_demo", "8")))
+```
+
+Choose a new output directory on every run. The demo uses synthetic data.
+For the earlier published workflow, see [Get Started](getting-started.html).
+
+## 3. Prepare your observations
+
+Inspect the FITS extensions, units, native wavelength coordinates, mask
+bit definitions, variance, spatial orientation and instrument resolution.
+Do not assume that all FITS files have the same extension or axis order.
+For MUSE, CALIFA and SAMI, use a verified instrument-specific reader before
+creating the following R list. Flux and variance must share the native grid.
+
+```{r input, eval=FALSE}
+# Replace these variables with data read from your instrument.
+# flux, variance, good_voxels: [spatial1, spatial2, wavelength]
+# host_mask: logical [spatial1, spatial2], verified source footprint
+# wavelength: increasing native wavelengths in Angstrom
+prepared <- list(
+  flux = flux,
+  variance = variance,
+  valid = good_voxels,
+  host_mask = host_mask,
+  wavelength = wavelength,
+  wavelength_frame = "observed",  # or "rest", as appropriate
+  wavelength_medium = "vacuum",   # or "air", as appropriate
+  flux_unit = flux_unit,
+  redshift = systemic_redshift,
+  object_id = object_id,
+  provenance = list(source = source_file, instrument = instrument)
+)
+saveRDS(prepared, "my_galaxy.rds")
+```
+
+Variance is not inverse variance. Convert only finite positive IVAR values;
+invalid voxels remain ineligible. Never replace missing samples with zeros.
+The host mask is an explicit astronomical selection, not simply the IFU
+footprint. Record how it was constructed and verify the spatial axes.
+
+For native MaNGA DR17 LOGCUBEs, a starter adapter is included:
+
+```{r manga, eval=FALSE}
+adapter <- system.file("tutorials", "prepare_manga_cube.R",
+                       package="capivara", mustWork=TRUE)
+# host_mask.rds must contain your verified native-grid logical host mask.
+system2(file.path(R.home("bin"), "Rscript"),
+  shQuote(c(adapter, "manga-8602-12705-LOGCUBE.fits.gz",
+            "host_mask.rds", as.character(systemic_redshift),
+            "8602-12705", "my_galaxy.rds")))
+```
+
+The adapter checks named HDUs against the expected native DRP layout.
+It does not infer galaxy membership or perform LSF matching.
+
+## 4. Analyse your own cube
+
+```{r run, eval=FALSE}
+system2(file.path(R.home("bin"), "Rscript"),
+        shQuote(c(script, "my_galaxy.rds", "my_galaxy_analysis", "12")))
+```
+
+Alternatively, run the analysis interactively with the existing public API:
+
+```{r interactive, eval=FALSE}
+d <- readRDS("my_galaxy.rds")
+valid <- d$valid & is.finite(d$flux) &
+         is.finite(d$variance) & d$variance > 0
+for (j in seq_along(d$wavelength))
+  valid[,,j] <- valid[,,j] & d$host_mask
+cube <- list(imDat=d$flux, wavelength=d$wavelength,
+             wavelength_frame=d$wavelength_frame,
+             wavelength_medium=d$wavelength_medium)
+seg <- segment_large(cube, Ncomp=12L, redshift=d$redshift,
+                     var_cube=d$variance, sample_validity=valid,
+                     representation=full_flux_representation())
+quality_seg <- seg
+quality_seg$original_cube$imDat[!valid] <- NA_real_
+spectra <- summarize_cluster_spectra(quality_seg, var_cube=d$variance)
+```
+
+Full flux retains amplitude and shape; it is distinct from the historical
+median-centred workflow. See [Semantic Representations](semantic-representations.html)
+for the validated MaNGA shape profile and its limited domain. Fixed K is an
+exploratory cut, not the number of physical populations. Inspect actual K,
+coverage, and hierarchy QC. For large MUSE mosaics, begin with a scientifically
+motivated crop; the starter materializes arrays in memory and has not been
+benchmarked on full mosaics.
+
+## 5. Understand your outputs
+
+The starter exports a native label matrix, segmentation figure, regional
+spectra CSV, region sizes, RDS segmentation object, provenance and session
+information. It records finite raw sums, quality-valid sums and fixed-aperture
+sums separately, including the contributing spaxel count per wavelength.
+Diagonal variance is not a calibrated covariance-aware uncertainty.
+The figure uses native pixel coordinates; verify celestial WCS independently
+before exporting spatial products. See [FITS and DS9](fits-ds9-export.html).
+
+## 6. Continue to physical analysis
+
+[Kinematic Analysis](kinematic-analysis.html) documents the existing
+single-line preview workflow. The optional capivaraPPXF companion provides
+experimental stellar/gas fitting; consult its licence and scientific QC
+before use. No calibrated physical fits, anomaly scores or semantic
+classifications are produced by the starter. Unified multi-line fitting,
+the interactive atlas and cross-survey validation are under development.
+
+See [observational examples](examples.html) and the
+[GitHub gallery](https://github.com/RafaelSdeSouza/capivara/tree/docs/reproducible-atlas-examples/examples)
+for data access and readiness by target.
+
+## Development validation status
+
+This tutorial was reviewed against the current public API. The new R scripts
+and FITS adapter require execution in a configured R environment; no new
+observational validation is claimed by this documentation.
