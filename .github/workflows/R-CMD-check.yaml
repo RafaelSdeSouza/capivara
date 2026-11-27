@@ -59,3 +59,22 @@ jobs:
                     all(is.na(spectra$fixed_aperture_sum) |
                         spectra$n_valid_spaxels == spectra$n_region_spaxels),
                     identical(provenance$physical_fits, "NOT_RUN"))
+          # Validate the real exporter against the tutorial's products.
+          exporter <- system.file("tutorials", "export_semantic_atlas.R",
+                                  package = "capivara", lib.loc = lib, mustWork = TRUE)
+          status <- system2(file.path(R.home("bin"), "Rscript"),
+                            shQuote(c(exporter, out)))
+          stopifnot(status == 0)
+          atlas <- jsonlite::read_json(file.path(out, "atlas.json"),
+                                      simplifyVector = FALSE)
+          features <- read.csv(file.path(out, "region_features.csv"))
+          edges <- read.csv(file.path(out, "region_adjacency.csv"))
+          stopifnot(identical(atlas$schema, "capivara-semantic-atlas-v1"),
+                    identical(atlas$source, "Synthetic demonstration"),
+                    atlas$actual_k == length(ids),
+                    setequal(features$region, ids),
+                    sum(features$n_spaxels) == sum(!is.na(labels$cluster_map)),
+                    all(edges$region_a < edges$region_b),
+                    all(edges$shared_edges > 0),
+                    all(is.na(edges$cosine_distance) |
+                        (edges$cosine_distance >= 0 & edges$cosine_distance <= 2)))
