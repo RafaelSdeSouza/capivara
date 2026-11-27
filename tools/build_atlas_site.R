@@ -5,6 +5,7 @@ args <- commandArgs(trailingOnly = TRUE)
 site <- normalizePath(if (length(args)) args[[1L]] else "docs", mustWork = TRUE)
 viewer <- system.file("atlas", "index.html", package = "capivara", mustWork = TRUE)
 gallery <- system.file("atlas", "gallery.html", package = "capivara", mustWork = TRUE)
+views <- system.file("atlas", "views.html", package = "capivara", mustWork = TRUE)
 starter <- system.file("tutorials", "run_prepared_cube.R",
                        package = "capivara", mustWork = TRUE)
 exporter <- system.file("tutorials", "export_semantic_atlas.R",
@@ -47,6 +48,7 @@ stopifnot(identical(demo$schema, "capivara-semantic-atlas-v1"),
           identical(demo$source, "Synthetic demonstration"),
           length(demo$regions) == demo$actual_k)
 stopifnot(file.copy(gallery, file.path(dest, "gallery.html"), overwrite = TRUE),
+          file.copy(views, file.path(dest, "views.html"), overwrite = TRUE),
           file.copy(viewer, file.path(dest, "index.html"), overwrite = TRUE),
           file.copy(file.path(out, "atlas.json"), file.path(dest, "demo.json"),
                     overwrite = TRUE))
