@@ -11,9 +11,9 @@ vignette: >
 knitr::opts_chunk$set(collapse=TRUE, comment="#>")
 ```
 
-These examples use real MaNGA cubes.
+What can you learn about a galaxy by comparing its spectra across the sky? Explore these examples from real MaNGA observations, compare different ways of defining regions, and use the same tools on your own data.
 
-## MaNGA segmentation mosaic
+## Explore the MaNGA galaxy collection
 
 <figure class="science-figure">
 <img src="../man/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour">
@@ -23,14 +23,14 @@ These examples use real MaNGA cubes.
 The panels show the IFS cube, spatial support, and spectral regions. Use
 `summarize_cluster_spectra()` to obtain the summed regional spectra.
 
-## Exact and sparse-graph comparison
+## Compare two segmentation methods
 
 <figure class="science-figure">
 <img src="../man/figures/manga_8443_6102_compare_current.png" alt="MaNGA 8443-6102 comparison of exact and sparse-graph Capivara segmentation with and without starlet support">
 <figcaption>MaNGA 8443-6102 segmented with `segment()` and `segment_large()`, with and without starlet support.</figcaption>
 </figure>
 
-For a new observed cube:
+Want to reproduce a similar map? For a FITS file whose flux HDU and spectral axes you have already checked, the original segmentation workflow is:
 
 ```{r real-template, eval=FALSE}
 library(capivara)
@@ -54,14 +54,16 @@ seg <- segment_large(
 regional_spectra <- summarize_cluster_spectra(seg)$sum_spectra
 ```
 
-Replace the path with a local FITS cube. The [Get
-Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
-guide provides a runnable simulation.
+Replace the path with your local, verified flux cube. To include measurement variance, quality masks and explicit spectral geometry, follow [Analyse your own data](your-own-data.html). If you are new to Capivara, start with the [runnable simulation](getting-started.html).
 
-## Kinematic and model-specific examples
+## Explore the motions of gas
 
 The [Kinematic
 Analysis](https://rafaelsdesouza.com.br/capivara/articles/kinematic-analysis.html)
 guide covers line maps and an axisymmetric disc model. The [Bar
 Model](https://rafaelsdesouza.com.br/capivara/articles/bisymmetric-bar-model.html)
 guide adds bisymmetric terms for a known barred galaxy.
+
+## Explore other observing programmes
+
+Interested in a MUSE spiral, a jellyfish galaxy or an active nucleus? The [GitHub example gallery](https://github.com/RafaelSdeSouza/capivara/tree/docs/reproducible-atlas-examples/examples) introduces the planned targets and links to their survey archives. Interactive Capivara results for those targets are not yet available.
