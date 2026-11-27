@@ -9,6 +9,21 @@ starter <- system.file("tutorials", "run_prepared_cube.R",
 exporter <- system.file("tutorials", "export_semantic_atlas.R",
                         package = "capivara", mustWork = TRUE)
 if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Install jsonlite.")
+# A complete root build is required so Atlas navigation and articles share a root.
+stopifnot(file.exists(file.path(site, "articles", "your-own-data.html")),
+          file.exists(file.path(site, "articles", "canonical-api.html")))
+# GitHub README keeps source-file links. Rewrite only their generated home-page
+# equivalents to the built website's actual article destinations.
+home <- file.path(site, "index.html")
+html <- readLines(home, warn = FALSE)
+links <- c("vignettes/your-own-data.Rmd" = "articles/your-own-data.html",
+           "examples/README.html" = "articles/examples.html",
+           "examples/README.md" = "articles/examples.html")
+for (from in names(links)) {
+  html <- gsub(paste0('href="', from, '"'),
+               paste0('href="', links[[from]], '"'), html, fixed = TRUE)
+}
+writeLines(html, home, useBytes = TRUE)
 dest <- file.path(site, "atlas")
 dir.create(dest, recursive = TRUE, showWarnings = FALSE)
 out <- tempfile("capivara-site-demo-")
