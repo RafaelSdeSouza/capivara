@@ -100,15 +100,19 @@ for (j in seq_along(d$wavelength))
 cube <- list(imDat=d$flux, wavelength=d$wavelength,
              wavelength_frame=d$wavelength_frame,
              wavelength_medium=d$wavelength_medium)
-seg <- segment_large(cube, Ncomp=12L, redshift=d$redshift,
-                     var_cube=d$variance, sample_validity=valid,
-                     representation=full_flux_representation())
+seg <- segment_spectra(cube, n_regions = 12L,
+                       representation = full_flux_representation(),
+                       variance = d$variance, sample_validity = valid,
+                       redshift = d$redshift)
 quality_seg <- seg
 quality_seg$original_cube$imDat[!valid] <- NA_real_
-spectra <- summarize_cluster_spectra(quality_seg, var_cube=d$variance)
+spectra <- extract_region_spectra(quality_seg, variance = d$variance)
+plot_regions(seg)
+geometry <- region_geometry(seg, coords = "native")
+neighbours <- region_adjacency(seg, coords = "native")
 ```
 
-Here you are grouping spectra using absolute flux. If you want to compare spectral shapes independently of brightness, explore the [representation guide](semantic-representations.html) and its tested MaNGA optical profile. Try several values of `Ncomp` and inspect the resulting regions and coverage; the requested number of regions is not an estimate of the number of physical populations, and the algorithm may retain more regions when comparisons are unsupported.
+Here you are grouping spectra using absolute flux. If you want to compare spectral shapes independently of brightness, explore the [representation guide](semantic-representations.html) and its tested MaNGA optical profile. Try several values of `n_regions` and inspect the resulting regions and coverage; the requested number of regions is not an estimate of the number of physical populations, and the algorithm may retain more regions when comparisons are unsupported.
 
 Working with a large MUSE mosaic? Start with a scientifically meaningful cutout. This starter loads arrays into memory and has not been benchmarked on full mosaics.
 
@@ -127,10 +131,35 @@ Your output folder contains:
 
 The spectra table distinguishes raw finite sums, quality-filtered sums and fixed-aperture sums. Check the contributing spaxel counts before comparing wavelengths. The variance column assumes diagonal errors only; it does not include spatial or spectral covariance. For sky-coordinate maps, verify the celestial WCS before exporting. See [FITS and DS9](fits-ds9-export.html).
 
+## Explore your galaxy in the Atlas
+
+Use the same output directory created by the starter script. Install the optional
+JSON dependency and export the region catalogue and spectra for the desktop viewer.
+
+```{r atlas, eval=FALSE}
+install.packages("jsonlite")
+exporter <- system.file("tutorials", "export_semantic_atlas.R",
+                        package = "capivara", mustWork = TRUE)
+system2(file.path(R.home("bin"), "Rscript"),
+        shQuote(c(exporter, "my_galaxy_analysis")))
+viewer <- system.file("atlas", "index.html", package = "capivara",
+                      mustWork = TRUE)
+utils::browseURL(viewer)
+```
+
+Choose `my_galaxy_analysis/atlas.json` in the viewer. Click a region on a
+map to inspect its summed spectrum, compare neighbours, or sort the discovery
+catalogue by spectral contrast. Your JSON stays in your browser.
+
+The catalogue describes measured spectral structure, not inferred physical
+populations. Missing fixed-aperture channels remain gaps, and neighbourhood
+distances are descriptive rather than calibrated detection significances.
+
 ## Where to go next
 
 - [Explore real galaxies](examples.html) for examples and observing programmes.
 - [Study gas motions](kinematic-analysis.html) using the single-line preview workflow.
+- [A regional analysis workflow](canonical-api.html) for the concise R interfaces and compatibility reference.
 - [Compare spectral representations](semantic-representations.html) to choose the right geometry for your science.
 - [Fit regional spectra](https://github.com/RafaelSdeSouza/capivaraPPXF) with the experimental pPXF companion, after reviewing its licence and measurement limitations.
 
