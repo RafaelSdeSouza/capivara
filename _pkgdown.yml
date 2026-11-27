@@ -38,6 +38,8 @@ navbar:
     articles:
       text: User guide
       menu:
+      - text: Analyse your own data
+        href: articles/your-own-data.html
       - text: Segmentation backends
         href: articles/choosing-segmentation-backend.html
       - text: Semantic representations
@@ -72,6 +74,7 @@ articles:
   navbar: ~
   contents:
   - getting-started
+  - your-own-data
 - title: User guide
   navbar: ~
   contents:
