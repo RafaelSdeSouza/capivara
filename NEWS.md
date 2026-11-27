@@ -1,5 +1,15 @@
 # capivara 0.4.5.9000
 
+## Regional analysis interfaces
+
+- New additive interfaces: `segment_spectra()`, `extract_region_spectra()`,
+  `plot_regions()`, `plot_region_spectra()`, `region_geometry()`, and
+  `list_emission_lines()`. Existing names, signatures, return objects and
+  scientific defaults remain available. The new segmentation interface requires
+  an explicit representation and requested hierarchy cut.
+- A prepared-cube tutorial and optional local Atlas viewer support regional
+  exploration and descriptive neighbourhood comparisons.
+
 ## Spatial-foundation integration
 
 - Explicit semantic representations now default to their declared measurement
