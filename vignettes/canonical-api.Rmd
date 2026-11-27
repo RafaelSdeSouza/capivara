@@ -98,6 +98,39 @@ and the region median; it is not a plot of calibrated summed flux.
 Use `list_emission_lines()` to inspect the laboratory line registry before
 constructing line-sensitive analyses. The registry itself is not a line fit.
 
+## Measure a declared native bandpass
+
+Once the line centre and sidebands are chosen in the spectrum's wavelength
+frame and air or vacuum convention, `measure_spectral_bandpass()` fits a linear
+continuum and integrates the excess within the line window. It returns a
+signed equivalent width and propagates continuum uncertainty into both
+measurements. The windows remain an explicit scientific choice; a blend or
+stellar absorption inside them contributes to the result.
+
+```{r bandpass, eval=FALSE}
+one <- subset(result$spectra, region == 1L)
+bandpass <- measure_spectral_bandpass(
+  wavelength = one$wavelength_angstrom,
+  flux = one$fixed_aperture_sum,
+  variance = one$diagonal_variance_only,
+  line_window = line_window_native,
+  continuum_windows = sidebands_native,
+  flux_unit = result$provenance$flux_unit,
+  wavelength_frame = result$provenance$wavelength_frame,
+  wavelength_medium = result$provenance$wavelength_medium
+)
+```
+
+Here `line_window_native` and `sidebands_native` must be set from the chosen
+feature and the galaxy's redshift before the call. Incomplete fixed-aperture
+channels produce missing measurements. The example's variance treats spectral
+channels as independent and does not recover spatial covariance lost during
+extraction. Supply the measured spatially adjusted per-channel variance and,
+when available, `spectral_covariance` to propagate those terms. Instrumental
+sigma can be supplied as `lsf_sigma_angstrom`; it is recorded without
+deconvolution. The output is a window measurement, not an isolated physical
+line flux or a velocity fit.
+
 ## Existing scripts still work
 
 The regional interfaces complement the original functions. No historical call
