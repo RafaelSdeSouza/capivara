@@ -1,31 +1,73 @@
-# CAPIVARA example gallery
+# Explore galaxies with Capivara
 
-The installed [Get Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html) guide is the first stop. Existing observed examples are in the [MaNGA examples vignette](../vignettes/examples.Rmd), including the published [segmentation mosaic](../man/figures/mosaic_segmented_sagui.png) and [8443-6102 backend comparison](../man/figures/manga_8443_6102_compare_current.png). The [V4 validation report](../SPATIAL_FOUNDATION_V4_FREEZE.md) describes the five real MaNGA replay targets. These are existing segmentation results, not new multi-survey physical fits.
+Every galaxy has a different spectral landscape. A bright nucleus, a faint
+disc or a star-forming knot may look very different when you compare their
+spectra. Explore how Capivara groups these observations into regions, and
+take the same approach to your own data.
 
-## Reproduce the examples
+[Get started](../vignettes/getting-started.Rmd) ·
+[Analyse your own data](../vignettes/your-own-data.Rmd) ·
+[Documentation](https://rafaelsdesouza.com.br/capivara/)
 
-See [Analyse your own data](../vignettes/your-own-data.Rmd) and the installed scripts in [inst/tutorials](../inst/tutorials). The synthetic demo does not need an archive download. The observational starter accepts a local MaNGA DRP cube or a prepared RDS from any instrument. No survey FITS cubes are committed.
+## Explore MaNGA
 
-## Planned flagship observational atlas
+![Real MaNGA galaxy images and Capivara region maps](../man/figures/mosaic_segmented_sagui.png)
 
-| Target | Programme / instrument | Science demonstration | Data source | Status |
-| --- | --- | --- | --- | --- |
-| 8602-12705 | MaNGA / SDSS | Disc kinematics and spatial segmentation | [SDSS DR17](https://www.sdss4.org/dr17/manga/manga-data/data-access/) | Existing V4 segmentation validation; atlas ingestion and physical fits pending |
-| NGC 628 | PHANGS / MUSE | H II regions and spiral disc | [PHANGS data releases](https://www.phangs.org/data) | Candidate; exact files, crop and validation pending |
-| NGC 5485 | CALIFA / PMAS-PPAK | Early-type stellar kinematics | [CALIFA DR3](https://califa.caha.es/DR3/) | Candidate; exact files and validation pending |
-| JO206 | GASP / MUSE | Ram-pressure stripping, extraplanar emission | [ESO GASP release](https://www.eso.org/cms/eso-archive-news/second-data-release-of-the-large-programme--dissecting-gas-strip.html) | Candidate; exact files and validation pending |
-| NGC 5643 | MAGNUM / MUSE | Nuclear ionized gas and outflows | [ESO Science Archive](https://archive.eso.org/cms.html), programme 60.A-9339; [science paper](https://doi.org/10.1051/0004-6361/201526581) | Candidate; verify final reduction and access |
-| CATID 272822 | SAMI / AAT | Stellar–gas kinematic misalignment | [Data Central](https://datacentral.org.au/) | Candidate; catalogue cross-match, exact files and validation pending |
+The maps show regions derived from real integral-field observations. Each
+colour identifies a region with similar spectra; the colours are categorical,
+not a scale of brightness or physical properties.
 
-For the MaNGA target, the DR17 archive naming convention gives the following paths (availability of the exact files has not been checked in this environment):
+### A closer look at MaNGA 8443-6102
 
-- [DRP LOGCUBE](https://data.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8602/stack/manga-8602-12705-LOGCUBE.fits.gz)
-- [DAP MAPS HYB10-MILESHC-MASTARSSP](https://data.sdss.org/sas/dr17/manga/spectro/analysis/v3_1_1/3.1.0/HYB10-MILESHC-MASTARSSP/8602/12705/manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz)
+![Comparison of exact and sparse-graph segmentation of MaNGA 8443-6102](../man/figures/manga_8443_6102_compare_current.png)
 
-Do not interpret DAP measurements as CAPIVARA fits. Do not transfer existing MEGACUBE labels to LOGCUBE/MAPS unless pixel alignment and WCS have been verified.
+Compare the exact and sparse-graph algorithms, with and without a Starlet
+support mask. This is a useful example if you want to understand how your
+choice of segmentation method or footprint changes the result.
 
-## Publishing policy
+[Read the example](../vignettes/examples.Rmd) ·
+[Choose a segmentation method](../vignettes/choosing-segmentation-backend.Rmd)
 
-Each finished example should include an archive identifier, release, citation, exact file hashes, configuration, software versions, wavelength/flux conventions, masks and WCS validation, and a description of which physical products passed quality gates. Commit small example scripts, provenance and validated web-ready products only; large native cubes stay in the survey archives. MUSE mosaics should initially use a documented science-driven crop, retaining the WCS and separate coverage mask. Large-cube processing and every non-MaNGA instrument require validation before claims of support. Unavailable products must be visibly unavailable, not simulated or zero-filled.
+### Work with MaNGA 8602-12705
 
-The multi-survey interactive atlas, unified joint fitting, calibrated anomaly detection and semantic catalogue are development goals, not features of this example index.
+Use this disc galaxy to try the local-data workflow. It is one of the five
+objects in our [spatial segmentation validation](../SPATIAL_FOUNDATION_V4_FREEZE.md).
+You can obtain the original observations through the [SDSS DR17 archive](https://www.sdss4.org/dr17/manga/manga-data/data-access/).
+
+The archive naming convention gives the following file paths (check their
+availability in the archive):
+
+- [DRP spectral cube](https://data.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8602/stack/manga-8602-12705-LOGCUBE.fits.gz)
+- [DAP maps](https://data.sdss.org/sas/dr17/manga/spectro/analysis/v3_1_1/3.1.0/HYB10-MILESHC-MASTARSSP/8602/12705/manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz)
+
+Follow [Analyse your own data](../vignettes/your-own-data.Rmd) to prepare
+the cube and extract regional spectra. DAP maps are survey measurements,
+not Capivara fits. If you compare the two, check their WCS and pixel alignment
+first.
+
+## Explore other surveys
+
+Interested in spiral structure, gas stripping or AGN feedback? The following
+targets are planned for the multi-survey gallery. The links lead to their
+observational programmes; Capivara results are not yet available for these
+examples.
+
+| Galaxy | Observations | What to explore |
+| --- | --- | --- |
+| NGC 628 | [PHANGS / MUSE](https://www.phangs.org/data) | Spiral structure and H II regions |
+| NGC 5485 | [CALIFA](https://califa.caha.es/DR3/) | Unusual stellar rotation |
+| JO206 | [GASP / MUSE](https://archive.eso.org/scienceportal/home) | Gas stripping and extraplanar star formation |
+| NGC 5643 | [MAGNUM / MUSE](https://archive.eso.org/scienceportal/home) | Nuclear ionized gas and outflows |
+| CATID 272822 | [SAMI](https://datacentral.org.au/) | Stellar–gas kinematic misalignment |
+
+## Try it yourself
+
+You do not need a large survey cube to get started. The tutorial includes a
+small synthetic galaxy and a workflow for local observations. For a large MUSE
+mosaic, start with a region of scientific interest and retain its WCS and
+coverage information.
+
+The original FITS data stay in their survey archives. Use the example scripts
+and documented input conventions to reproduce your own maps and spectra.
+
+[Install Capivara and run your first analysis](../vignettes/your-own-data.Rmd)
