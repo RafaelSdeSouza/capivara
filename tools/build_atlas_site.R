@@ -23,6 +23,16 @@ for (from in names(links)) {
   html <- gsub(paste0('href="', from, '"'),
                paste0('href="', links[[from]], '"'), html, fixed = TRUE)
 }
+# Quarto's GFM output can drop explicit source heading IDs. Preserve the
+# historical About deep link by adding an anchor at the citation section.
+if (!any(grepl('id="about"', html, fixed = TRUE))) {
+  doc <- paste(html, collapse = "\n")
+  pattern <- '(?is)(<h[2-4]\\b[^>]*\\bid="cite-capivara"[^>]*>)'
+  if (!grepl(pattern, doc, perl = TRUE))
+    stop("Cannot locate the citation heading for the legacy About anchor.")
+  doc <- sub(pattern, '<span id="about"></span>\\1', doc, perl = TRUE)
+  html <- strsplit(doc, "\n", fixed = TRUE)[[1L]]
+}
 writeLines(html, home, useBytes = TRUE)
 dest <- file.path(site, "atlas")
 dir.create(dest, recursive = TRUE, showWarnings = FALSE)
