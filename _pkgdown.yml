@@ -37,7 +37,7 @@ navbar:
       href: articles/getting-started.html
     atlas:
       text: Galaxy Atlas
-      href: atlas/index.html
+      href: atlas/gallery.html
     articles:
       text: User guide
       menu:
