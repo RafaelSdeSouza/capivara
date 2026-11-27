@@ -33,7 +33,7 @@ jobs:
             local::.
           needs: website
       - name: Build pkgdown site
-        run: Rscript -e 'pkgdown::build_site(new_process = FALSE)'
+        run: Rscript -e 'pkgdown::build_site(new_process = FALSE, override = list(development = list(mode = "release")))'
       - name: Build Atlas
         run: Rscript tools/build_atlas_site.R docs
       - name: Generate legacy redirects
