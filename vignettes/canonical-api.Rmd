@@ -11,6 +11,38 @@ Use Capivara to define regions by their spectra, measure their light, and explor
 their spatial relationships. Start with a prepared cube and aligned quality and
 variance arrays, as in [Analyse your own data](your-own-data.html).
 
+## Analyse and explore in two calls
+
+Once your data are prepared using the [own-data guide](your-own-data.html),
+you can run the whole regional workflow from R:
+
+```{r full-workflow, eval=FALSE}
+library(capivara)
+
+result <- analyse_galaxy(
+  prepared = readRDS("my_galaxy.rds"),
+  n_regions = 25L,
+  representation = full_flux_representation()
+)
+
+explore_galaxy(result, output_dir = "my_galaxy_atlas")
+```
+
+The second call creates a local interactive HTML atlas and opens it in an
+interactive R session. Install the optional `jsonlite` package for export.
+The directory includes the original regional spectra, segmentation and
+provenance alongside the atlas JSON and catalogue CSV files. You can share
+the HTML with a collaborator; the exported spectra are embedded in the page.
+Only share it when you have permission to distribute those data.
+
+Use `export_atlas(result, output_dir = "my_galaxy_products")` if you only
+want the machine-readable products. Both commands require a new output
+directory. No existing files are overwritten.
+
+The atlas displays native-pixel regions and descriptive spectral features.
+It does not estimate stellar populations or assign physical classifications.
+To inspect the regional analysis more closely, use the individual functions below.
+
 ## Choose what makes two spectra similar
 
 The representation is a scientific choice, not a computational convenience.
