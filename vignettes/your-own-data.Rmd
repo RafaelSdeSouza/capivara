@@ -84,6 +84,22 @@ It does not infer galaxy membership or perform LSF matching.
 
 ## Find spectral regions
 
+Prefer an end-to-end R workflow? Once you have saved the prepared cube:
+
+```{r unified, eval=FALSE}
+result <- analyse_galaxy(
+  readRDS("my_galaxy.rds"),
+  n_regions = 12L,
+  representation = full_flux_representation()
+)
+explore_galaxy(result, output_dir = "my_galaxy_atlas")
+```
+
+The interactive atlas export requires the optional `jsonlite` package.
+The result stays in memory until you request an export, and the atlas
+uses a new output directory. You can also follow the script-based workflow
+below or use individual segmentation functions.
+
 ```{r run, eval=FALSE}
 system2(file.path(R.home("bin"), "Rscript"),
         shQuote(c(script, "my_galaxy.rds", "my_galaxy_analysis", "12")))
