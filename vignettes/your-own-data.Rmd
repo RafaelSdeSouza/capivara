@@ -7,28 +7,27 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## 1. Installation
+Have an integral-field data cube you would like to explore? This guide takes you from installing Capivara to extracting regional spectra from your own observations. Start with the small example below to get familiar with the workflow, then bring your own data.
 
-Install R and the compiler toolchain for your platform (Rtools on Windows,
-Xcode command-line tools on macOS, or the relevant compiler and development
-libraries on Linux). The sf dependency may require GDAL, GEOS and PROJ.
-Install the current package:
+## Install Capivara
+
+You can install Capivara directly from GitHub. Open R or RStudio and run:
 
 ```{r install, eval=FALSE}
 install.packages("remotes")
-remotes::install_github("RafaelSdeSouza/capivara", upgrade="never")
+remotes::install_github("RafaelSdeSouza/capivara@docs/reproducible-atlas-examples",
+                        upgrade = "never")
 library(capivara)
 packageVersion("capivara")
 ```
 
-For this development tutorial before merge, install the tutorial branch
-explicitly by appending @docs/reproducible-atlas-examples to the GitHub
-repository name in the command above. SpectroPath is currently a package
-dependency; torch and the pPXF companion are not needed for the starter.
+The command installs the preview of this tutorial. You do not need Python, torch or the pPXF companion to follow this guide. SpectroPath is installed as a package dependency.
 
-## 2. Run your first example
+If installation fails while compiling a dependency, check that you have the appropriate compiler tools (Rtools on Windows, Xcode command-line tools on macOS, or development libraries on Linux). The sf package may also require GDAL, GEOS and PROJ.
 
-No FITS download is necessary. From R:
+## Try your first galaxy
+
+Start with a small simulated galaxy. You do not need to download any observations. The following command runs the example and saves a map and regional spectra to a new folder:
 
 ```{r demo, eval=FALSE}
 script <- system.file("tutorials", "run_prepared_cube.R",
@@ -37,16 +36,11 @@ system2(file.path(R.home("bin"), "Rscript"),
         shQuote(c(script, "--demo", "capivara_demo", "8")))
 ```
 
-Choose a new output directory on every run. The demo uses synthetic data.
-For the earlier published workflow, see [Get Started](getting-started.html).
+Open `capivara_demo/segmentation.png` to see the regions, or read `capivara_demo/regional_spectra.csv` to compare their spectra. To try a different number of regions, change `8` and choose a new output directory. The example uses simulated data; the [Get Started guide](getting-started.html) walks through the original algorithm interactively.
 
-## 3. Prepare your observations
+## Bring your own observations
 
-Inspect the FITS extensions, units, native wavelength coordinates, mask
-bit definitions, variance, spatial orientation and instrument resolution.
-Do not assume that all FITS files have the same extension or axis order.
-For MUSE, CALIFA and SAMI, use a verified instrument-specific reader before
-creating the following R list. Flux and variance must share the native grid.
+Capivara works with a three-dimensional array of spectra on a spatial grid. If you already have your observations in R, you can prepare them directly. For MaNGA, see the dedicated reader below. For other instruments, use your preferred FITS reader and check the units, axis order, quality flags and instrumental resolution before assembling the input.
 
 ```{r input, eval=FALSE}
 # Replace these variables with data read from your instrument.
@@ -69,12 +63,11 @@ prepared <- list(
 saveRDS(prepared, "my_galaxy.rds")
 ```
 
-Variance is not inverse variance. Convert only finite positive IVAR values;
-invalid voxels remain ineligible. Never replace missing samples with zeros.
-The host mask is an explicit astronomical selection, not simply the IFU
-footprint. Record how it was constructed and verify the spatial axes.
+Two details matter here: use variance rather than inverse variance, and keep missing measurements marked as missing. Your `host_mask` selects the galaxy or structure you want to study; it need not cover the entire IFU footprint. Check its orientation against your image.
 
-For native MaNGA DR17 LOGCUBEs, a starter adapter is included:
+### Working with MaNGA?
+
+If you have a native DR17 LOGCUBE, use the included preparation script. Supply the measured systemic redshift and a host mask on the native spatial grid:
 
 ```{r manga, eval=FALSE}
 adapter <- system.file("tutorials", "prepare_manga_cube.R",
@@ -89,14 +82,14 @@ system2(file.path(R.home("bin"), "Rscript"),
 The adapter checks named HDUs against the expected native DRP layout.
 It does not infer galaxy membership or perform LSF matching.
 
-## 4. Analyse your own cube
+## Find spectral regions
 
 ```{r run, eval=FALSE}
 system2(file.path(R.home("bin"), "Rscript"),
         shQuote(c(script, "my_galaxy.rds", "my_galaxy_analysis", "12")))
 ```
 
-Alternatively, run the analysis interactively with the existing public API:
+Prefer to work interactively in R? Use the same segmentation and spectral extraction functions directly:
 
 ```{r interactive, eval=FALSE}
 d <- readRDS("my_galaxy.rds")
@@ -115,39 +108,30 @@ quality_seg$original_cube$imDat[!valid] <- NA_real_
 spectra <- summarize_cluster_spectra(quality_seg, var_cube=d$variance)
 ```
 
-Full flux retains amplitude and shape; it is distinct from the historical
-median-centred workflow. See [Semantic Representations](semantic-representations.html)
-for the validated MaNGA shape profile and its limited domain. Fixed K is an
-exploratory cut, not the number of physical populations. Inspect actual K,
-coverage, and hierarchy QC. For large MUSE mosaics, begin with a scientifically
-motivated crop; the starter materializes arrays in memory and has not been
-benchmarked on full mosaics.
+Here you are grouping spectra using absolute flux. If you want to compare spectral shapes independently of brightness, explore the [representation guide](semantic-representations.html) and its tested MaNGA optical profile. Try several values of `Ncomp` and inspect the resulting regions and coverage; the requested number of regions is not an estimate of the number of physical populations, and the algorithm may retain more regions when comparisons are unsupported.
 
-## 5. Understand your outputs
+Working with a large MUSE mosaic? Start with a scientifically meaningful cutout. This starter loads arrays into memory and has not been benchmarked on full mosaics.
 
-The starter exports a native label matrix, segmentation figure, regional
-spectra CSV, region sizes, RDS segmentation object, provenance and session
-information. It records finite raw sums, quality-valid sums and fixed-aperture
-sums separately, including the contributing spaxel count per wavelength.
-Diagonal variance is not a calibrated covariance-aware uncertainty.
-The figure uses native pixel coordinates; verify celestial WCS independently
-before exporting spatial products. See [FITS and DS9](fits-ds9-export.html).
+## Explore and export your results
 
-## 6. Continue to physical analysis
+Your output folder contains:
 
-[Kinematic Analysis](kinematic-analysis.html) documents the existing
-single-line preview workflow. The optional capivaraPPXF companion provides
-experimental stellar/gas fitting; consult its licence and scientific QC
-before use. No calibrated physical fits, anomaly scores or semantic
-classifications are produced by the starter. Unified multi-line fitting,
-the interactive atlas and cross-survey validation are under development.
+| File | Use it to |
+| --- | --- |
+| `segmentation.png` | See the spatial regions at a glance |
+| `regional_spectra.csv` | Plot, compare or fit the extracted spectra |
+| `regions.csv` | Inspect the number of spaxels per region |
+| `labels_native.rds` | Match a spectrum to its position in the cube |
+| `segmentation.rds` | Continue your analysis in R |
+| `provenance.rds`, `sessionInfo.txt` | Record the input conventions and software environment |
 
-See [observational examples](examples.html) and the
-[GitHub gallery](https://github.com/RafaelSdeSouza/capivara/tree/docs/reproducible-atlas-examples/examples)
-for data access and readiness by target.
+The spectra table distinguishes raw finite sums, quality-filtered sums and fixed-aperture sums. Check the contributing spaxel counts before comparing wavelengths. The variance column assumes diagonal errors only; it does not include spatial or spectral covariance. For sky-coordinate maps, verify the celestial WCS before exporting. See [FITS and DS9](fits-ds9-export.html).
 
-## Development validation status
+## Where to go next
 
-This tutorial was reviewed against the current public API. The new R scripts
-and FITS adapter require execution in a configured R environment; no new
-observational validation is claimed by this documentation.
+- [Explore real galaxies](examples.html) for examples and observing programmes.
+- [Study gas motions](kinematic-analysis.html) using the single-line preview workflow.
+- [Compare spectral representations](semantic-representations.html) to choose the right geometry for your science.
+- [Fit regional spectra](https://github.com/RafaelSdeSouza/capivaraPPXF) with the experimental pPXF companion, after reviewing its licence and measurement limitations.
+
+**Preview note:** this starter produces segmentation and regional spectra, not calibrated physical fits or an anomaly catalogue. The new scripts and FITS reader still require runtime validation. See the [example gallery](https://github.com/RafaelSdeSouza/capivara/tree/docs/reproducible-atlas-examples/examples) for available results.
