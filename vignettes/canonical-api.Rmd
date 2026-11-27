@@ -1,0 +1,89 @@
+---
+title: "A regional analysis workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A regional analysis workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Use Capivara to define regions by their spectra, measure their light, and explore
+their spatial relationships. Start with a prepared cube and aligned quality and
+variance arrays, as in [Analyse your own data](your-own-data.html).
+
+## Choose what makes two spectra similar
+
+The representation is a scientific choice, not a computational convenience.
+Choose absolute flux when brightness is part of the question. Use a declared
+spectral-shape representation when a positive multiplicative amplitude is a
+nuisance. The MaNGA/Sandra profile has an instrument-specific validation domain;
+it is not a universal normalizer for other surveys.
+
+```{r workflow, eval=FALSE}
+library(capivara)
+
+seg <- segment_spectra(
+  cube = cube,
+  n_regions = 25L,
+  representation = full_flux_representation(),
+  variance = variance,
+  sample_validity = valid
+)
+
+plot_regions(seg)
+region_geometry(seg, coords = "native")
+region_adjacency(seg, coords = "native")
+```
+
+The requested count is a cut through a hierarchy, not a count of physical
+populations. The hierarchy can retain more regions if reliable comparisons
+do not support further merges. See [Semantic representations](semantic-representations.html)
+to choose a representation and inspect coverage.
+
+## Extract the spectra you want to fit
+
+The extraction function preserves the existing summary object. If you have a
+quality mask, explicitly apply it to a copy of the retained cube before
+extraction. Channels with missing contributors are not fixed-aperture sums.
+
+```{r extraction, eval=FALSE}
+quality_seg <- seg
+quality_seg$original_cube$imDat[!valid] <- NA_real_
+spectra <- extract_region_spectra(quality_seg, variance = variance)
+
+fixed <- spectra$sum_spectra
+complete <- sweep(spectra$finite_counts, 1L, spectra$n_spaxels, "==")
+fixed[!complete] <- NA_real_
+```
+
+The returned variance summaries assume diagonal errors, with an optional scalar
+inflation. They do not propagate a full spatial or spectral covariance model.
+
+For a legacy cube with suitable FITS axis metadata,
+`plot_region_spectra(seg)` displays individual median-centred profiles
+and the region median; it is not a plot of calibrated summed flux.
+
+Use `list_emission_lines()` to inspect the laboratory line registry before
+constructing line-sensitive analyses. The registry itself is not a line fit.
+
+## Existing scripts still work
+
+The regional interfaces complement the original functions. No historical call
+or scientific default has changed.
+
+| To do this | Regional interface | Existing interface |
+| --- | --- | --- |
+| Segment with an explicit representation | `segment_spectra()` | `segment_large()` or `segment()` with a declaration |
+| Extract spectra | `extract_region_spectra()` | `summarize_cluster_spectra()` |
+| Draw a region map | `plot_regions()` | `plot_cluster()` |
+| Display scaled profiles | `plot_region_spectra()` | `plot_cluster_spectra()` |
+| Inspect polygons | `region_geometry()` | `regions_sf()` |
+| List laboratory lines | `list_emission_lines()` | `emission_lines()` |
+
+The new segmentation interface always selects the explicit observed-entry
+spatial hierarchy. For historical exact or sparse feature-graph segmentation,
+and for the existing target-S/N cutting options, continue using the original
+interfaces. They are not interchangeable with the new scientific representation.
+
+See the [function reference](../reference/index.html) for advanced controls,
+kinematics, reconstruction, spatial contracts and export functions.
