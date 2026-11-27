@@ -13,6 +13,8 @@ knitr::opts_chunk$set(collapse=TRUE, comment="#>")
 
 What can you learn about a galaxy by comparing its spectra across the sky? Explore these examples from real MaNGA observations, compare different ways of defining regions, and use the same tools on your own data.
 
+Open the [Galaxy Atlas collection](../atlas/gallery.html) to browse individual observed examples and compare their region maps. The current observational collection displays the original figures; the interactive numerical workspace uses exported spectra and labels.
+
 ## Explore the MaNGA galaxy collection
 
 <figure class="science-figure">
