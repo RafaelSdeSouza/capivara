@@ -101,6 +101,9 @@ reference:
 - title: Regional analysis
   desc: Start with an explicit scientific representation, extract spectra, and explore the spatial geometry.
   contents:
+  - analyse_galaxy
+  - explore_galaxy
+  - export_atlas
   - segment_spectra
   - extract_region_spectra
   - region_geometry
