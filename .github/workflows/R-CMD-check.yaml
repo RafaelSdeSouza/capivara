@@ -37,3 +37,25 @@ jobs:
           stopifnot(status == 0)
           status <- system2(file.path(R.home("bin"), "Rscript"), c("tools/check_source_install.R", ".", shQuote(lib)))
           stopifnot(status == 0)
+          # Exercise the installed user-facing tutorial, not a source-only script.
+          demo <- system.file("tutorials", "run_prepared_cube.R", package = "capivara",
+                              lib.loc = lib, mustWork = TRUE)
+          out <- tempfile("capivara-tutorial-")
+          Sys.setenv(R_LIBS = paste(c(lib, .libPaths()), collapse = .Platform$path.sep))
+          status <- system2(file.path(R.home("bin"), "Rscript"),
+                            shQuote(c(demo, "--demo", out, "8")))
+          stopifnot(status == 0)
+          expected <- c("segmentation.rds", "labels_native.rds", "regional_spectra.csv",
+                        "regions.csv", "provenance.rds", "sessionInfo.txt", "segmentation.png")
+          stopifnot(all(file.exists(file.path(out, expected))))
+          labels <- readRDS(file.path(out, "labels_native.rds"))
+          regions <- read.csv(file.path(out, "regions.csv"))
+          spectra <- read.csv(file.path(out, "regional_spectra.csv"))
+          provenance <- readRDS(file.path(out, "provenance.rds"))
+          ids <- sort(unique(as.integer(labels$cluster_map[!is.na(labels$cluster_map)])))
+          stopifnot(length(ids) >= 8L, identical(ids, sort(as.integer(regions$region))),
+                    sum(regions$n_spaxels) == sum(!is.na(labels$cluster_map)),
+                    setequal(ids, unique(spectra$region)),
+                    all(is.na(spectra$fixed_aperture_sum) |
+                        spectra$n_valid_spaxels == spectra$n_region_spaxels),
+                    identical(provenance$physical_fits, "NOT_RUN"))
