@@ -141,6 +141,7 @@ reference:
   - reconstruct_cluster_cube
   - reconstruct_flux_preserving_cube
   - prepare_segment_spectra
+  - measure_spectral_bandpass
   - read_manga_lsf
   - select_manga_lsf
   - convert_wavelength_medium
