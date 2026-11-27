@@ -10,19 +10,14 @@ execute:
 
 **Explore galaxies through their spectra.**
 
-Capivara is an R package for integral-field spectroscopy (IFS). Use it to find
-regions of a galaxy with similar spectra, map how their properties vary across
-the sky, and extract the light from each region for further analysis.
+Capivara is an R package for integral-field spectroscopy (IFS). Find regions
+with similar spectra, compare their spatial structure, and extract regional
+spectra while preserving the measured flux. Choose whether to group spaxels
+by absolute flux or spectral shape.
 
-Instead of choosing spatial bins solely by their location or signal-to-noise
-ratio, you can let the spectral information help define the regions. Choose
-whether to retain absolute flux or focus on spectral shape, and work with
-regional spectra in your preferred fitting tools.
+[Install Capivara](#installation) · [Quick start](#quick-start) · [Analyse your own data](vignettes/your-own-data.Rmd) · [Galaxy examples](examples/README.md) · [Documentation](https://rafaelsdesouza.com.br/capivara/)
 
-[Peer-reviewed paper](https://doi.org/10.1093/mnras/staf688) ·
-[arXiv:2410.21962](https://arxiv.org/abs/2410.21962) ·
-[Documentation](https://rafaelsdesouza.com.br/capivara/) ·
-[Get Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
+[Published paper](https://doi.org/10.1093/mnras/staf688) · [arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
 
 <figure class="science-figure">
 <img src="man/figures/mosaic_segmented_sagui.png" alt="A landscape mosaic of real MaNGA galaxies and their Capivara spectral segmentation maps, with each categorical region shown in a distinct colour">
@@ -37,13 +32,6 @@ Start with an IFS cube and follow the light from individual spaxels to regional 
 <li>spectral regions</li>
 <li>regional spectra</li>
 </ol>
-
-## Start exploring
-
-- [Get started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html) — learn the workflow with a small simulated galaxy.
-- [Explore real galaxies](https://rafaelsdesouza.com.br/capivara/articles/examples.html) — see what spectral segmentation reveals in MaNGA observations.
-- [Analyse your own data](vignettes/your-own-data.Rmd) — prepare your cube, run the analysis and export your results (development tutorial).
-- [Function reference](https://rafaelsdesouza.com.br/capivara/reference/index.html) — find the tools for your next analysis.
 
 ## Installation {#installation}
 
