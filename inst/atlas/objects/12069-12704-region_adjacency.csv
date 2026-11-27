@@ -1,0 +1,3 @@
+region_a,region_b,shared_edges,common_fraction,cosine_distance
+1,6,74,0.6946842344388914,
+6,7,24,1.0,0.011806655847189651

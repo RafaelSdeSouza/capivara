@@ -50,5 +50,21 @@ stopifnot(file.copy(gallery, file.path(dest, "gallery.html"), overwrite = TRUE),
           file.copy(viewer, file.path(dest, "index.html"), overwrite = TRUE),
           file.copy(file.path(out, "atlas.json"), file.path(dest, "demo.json"),
                     overwrite = TRUE))
+observed <- system.file("atlas", "objects", package = "capivara", mustWork = TRUE)
+observed_files <- list.files(observed, full.names = TRUE)
+collection <- jsonlite::read_json(file.path(observed, "collection.json"),
+                                  simplifyVector = FALSE)
+stopifnot(identical(collection$schema, "capivara-observed-collection-v1"),
+          length(collection$entries) == 15L,
+          all(vapply(collection$entries, function(entry) {
+            id <- entry$object
+            all(file.exists(file.path(observed, paste0(id, c(
+              ".json", "-regions.svg", "-region_features.csv",
+              "-region_adjacency.csv")))))
+          }, logical(1))),
+          length(observed_files) > 0L,
+          dir.create(file.path(dest, "objects"), showWarnings = FALSE) ||
+            dir.exists(file.path(dest, "objects")),
+          all(file.copy(observed_files, file.path(dest, "objects"), overwrite = TRUE)))
 unlink(out, recursive = TRUE)
 cat("Built atlas viewer and synthetic demo in ", dest, "\n", sep = "")
