@@ -7,11 +7,13 @@
 #'   object_id and provenance. See the Analyse your own data vignette.
 #' @param n_regions Positive integer requested hierarchy cut.
 #' @param representation Explicit scientific representation declaration.
+#' @param output_dir Optional new directory for analysis products. If omitted,
+#'   the result stays in memory and no files are written.
 #' @return A capivara_galaxy_analysis object with segmentation, regional
 #'   spectra, measurements and provenance. Incomplete fixed-aperture channels
 #'   are missing; uncertainties are diagonal only.
 #' @export
-analyse_galaxy <- function(prepared, n_regions, representation) {
+analyse_galaxy <- function(prepared, n_regions, representation, output_dir = NULL) {
   d <- prepared
   if (!is.list(d)) stop("Prepared input must be a list.")
   required <- c("flux","wavelength","wavelength_frame","wavelength_medium",
@@ -74,11 +76,13 @@ analyse_galaxy <- function(prepared, n_regions, representation) {
     actual_k=length(ids), representation=seg$representation, backend=seg$backend,
     uncertainty="diagonal variance only; spatial/spectral covariance not propagated",
     physical_fits="NOT_RUN", sky_wcs_export="NOT_CERTIFIED")
-  structure(list(segmentation=seg, raw_spectra=raw, quality_spectra=p,
+  result <- structure(list(segmentation=seg, raw_spectra=raw, quality_spectra=p,
     spectra=tab, regions=data.frame(region=ids,n_spaxels=unname(p$n_spaxels)),
     labels=list(cluster_map=seg$cluster_map,requested_k=as.integer(n_regions),
                 actual_k=length(ids),backend=seg$backend),
     provenance=provenance), class="capivara_galaxy_analysis")
+  if (!is.null(output_dir)) .capivara_write_analysis(result, output_dir)
+  result
 }
 
 # Write the same seven analysis products as the prepared-cube tutorial.
