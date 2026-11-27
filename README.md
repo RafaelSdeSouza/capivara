@@ -4,14 +4,18 @@
 
 **Explore galaxies through their spectra.**
 
-Capivara is an R package for integral-field spectroscopy (IFS). Find regions
-with similar spectra, compare their spatial structure, and extract regional
-spectra while preserving the measured flux. Choose whether to group spaxels
-by absolute flux or spectral shape.
+Capivara is an R package for integral-field spectroscopy (IFS). Find
+regions with similar spectra, compare their spatial structure, and
+extract regional spectra while preserving the measured flux. Choose
+whether to group spaxels by absolute flux or spectral shape.
 
-[Install Capivara](#installation) · [Quick start](#quick-start) · [Analyse your own data](vignettes/your-own-data.Rmd) · [Galaxy examples](examples/README.md) · [Documentation](https://rafaelsdesouza.com.br/capivara/)
+[Install Capivara](#installation) · [Quick start](#quick-start) ·
+[Analyse your own data](vignettes/your-own-data.Rmd) · [Galaxy
+examples](examples/README.md) ·
+[Documentation](https://rafaelsdesouza.com.br/capivara/)
 
-[Published paper](https://doi.org/10.1093/mnras/staf688) · [arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
+[Published paper](https://doi.org/10.1093/mnras/staf688) ·
+[arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
 
 <figure class="science-figure">
 
@@ -24,7 +28,8 @@ regions and do not represent an ordered quantity.
 
 </figure>
 
-Start with an IFS cube and follow the light from individual spaxels to regional spectra:
+Start with an IFS cube and follow the light from individual spaxels to
+regional spectra:
 
 <ol class="science-flow">
 
@@ -63,7 +68,9 @@ dependencies.
 
 ## Quick start
 
-Try Capivara without downloading any observations. The example below builds a small simulated galaxy with a bulge, disc, nucleus and two star-forming knots, then finds six regions and extracts their spectra.
+Try Capivara without downloading any observations. The example below
+builds a small simulated galaxy with a bulge, disc, nucleus and two
+star-forming knots, then finds six regions and extracts their spectra.
 
 ``` r
 library(capivara)
@@ -148,10 +155,20 @@ knitr::kable(regional_products)
 
 The integer values are categorical region identifiers. `NA` in
 `seg$cluster_map` means that the spaxel was outside the eligible
-support. The table reports the number of assigned spaxels and the
-sum across the sampled wavelength channels (not a wavelength-weighted integral).
+support. The table reports the number of assigned spaxels and the sum
+across the sampled wavelength channels (not a wavelength-weighted
+integral).
 
-This example uses the original published segmentation workflow. When your science calls for a specific spectral geometry, try `full_flux_representation()` to retain brightness and shape, or explore `manga_sandra_spectral_shape()` for the tested MaNGA optical profile. The latter requires measured amplitude S/N of at least 30, returns the removed amplitude separately, and reports the eligible coverage. See the [representation guide](https://rafaelsdesouza.com.br/capivara/articles/semantic-representations.html) for choosing a representation and, when needed, an explicit spatial support.
+This example uses the original published segmentation workflow. When
+your science calls for a specific spectral geometry, try
+`full_flux_representation()` to retain brightness and shape, or explore
+`manga_sandra_spectral_shape()` for the tested MaNGA optical profile.
+The latter requires measured amplitude S/N of at least 30, returns the
+removed amplitude separately, and reports the eligible coverage. See the
+[representation
+guide](https://rafaelsdesouza.com.br/capivara/articles/semantic-representations.html)
+for choosing a representation and, when needed, an explicit spatial
+support.
 
 ``` r
 plot_cluster(seg)
