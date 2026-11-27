@@ -29,8 +29,8 @@ export_atlas <- function(analysis, output_dir = NULL) {
   label <- readRDS(file.path(dir,"labels_native.rds"))
   m <- label$cluster_map
   p <- readRDS(file.path(dir,"provenance.rds"))
-  t <- read.csv(file.path(dir,"regional_spectra.csv"),check.names=FALSE)
-  size <- read.csv(file.path(dir,"regions.csv"))
+  t <- utils::read.csv(file.path(dir,"regional_spectra.csv"),check.names=FALSE)
+  size <- utils::read.csv(file.path(dir,"regions.csv"))
   stopifnot(is.matrix(m),is.numeric(m),
             all(is.na(m) | (is.finite(m)&m>0&m==floor(m))))
   ids <- sort(unique(as.integer(m[!is.na(m)])))
@@ -67,7 +67,7 @@ export_atlas <- function(analysis, output_dir = NULL) {
   if (nc>1L) edges <- rbind(edges,contact(m[,-nc,drop=FALSE],m[,-1L,drop=FALSE]))
   if (nrow(edges)) {
     edges$shared_edges <- 1L
-    edges <- aggregate(shared_edges~region_a+region_b,edges,sum)
+    edges <- stats::aggregate(shared_edges~region_a+region_b,edges,sum)
   } else edges$shared_edges <- integer()
   edges$common_fraction <- rep(NA_real_,nrow(edges))
   edges$cosine_distance <- rep(NA_real_,nrow(edges))
@@ -86,7 +86,7 @@ export_atlas <- function(analysis, output_dir = NULL) {
     a <- a/ma; b <- b/mb
     edges$cosine_distance[i] <- max(0,min(2,1-sum(a*b)/sqrt(sum(a*a)*sum(b*b))))
   }
-  finite_median <- function(x) if(any(is.finite(x))) median(x[is.finite(x)]) else NA_real_
+  finite_median <- function(x) if(any(is.finite(x))) stats::median(x[is.finite(x)]) else NA_real_
   features <- data.frame(region=ids,n_spaxels=sizes,
      complete_fraction=rowMeans(is.finite(spec)),
      median_flux_density_per_spaxel=vapply(seq_along(ids),
@@ -129,8 +129,8 @@ export_atlas <- function(analysis, output_dir = NULL) {
       input_files=as.list(as.character(tools::md5sum(file.path(dir,
         c("labels_native.rds","regional_spectra.csv","regions.csv","provenance.rds")))))))
   jsonlite::write_json(payload,outputs[1],auto_unbox=TRUE,na="null",digits=NA)
-  write.csv(features,outputs[2],row.names=FALSE,na="")
-  write.csv(edges,outputs[3],row.names=FALSE,na="")
+  utils::write.csv(features,outputs[2],row.names=FALSE,na="")
+  utils::write.csv(edges,outputs[3],row.names=FALSE,na="")
   invisible(stats::setNames(outputs,c("atlas","features","adjacency")))
 }
 
@@ -156,6 +156,10 @@ explore_galaxy <- function(analysis, output_dir = tempfile("capivara-atlas-"),
   bytes <- readBin(paths[["atlas"]],"raw",n=file.info(paths[["atlas"]])$size)
   encoded <- jsonlite::base64_enc(bytes)
   html <- paste(readLines(template,warn=FALSE,encoding="UTF-8"),collapse="\n")
+  # Local exports retain working links to the public reference rather than
+  # referring to a nonexistent adjacent pkgdown directory.
+  html <- gsub('href="../articles/',
+               'href="https://rafaelsdesouza.com.br/capivara/articles/', html, fixed=TRUE)
   payload <- paste0("<script>load(JSON.parse(new TextDecoder().decode(Uint8Array.from(atob('",
                     encoded,"'),c=>c.charCodeAt(0)))));</script>")
   if (!grepl("</body>",html,fixed=TRUE)) stop("Atlas template missing body terminator.")
