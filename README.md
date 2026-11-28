@@ -2,7 +2,7 @@
 
 # Capivara <img align="right" src="man/figures/logo_capivara.png" width="72" alt="Capivara package logo">
 
-**Explore galaxies through their spectra.**
+**Spatially resolved spectroscopy.**
 
 Capivara is an R package for integral-field spectroscopy (IFS). Find
 regions with similar spectra, compare their spatial structure, and
