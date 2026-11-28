@@ -1,0 +1,67 @@
+name: Observational atlas pilot
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/observational-atlas.yml'
+      - 'tools/preflight_manga_atlas.py'
+      - 'tools/run_manga_atlas_pilot.R'
+      - 'inst/tutorials/run_atlas_views.R'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: observational-atlas-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  manga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Retrieve DR17 source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pilot-input
+          cd pilot-input
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 600 -o manga-8602-12705-LOGCUBE.fits.gz 'https://data.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8602/stack/manga-8602-12705-LOGCUBE.fits.gz'
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 180 -o manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz 'https://data.sdss.org/sas/dr17/manga/spectro/analysis/v3_1_1/3.1.0/HYB10-MILESHC-MASTARSSP/8602/12705/manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz'
+          gzip -t manga-8602-12705-LOGCUBE.fits.gz
+          gzip -t manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz
+          gunzip manga-8602-12705-LOGCUBE.fits.gz
+      - name: Verify the observations
+        run: |
+          python -m pip install 'numpy<3' 'astropy<8'
+          python tools/preflight_manga_atlas.py pilot-input/manga-8602-12705-LOGCUBE.fits pilot-input/manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz pilot-preflight
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::jsonlite
+            any::digest
+            local::.
+          needs: check
+      - name: Generate observational products
+        run: |
+          Rscript tools/run_manga_atlas_pilot.R pilot-input/manga-8602-12705-LOGCUBE.fits pilot-preflight pilot-output
+      - name: Package verified atlas data
+        uses: actions/upload-artifact@v4
+        with:
+          name: capivara-manga-8602-12705
+          path: pilot-output/web
+          if-no-files-found: error
+      - name: Preserve diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capivara-manga-pilot-diagnostics
+          path: |
+            pilot-preflight/preflight.json
+            pilot-output/status.json
+          if-no-files-found: ignore

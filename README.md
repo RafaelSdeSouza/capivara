@@ -2,14 +2,20 @@
 
 # Capivara <img align="right" src="man/figures/logo_capivara.png" width="72" alt="Capivara package logo">
 
-Capivara performs spectral segmentation of integral-field spectroscopy
-(IFS) cubes, assigning eligible spaxels to regions with coherent spectra
-and returning flux-preserving regional spectra.
+**Spatially resolved spectroscopy.**
 
-[Peer-reviewed paper](https://doi.org/10.1093/mnras/staf688) ·
-[arXiv:2410.21962](https://arxiv.org/abs/2410.21962) ·
-[Documentation](https://rafaelsdesouza.com.br/capivara/) · [Get
-Started](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
+Capivara is an R package for integral-field spectroscopy (IFS). Find
+regions with similar spectra, compare their spatial structure, and
+extract regional spectra while preserving the measured flux. Choose
+whether to group spaxels by absolute flux or spectral shape.
+
+[Install Capivara](#installation) · [Quick start](#quick-start) ·
+[Analyse your own data](vignettes/your-own-data.Rmd) · [Galaxy
+examples](examples/README.md) ·
+[Documentation](https://rafaelsdesouza.com.br/capivara/)
+
+[Published paper](https://doi.org/10.1093/mnras/staf688) ·
+[arXiv:2410.21962](https://arxiv.org/abs/2410.21962)
 
 <figure class="science-figure">
 
@@ -22,7 +28,8 @@ regions and do not represent an ordered quantity.
 
 </figure>
 
-The workflow has four stages:
+Start with an IFS cube and follow the light from individual spaxels to
+regional spectra:
 
 <ol class="science-flow">
 
@@ -61,9 +68,9 @@ dependencies.
 
 ## Quick start
 
-This fixed-seed example creates a small synthetic IFS cube. Its four
-profiles contain Hβ, \[O III\], Mg b, Na D, Hα, and \[N II\] features
-mixed across a bulge, disc, nucleus, and two star-forming knots.
+Try Capivara without downloading any observations. The example below
+builds a small simulated galaxy with a bulge, disc, nucleus and two
+star-forming knots, then finds six regions and extracts their spectra.
 
 ``` r
 library(capivara)
@@ -148,15 +155,20 @@ knitr::kable(regional_products)
 
 The integer values are categorical region identifiers. `NA` in
 `seg$cluster_map` means that the spaxel was outside the eligible
-support. The table reports the number of assigned spaxels and the
-wavelength-integrated sum of each regional spectrum.
+support. The table reports the number of assigned spaxels and the sum
+across the sampled wavelength channels (not a wavelength-weighted
+integral).
 
-The quick start retains Capivara’s published historical transformation.
-For an explicit scientific meaning, declare `full_flux_representation()`
-or `manga_sandra_spectral_shape()` and supply a `capivara_support`
-object. The validated optical shape profile requires measured amplitude
-S/N \>= 30, returns the removed amplitude separately, and reports
-whether the eligible domain supports a whole-galaxy interpretation.
+This example uses the original published segmentation workflow. When
+your science calls for a specific spectral geometry, try
+`full_flux_representation()` to retain brightness and shape, or explore
+`manga_sandra_spectral_shape()` for the tested MaNGA optical profile.
+The latter requires measured amplitude S/N of at least 30, returns the
+removed amplitude separately, and reports the eligible coverage. See the
+[representation
+guide](https://rafaelsdesouza.com.br/capivara/articles/semantic-representations.html)
+for choosing a representation and, when needed, an explicit spatial
+support.
 
 ``` r
 plot_cluster(seg)
@@ -179,7 +191,7 @@ and medians describe spectral shape. The [Get Started
 guide](https://rafaelsdesouza.com.br/capivara/articles/getting-started.html)
 runs the complete example.
 
-## Continue with
+## What would you like to do next?
 
 - [Choose the exact or sparse-graph
   backend](https://rafaelsdesouza.com.br/capivara/articles/choosing-segmentation-backend.html)
@@ -192,14 +204,14 @@ runs the complete example.
 - [View MaNGA
   examples](https://rafaelsdesouza.com.br/capivara/articles/examples.html)
 
-## Functions
+## Function reference
 
 The [function
 index](https://rafaelsdesouza.com.br/capivara/reference/index.html)
 groups the public API by task. Kinematic analysis and bisymmetric
 modelling have separate guides.
 
-## About
+## Cite Capivara
 
 Capivara is an R package for spectral segmentation and post-processing
 of IFS data cubes. Use `citation("capivara")` or cite the [MNRAS

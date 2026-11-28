@@ -1,0 +1,73 @@
+name: MaNGA observational atlas pilot
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/preflight_manga_atlas.py'
+      - 'tools/run_manga_atlas_pilot.R'
+      - 'tools/package_manga_atlas.py'
+      - '.github/workflows/manga-atlas-pilot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manga-atlas-pilot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install FITS preflight tools
+        run: python -m pip install numpy astropy
+      - name: Retrieve original public DR17 observations
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p atlas-input
+          cube=manga-8602-12705-LOGCUBE.fits.gz
+          maps=manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz
+          curl --fail --location --retry 3 --retry-delay 5 --connect-timeout 30 --max-time 600 -o "atlas-input/$cube" "https://data.sdss.org/sas/dr17/manga/spectro/redux/v3_1_1/8602/stack/$cube"
+          curl --fail --location --retry 3 --retry-delay 5 --connect-timeout 30 --max-time 300 -o "atlas-input/$maps" "https://data.sdss.org/sas/dr17/manga/spectro/analysis/v3_1_1/3.1.0/HYB10-MILESHC-MASTARSSP/8602/12705/$maps"
+          gzip -t "atlas-input/$cube" "atlas-input/$maps"
+          gzip -d "atlas-input/$cube"
+      - name: Verify observed target and coordinate alignment
+        run: python tools/preflight_manga_atlas.py atlas-input/manga-8602-12705-LOGCUBE.fits atlas-input/manga-8602-12705-MAPS-HYB10-MILESHC-MASTARSSP.fits.gz atlas-preflight
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::jsonlite
+            local::.
+          needs: check
+      - name: Generate native spectral and kinematic atlas
+        run: Rscript tools/run_manga_atlas_pilot.R atlas-input/manga-8602-12705-LOGCUBE.fits atlas-preflight atlas-results
+      - name: Package interactive observational preview
+        run: python tools/package_manga_atlas.py atlas-results/web atlas-observed-preview
+      - name: Upload observational preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: capivara-manga-8602-12705
+          path: atlas-observed-preview
+          if-no-files-found: error
+      - name: Upload compact diagnostic products
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manga-pilot-diagnostics
+          path: |
+            atlas-preflight/preflight.json
+            atlas-preflight/witness.csv
+            atlas-results/status.json
+            atlas-results/sessionInfo.txt
+            atlas-results/web
+          if-no-files-found: ignore

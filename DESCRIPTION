@@ -4,7 +4,7 @@ Title: Decomposition and Analysis of IFU Data Cubes
 Version: 0.4.5.9000
 Imports: digest, FITSio, dplyr, fastcluster, ggplot2, gridExtra, matrixStats, patchwork, readr, reshape2, RANN, Rcpp, scales, sf, spectropath, tidyr, viridis, yaml
 LinkingTo: Rcpp
-Suggests: reticulate, Matrix, torch, EBImage, imager, knitr, minpack.lm, rmarkdown, testthat (>= 3.0.0)
+Suggests: reticulate, Matrix, torch, EBImage, imager, jsonlite, knitr, minpack.lm, rmarkdown, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Remotes:
     RafaelSdeSouza/spectropath

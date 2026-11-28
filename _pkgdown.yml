@@ -29,15 +29,22 @@ home:
 
 navbar:
   structure:
-    left: [intro, articles, examples, reference, paper, github]
+    left: [intro, atlas, articles, examples, reference, paper, github]
     right: [search, lightswitch]
   components:
     intro:
       text: Get started
       href: articles/getting-started.html
+    atlas:
+      text: Galaxy Atlas
+      href: atlas/gallery.html
     articles:
       text: User guide
       menu:
+      - text: Analyse your own data
+        href: articles/your-own-data.html
+      - text: Regional analysis workflow
+        href: articles/canonical-api.html
       - text: Segmentation backends
         href: articles/choosing-segmentation-backend.html
       - text: Semantic representations
@@ -72,6 +79,8 @@ articles:
   navbar: ~
   contents:
   - getting-started
+  - your-own-data
+  - canonical-api
 - title: User guide
   navbar: ~
   contents:
@@ -89,6 +98,15 @@ articles:
   - reproducing-paper
 
 reference:
+- title: Regional analysis
+  desc: Start with an explicit scientific representation, extract spectra, and explore the spatial geometry.
+  contents:
+  - analyse_galaxy
+  - explore_galaxy
+  - export_atlas
+  - segment_spectra
+  - extract_region_spectra
+  - region_geometry
 - title: Core spectral segmentation
   desc: Exact and sparse-graph segmentation, component selection, and memory planning.
   contents:
@@ -96,6 +114,8 @@ reference:
   - segment_large
   - choose_ncomp_by_snr
   - estimate_segment_memory
+  - segment_emission_lines
+  - emission_lines
 - title: Semantic representations
   desc: Explicit flux and shape meanings, preparation, diagnostics, and native coverage.
   contents:
@@ -120,11 +140,26 @@ reference:
   - summarize_cluster_spectra
   - reconstruct_cluster_cube
   - reconstruct_flux_preserving_cube
+  - prepare_segment_spectra
+  - read_manga_lsf
+  - select_manga_lsf
+  - convert_wavelength_medium
+- title: Spatial geometry
+  contents:
+  - capivara_spatial_contract
+  - regions_sf
+  - domain_sf
+  - region_adjacency
 - title: Segmentation plotting
   desc: Discrete region maps and regional spectral displays.
   contents:
   - plot_cluster
   - plot_cluster_spectra
+  - scale_capivara_identity
+  - scale_capivara_continuous
+  - scale_capivara_diverging
+  - scale_capivara_rank
+  - theme_capivara
 - title: Kinematics
   desc: Native line maps, kinematic segmentation, model discovery, and reusable panels.
   contents:

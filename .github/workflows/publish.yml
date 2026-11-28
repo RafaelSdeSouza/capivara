@@ -53,7 +53,10 @@ jobs:
           git diff --exit-code -- README.md README_files
 
       - name: Build pkgdown site
-        run: Rscript -e 'pkgdown::build_site(new_process = FALSE)'
+        run: Rscript -e 'pkgdown::build_site(new_process = FALSE, override = list(development = list(mode = "release")))'
+
+      - name: Build Galaxy Atlas
+        run: Rscript tools/build_atlas_site.R docs
 
       - name: Generate legacy redirects
         run: Rscript tools/write_website_redirects.R docs
