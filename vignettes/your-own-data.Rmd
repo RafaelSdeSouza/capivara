@@ -164,7 +164,7 @@ utils::browseURL(viewer)
 ```
 
 Choose `my_galaxy_analysis/atlas.json` in the viewer. Click a region on a
-map to inspect its summed spectrum, compare neighbours, or sort the discovery
+map to inspect its summed spectrum, compare neighbours, or sort the region
 catalogue by spectral contrast. Your JSON stays in your browser.
 
 The catalogue describes measured spectral structure, not inferred physical
